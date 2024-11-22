@@ -1,6 +1,7 @@
 nextflow.enable.dsl=2
 
-include { hello, goodbye } from './modules'
+include { hello } from './modules/hello'
+include { goodbye } from './modules/goodbye'
 
 workflow  {
     Channel

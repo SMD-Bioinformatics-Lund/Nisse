@@ -1,4 +1,4 @@
-process hello {
+process goodbye {
     input:
     path input_file
 

@@ -1,3 +1,3 @@
 #!/bin/bash
 
-sed "${1}" "s/$/Hello/"
+sed "s/$/Hello/" "${1}"
