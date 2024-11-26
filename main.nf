@@ -5,7 +5,27 @@ nextflow.enable.dsl=2
 // snv_calls:
 // 
 
-def requiredParams = ['csv', 'score_thres', 'snv_calls']
+def containers = ['genmod', 'vep', 'ol_wgs']
+def vep_params = [
+    'VEP_SYNONYMS',
+    'VEP_FASTA',
+    'VEP_CACHE',
+    'VEP_PLUGINS',
+    'VEP_TRANSCRIPT_DISTANCE',
+    'CADD',
+    'MAXENTSCAN',
+    'DBNSFP',
+    'GNOMAD_EXOMES',
+    'GNOMAD_GENOMES',
+    'GNOMAD_MT',
+    'PHYLOP',
+    'PHASTCONS'
+]
+
+def otherParams = ['csv', 'score_thres', 'snv_calls']
+
+def requiredParams = containers + vep_params + otherParams
+
 requiredParams.each { param ->
     if (!params.containsKey(param)) {
         params[param] = null 
@@ -17,6 +37,11 @@ include { goodbye } from './modules/goodbye'
 
 include { prepare_drop } from './modules/prepare_drop'
 include { scout_yaml } from './modules/scout_yaml'
+
+include { ADD_CADD_SCORES_TO_VCF } from './modules/annotate/add_cadd_scores_to_vcf.nf'
+include { ANNOTATE_VEP } from './modules/annotate/annotate_vep.nf'
+include { CALCULATE_INDEL_CADD } from './modules/annotate/calculate_indel_cadd.nf'
+include { CREATE_PED } from './modules/annotate/create_ped.nf'
 
 def validateParams(requiredParams) {
     def missingParams = requiredParams.findAll { !params[it] }
@@ -69,6 +94,7 @@ workflow preprocess {
 }
 
 // Something from /fs1/jakob/proj/240613_run_tomte/load_cases/4_rank_scores_run/prepare_annot_run.sh needed?
+// Haven't I already implemented this?
 
 workflow snv_annotate {
     take:
@@ -80,6 +106,8 @@ workflow snv_annotate {
         
         goodbye(after_hello_ch)
             .set { goodbye_ch }        
+
+
 
         // What are the steps
         // [create_ped] create_ped.pl
