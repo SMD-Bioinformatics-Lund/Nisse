@@ -1,10 +1,17 @@
 nextflow.enable.dsl=2
 
-params.csv = null
-params.annot = null
+def requiredParams = ['csv', 'annot', 'score_thres']
+requiredParams.each { param ->
+    if (!params.containsKey(param)) {
+        params[param] = null 
+    }
+}
 
 include { hello } from './modules/hello'
 include { goodbye } from './modules/goodbye'
+
+include { prepare_drop } from './modules/prepare_drop'
+include { scout_yaml } from './modules/scout_yaml'
 
 def validateParams(requiredParams) {
     def missingParams = requiredParams.findAll { !params[it] }
@@ -14,8 +21,9 @@ def validateParams(requiredParams) {
     }
 }
 
-def requiredParams = ['csv', 'annot']
 validateParams(requiredParams)
+
+// OK, I can probably start stubbing this locally
 
 workflow  {
     Channel
@@ -26,38 +34,62 @@ workflow  {
         .fromPath(params.annot)
         .set { annot_ch }
 
-    // Verify input parameters
+    preprocess(csv_ch)
+        .set { out_ch }
 
-    // prepare_drop.sh
-    // Annotation run
+    annotate(out_ch)
+        .set { annotated_ch }
+
+    postprocess(annotated_ch)
+        .set { final_ch }
+
+    final_ch.view()
+    
+}
+
+workflow preprocess {
+    take:
+        unsure_ch
+    
+    main:
+
+        prepare_drop(unsure_ch)
+            .set { goodbye_ch }
+
+    emit:
+        goodbye_ch
+}
+
+workflow annotate {
+    take:
+        unsure_ch
+    
+    main:
+        hello(unsure_ch)
+            .set { after_hello_ch }
+        
+        goodbye(after_hello_ch)
+            .set { goodbye_ch }        
+
+    emit:
+        goodbye_ch
+}
+
+workflow postprocess {
+    take:
+        scored_vcf_ch
+        csv_ch
+    
     // Filter out variants with higher scores
     // Produce Scout yaml
     // parse_tomte.py
 
-    hello_goodbye(csv_ch)
-        .set { goodbye_ch }
-
-    // hello(csv_ch)
-    //     .set { after_hello_ch }
-    
-    // goodbye(after_hello_ch)
-    //     .set { goodbye_ch }
-
-    goodbye_ch.view()
-    
-}
-
-workflow hello_goodbye {
-    take:
-        csv_ch
-    
     main:
-        hello(csv_ch)
+        filter_variants_on_score(scored_vcf_ch, params.score_threshold)
+
+        scout_yaml(csv_ch)
             .set { after_hello_ch }
         
-        goodbye(after_hello_ch)
-            .set { goodbye_ch }
-        
     emit:
-        goodbye_ch
+        after_hello_ch
 }
