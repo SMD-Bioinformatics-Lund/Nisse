@@ -1,6 +1,11 @@
 nextflow.enable.dsl=2
 
-def requiredParams = ['csv', 'annot', 'score_thres']
+// A bunch of these ones will be present in fixed locations in the Tomte output
+
+// snv_calls:
+// 
+
+def requiredParams = ['csv', 'score_thres', 'snv_calls']
 requiredParams.each { param ->
     if (!params.containsKey(param)) {
         params[param] = null 
@@ -37,7 +42,10 @@ workflow  {
     preprocess(csv_ch)
         .set { out_ch }
 
-    annotate(out_ch)
+    snv_annotate(out_ch)
+        .set { annotated_ch }
+
+    snv_score(out_ch)
         .set { annotated_ch }
 
     postprocess(annotated_ch)
@@ -60,7 +68,9 @@ workflow preprocess {
         goodbye_ch
 }
 
-workflow annotate {
+// Something from /fs1/jakob/proj/240613_run_tomte/load_cases/4_rank_scores_run/prepare_annot_run.sh needed?
+
+workflow snv_annotate {
     take:
         unsure_ch
     
@@ -71,6 +81,33 @@ workflow annotate {
         goodbye(after_hello_ch)
             .set { goodbye_ch }        
 
+        // What are the steps
+        // [create_ped] create_ped.pl
+        // [extract_indels_for_cadd] bcftools view
+        // [indel_vep] vep + filter_indels.pl
+        // [calculate_indel_cadd] /CADD-scripts/CADD.sh
+        // [annotate_vep] vep
+        // [vcfanno] vcfanno_linux64
+        // [modify_vcf] modify_vcf_scout.pl
+        // [mark_splice] /opt/bin/mark_spliceindels.pl
+        // [add_cadd_scores_to_vcf] genmod annotate --cadd-file
+        // [vcf_completion] sed + bgzip + tabix
+    emit:
+        goodbye_ch
+}
+
+workflow snv_score {
+
+    // [inher_models] genmod models
+    // [genmodscore] genmod score + genmod compound + sed + genmod sort
+
+    take:
+        unsure_ch
+    
+    main:
+        hello(unsure_ch)
+            .set { after_hello_ch }
+    
     emit:
         goodbye_ch
 }
@@ -79,17 +116,17 @@ workflow postprocess {
     take:
         scored_vcf_ch
         csv_ch
+        multiqc_ch // Both general stats and the picard
     
-    // Filter out variants with higher scores
-    // Produce Scout yaml
-    // parse_tomte.py
-
     main:
         filter_variants_on_score(scored_vcf_ch, params.score_threshold)
 
         scout_yaml(csv_ch)
             .set { after_hello_ch }
+
+        parse_tomte_qc(multiqc_ch)
         
     emit:
         after_hello_ch
 }
+
