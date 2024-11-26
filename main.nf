@@ -5,7 +5,7 @@ nextflow.enable.dsl=2
 // snv_calls:
 // 
 
-// def containers = ['genmod', 'vep', 'ol_wgs']
+def containers = ['genmod', 'vep', 'ol_wgs']
 def vep_params = [
     'VEP_SYNONYMS',
     'VEP_FASTA',
@@ -24,9 +24,17 @@ def vep_params = [
 
 def otherParams = ['csv', 'score_thres', 'snv_calls']
 
-def requiredParams = vep_params + otherParams
-
-requiredParams.each { param ->
+containers.each { param ->
+    if (!params.containers.containsKey(param)) {
+        params.containers[param] = null 
+    }
+}
+vep_params.each { param ->
+    if (!params.containsKey(param)) {
+        params[param] = null 
+    }
+}
+otherParams.each { param ->
     if (!params.containsKey(param)) {
         params[param] = null 
     }
@@ -51,21 +59,28 @@ include { VCF_ANNO } from './modules/annotate/vcf_anno.nf'
 include { VCF_COMPLETION } from './modules/annotate/vcf_completion.nf'
 
 // Genmod
-include { GENMOD_ANNOTATE } from './modules/annotate/genmod_annotate.nf'
-include { GENMOD_MODELS } from './modules/annotate/genmod_models.nf'
-include { GENMOD_SCORE } from './modules/annotate/genmod_score.nf'
-include { GENMOD_COMPOUND } from './modules/annotate/genmod_compound.nf'
+include { GENMOD_ANNOTATE } from './modules/genmod/genmod_annotate.nf'
+include { GENMOD_MODELS } from './modules/genmod/genmod_models.nf'
+include { GENMOD_SCORE } from './modules/genmod/genmod_score.nf'
+include { GENMOD_COMPOUND } from './modules/genmod/genmod_compound.nf'
 
 
-def validateParams(requiredParams) {
-    def missingParams = requiredParams.findAll { !params[it] }
+def validateParams(targetParams, search_scope, type) {
+    print(targetParams)
+    print(params)
+    def missingParams = targetParams.findAll { !search_scope[it] }
+    print(missingParams)
     if (!missingParams.isEmpty()) {
         def missingList = missingParams.collect { "--${it}" }.join(", ")
-        error "Error: Missing required parameter(s): ${missingList}"
+        error "Error: Missing required parameter(s) in $type: ${missingList}"
     }
 }
 
-validateParams(requiredParams)
+print(otherParams)
+
+validateParams(otherParams, params, "base")
+validateParams(containers, params.containers, "containers")
+validateParams(vep_params, params.vep, "vep")
 
 // OK, I can probably start stubbing this locally
 
@@ -73,10 +88,6 @@ workflow  {
     Channel
         .fromPath(params.csv)
         .set { csv_ch }
-
-    Channel
-        .fromPath(params.annot)
-        .set { annot_ch }
 
     preprocess(csv_ch)
         .set { out_ch }

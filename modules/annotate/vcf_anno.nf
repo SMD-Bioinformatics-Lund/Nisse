@@ -1,4 +1,4 @@
-process VCFANNO {
+process VCF_ANNO {
 	memory '1GB'
 	time '1h'
 	errorStrategy 'retry'
