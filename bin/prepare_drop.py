@@ -1,5 +1,7 @@
 import argparse
 from pathlib import Path
+import csv
+import sys
 
 """
 Takes a single FRASER or OUTRIDER file
@@ -16,7 +18,12 @@ def main(
     hgnc_symbol_col: str,
     sample_col: str,
 ):
-    pass
+    print(f"Initial number of entries, counting file: {in_path}")
+    with open(in_path) as in_fh:
+        reader = csv.DictReader(in_fh, delimiter="\t")
+        for row in reader:
+            print(row)
+            sys.exit(1)
 
 
 def parse_arguments() -> argparse.Namespace:
