@@ -87,31 +87,34 @@ validateParams(vep_params, params.vep, "vep")
 workflow  {
     Channel
         .fromPath(params.csv)
-        .set { csv_ch }
+        .splitCsv(header:true)
+        .set { meta }
 
-    preprocess(csv_ch)
+    meta.view()
+
+    preprocess(meta)
         .set { out_ch }
 
-    snv_annotate(out_ch)
-        .set { annotated_ch }
+    // snv_annotate(out_ch)
+    //     .set { annotated_ch }
 
-    snv_score(out_ch)
-        .set { annotated_ch }
+    // snv_score(out_ch)
+    //     .set { annotated_ch }
 
-    postprocess(annotated_ch)
-        .set { final_ch }
+    // postprocess(annotated_ch)
+    //     .set { final_ch }
 
-    final_ch.view()
+    // final_ch.view()
     
 }
 
 workflow preprocess {
     take:
-        unsure_ch
+        meta
     
     main:
 
-        prepare_drop(unsure_ch)
+        prepare_drop(meta)
             .set { goodbye_ch }
 
     emit:

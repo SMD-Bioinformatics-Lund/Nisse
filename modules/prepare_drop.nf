@@ -11,7 +11,7 @@ process prepare_drop {
 
     script:
     """
-    bash hello.sh ${input_file} > "hello_out.txt"
+    prepare_drop.sh ${input_file} > "hello_out.txt"
     """
 
     stub:
