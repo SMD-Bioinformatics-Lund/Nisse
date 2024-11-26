@@ -5,7 +5,7 @@ nextflow.enable.dsl=2
 // snv_calls:
 // 
 
-def containers = ['genmod', 'vep', 'ol_wgs']
+// def containers = ['genmod', 'vep', 'ol_wgs']
 def vep_params = [
     'VEP_SYNONYMS',
     'VEP_FASTA',
@@ -24,7 +24,7 @@ def vep_params = [
 
 def otherParams = ['csv', 'score_thres', 'snv_calls']
 
-def requiredParams = containers + vep_params + otherParams
+def requiredParams = vep_params + otherParams
 
 requiredParams.each { param ->
     if (!params.containsKey(param)) {
@@ -38,10 +38,24 @@ include { goodbye } from './modules/goodbye'
 include { prepare_drop } from './modules/prepare_drop'
 include { scout_yaml } from './modules/scout_yaml'
 
+// Annotations
 include { ADD_CADD_SCORES_TO_VCF } from './modules/annotate/add_cadd_scores_to_vcf.nf'
 include { ANNOTATE_VEP } from './modules/annotate/annotate_vep.nf'
 include { CALCULATE_INDEL_CADD } from './modules/annotate/calculate_indel_cadd.nf'
 include { CREATE_PED } from './modules/annotate/create_ped.nf'
+include { EXTRACT_INDELS_FOR_CADD } from './modules/annotate/extract_indels_for_cadd.nf'
+include { INDEL_VEP } from './modules/annotate/indel_vep.nf'
+include { MARK_SPLICE } from './modules/annotate/mark_splice.nf'
+include { MODIFY_VCF } from './modules/annotate/modify_vcf.nf'
+include { VCF_ANNO } from './modules/annotate/vcf_anno.nf'
+include { VCF_COMPLETION } from './modules/annotate/vcf_completion.nf'
+
+// Genmod
+include { GENMOD_ANNOTATE } from './modules/annotate/genmod_annotate.nf'
+include { GENMOD_MODELS } from './modules/annotate/genmod_models.nf'
+include { GENMOD_SCORE } from './modules/annotate/genmod_score.nf'
+include { GENMOD_COMPOUND } from './modules/annotate/genmod_compound.nf'
+
 
 def validateParams(requiredParams) {
     def missingParams = requiredParams.findAll { !params[it] }

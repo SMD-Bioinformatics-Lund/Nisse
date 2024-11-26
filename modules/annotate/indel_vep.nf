@@ -1,4 +1,4 @@
-process indel_vep {
+process INDEL_VEP {
 	cpus 5
 	container = "${params.container_vep}"
 	tag "$meta.id"

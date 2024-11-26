@@ -1,4 +1,4 @@
-process vcfanno {
+process VCFANNO {
 	memory '1GB'
 	time '1h'
 	errorStrategy 'retry'

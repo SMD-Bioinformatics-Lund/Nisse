@@ -1,4 +1,4 @@
-process mark_splice {
+process MARK_SPLICE {
 	cpus 2
 	tag "$meta.id"
 	memory '1 GB'

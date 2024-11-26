@@ -1,4 +1,4 @@
-process modify_vcf {
+process MODIFY_VCF {
 	cpus 2
 	tag "$meta.id"
 	memory '1 GB'

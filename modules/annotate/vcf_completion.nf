@@ -1,4 +1,4 @@
-process vcf_completion {
+process VCF_COMPLETION {
 	cpus 16
 	publishDir "${OUTDIR}/vcf", mode: 'copy', overwrite: 'true', pattern: '*.vcf.gz*'
 	tag "$meta.id"

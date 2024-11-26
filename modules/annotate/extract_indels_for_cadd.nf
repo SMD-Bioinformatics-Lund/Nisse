@@ -1,4 +1,4 @@
-process extract_indels_for_cadd {
+process EXTRACT_INDELS_FOR_CADD {
 	cpus 2
 	tag "$group"
 	memory '1 GB'
