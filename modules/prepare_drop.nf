@@ -1,6 +1,7 @@
 // What exactly is this part performing?
 
 // HGNC ID map
+// Split 
 
 process PREPARE_DROP {
     input:

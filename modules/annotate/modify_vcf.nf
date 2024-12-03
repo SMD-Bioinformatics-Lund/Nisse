@@ -1,14 +1,13 @@
 process MODIFY_VCF {
 	cpus 2
-	tag "$meta.id"
 	memory '1 GB'
 	time '1h'
 
 	input:
-		set meta, file(vcf) from vcfanno_vcf
+		tuple val(meta), file(vcf)
 
 	output:
-		set meta, file("${meta.id}.mod.vcf") into mod_vcf
+		tuple val(meta), file("${meta.id}.mod.vcf")
 
 	script:
 		"""

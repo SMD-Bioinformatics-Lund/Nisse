@@ -1,43 +1,3 @@
-// A bunch of these ones will be present in fixed locations in the Tomte output
-
-// snv_calls:
-// 
-
-def containers = ['genmod', 'vep', 'ol_wgs']
-def vep_params = [
-    'VEP_SYNONYMS',
-    'VEP_FASTA',
-    'VEP_CACHE',
-    'VEP_PLUGINS',
-    'VEP_TRANSCRIPT_DISTANCE',
-    'CADD',
-    'MAXENTSCAN',
-    'DBNSFP',
-    'GNOMAD_EXOMES',
-    'GNOMAD_GENOMES',
-    'GNOMAD_MT',
-    'PHYLOP',
-    'PHASTCONS'
-]
-
-def otherParams = ['csv', 'score_thres', 'snv_calls']
-
-containers.each { param ->
-    if (!params.containers.containsKey(param)) {
-        params.containers[param] = null 
-    }
-}
-vep_params.each { param ->
-    if (!params.containsKey(param)) {
-        params[param] = null 
-    }
-}
-otherParams.each { param ->
-    if (!params.containsKey(param)) {
-        params[param] = null 
-    }
-}
-
 include { hello } from './modules/hello'
 include { goodbye } from './modules/goodbye'
 
@@ -63,6 +23,14 @@ include { GENMOD_SCORE } from './modules/genmod/genmod_score.nf'
 include { GENMOD_COMPOUND } from './modules/genmod/genmod_compound.nf'
 
 
+def assignDefaultParams(target_params, user_params) {
+    target_params.each { param ->
+        if (!user_params.containers.containsKey(param)) {
+            user_params.containers[param] = null 
+        }
+    }
+}
+
 def validateParams(targetParams, search_scope, type) {
     def missingParams = targetParams.findAll { !search_scope[it] }
     if (!missingParams.isEmpty()) {
@@ -71,13 +39,40 @@ def validateParams(targetParams, search_scope, type) {
     }
 }
 
-validateParams(otherParams, params, "base")
-validateParams(containers, params.containers, "containers")
-validateParams(vep_params, params.vep, "vep")
 
-// OK, I can probably start stubbing this locally
+def validateAllParams() {
+    def containers = ['genmod', 'vep', 'ol_wgs']
+    def vepParams = [
+        'VEP_SYNONYMS',
+        'VEP_FASTA',
+        'VEP_CACHE',
+        'VEP_PLUGINS',
+        'VEP_TRANSCRIPT_DISTANCE',
+        'CADD',
+        'MAXENTSCAN',
+        'DBNSFP',
+        'GNOMAD_EXOMES',
+        'GNOMAD_GENOMES',
+        'GNOMAD_MT',
+        'PHYLOP',
+        'PHASTCONS'
+    ]
+
+    def otherParams = ['csv', 'score_thres', 'snv_calls']
+
+    assignDefaultParams(containers, params)
+    assignDefaultParams(vepParams, params)
+    assignDefaultParams(otherParams, params)
+
+    validateParams(otherParams, params, "base")
+    validateParams(containers, params.containers, "containers")
+    validateParams(vepParams, params.vep, "vep")
+}
 
 workflow  {
+
+    validateAllParams()
+
     Channel
         .fromPath(params.csv)
         .splitCsv(header:true)
@@ -85,8 +80,14 @@ workflow  {
 
     // 
 
-    preprocess(meta, params.hgnc_map)
-        .set { out_ch }
+    preprocess_drop(meta, params.fraser_results, params.hgnc_map)
+        .set { fraser_out_ch }
+
+    preprocess_drop(meta, params.outrider_results, params.hgnc_map)
+        .set { fraser_out_ch }
+
+
+    // results/call_variants/ID_split_rmdup_info.vcf.gz
 
     // snv_annotate(out_ch)
     //     .set { annotated_ch }
@@ -100,13 +101,13 @@ workflow  {
     // final_ch.view()
 }
 
-workflow preprocess {
+workflow preprocess_drop {
     take:
         meta
+        drop_results
         hgnc_map
     main:
-
-        PREPARE_DROPS(meta, hgnc_map)
+        PREPARE_DROP(meta, drop_results, hgnc_map)
             .set { goodbye_ch }
 
     emit:

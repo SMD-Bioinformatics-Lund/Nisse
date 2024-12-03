@@ -6,11 +6,11 @@ process VCF_ANNO {
 	cpus 2
 
 	input:
-		set meta, file(vcf) from vep
+		tuple val(meta), file(vcf)
 
 	output:
-		set meta, file("${meta.id}.clinvar.loqusdb.gene.vcf") into vcfanno_vcf
-		set meta, file("*versions.yml") into ch_vcfanno_versions
+		tuple val(meta), file("${meta.id}.clinvar.loqusdb.gene.vcf")
+		tuple val(meta), file("*versions.yml")
 
 	script:
 		"""

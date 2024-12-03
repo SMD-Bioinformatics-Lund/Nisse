@@ -1,16 +1,14 @@
 process VCF_COMPLETION {
 	cpus 16
-	publishDir "${OUTDIR}/vcf", mode: 'copy', overwrite: 'true', pattern: '*.vcf.gz*'
-	tag "$meta.id"
 	time '1h'
 	memory '5 GB'
 
 	input:
-		set meta, type, file(vcf) from scored_vcf
+		tuple val(meta), file(vcf)
 
 	output:
-		set meta, type, file("${meta.id}.scored.vcf.gz"), file("${meta.id}.scored.vcf.gz.tbi")
-		set meta, file("*versions.yml")
+		tuple val(meta), file("${meta.id}.scored.vcf.gz"), file("${meta.id}.scored.vcf.gz.tbi")
+		tuple val(meta), file("*versions.yml")
 
 	script:
 		"""
