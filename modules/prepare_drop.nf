@@ -2,16 +2,18 @@
 
 // HGNC ID map
 
-process prepare_drop {
+process PREPARE_DROP {
     input:
-    path input_file
+    val(meta)
+    path(drop_full)
+    path(hgn_map)
 
     output:
     path 'hello_out.txt'
 
     script:
     """
-    prepare_drop.sh ${input_file} > "hello_out.txt"
+    prepare_drop.sh ${hgn_map} > "hello_out.txt"
     """
 
     stub:

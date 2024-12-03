@@ -1,5 +1,3 @@
-nextflow.enable.dsl=2
-
 // A bunch of these ones will be present in fixed locations in the Tomte output
 
 // snv_calls:
@@ -43,7 +41,7 @@ otherParams.each { param ->
 include { hello } from './modules/hello'
 include { goodbye } from './modules/goodbye'
 
-include { prepare_drop } from './modules/prepare_drop'
+include { PREPARE_DROP } from './modules/prepare_drop'
 include { scout_yaml } from './modules/scout_yaml'
 
 // Annotations
@@ -66,17 +64,12 @@ include { GENMOD_COMPOUND } from './modules/genmod/genmod_compound.nf'
 
 
 def validateParams(targetParams, search_scope, type) {
-    print(targetParams)
-    print(params)
     def missingParams = targetParams.findAll { !search_scope[it] }
-    print(missingParams)
     if (!missingParams.isEmpty()) {
         def missingList = missingParams.collect { "--${it}" }.join(", ")
         error "Error: Missing required parameter(s) in $type: ${missingList}"
     }
 }
-
-print(otherParams)
 
 validateParams(otherParams, params, "base")
 validateParams(containers, params.containers, "containers")
@@ -90,9 +83,9 @@ workflow  {
         .splitCsv(header:true)
         .set { meta }
 
-    meta.view()
+    // 
 
-    preprocess(meta)
+    preprocess(meta, params.hgnc_map)
         .set { out_ch }
 
     // snv_annotate(out_ch)
@@ -105,16 +98,15 @@ workflow  {
     //     .set { final_ch }
 
     // final_ch.view()
-    
 }
 
 workflow preprocess {
     take:
         meta
-    
+        hgnc_map
     main:
 
-        prepare_drop(meta)
+        PREPARE_DROPS(meta, hgnc_map)
             .set { goodbye_ch }
 
     emit:
@@ -127,15 +119,11 @@ workflow preprocess {
 workflow snv_annotate {
     take:
         unsure_ch
-    
     main:
         hello(unsure_ch)
             .set { after_hello_ch }
-        
         goodbye(after_hello_ch)
-            .set { goodbye_ch }        
-
-
+            .set { goodbye_ch }
 
         // What are the steps
         // [create_ped] create_ped.pl
