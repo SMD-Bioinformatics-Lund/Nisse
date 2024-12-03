@@ -1,16 +1,15 @@
 process CALCULATE_INDEL_CADD {
 	cpus 2
-	container = '/fs1/resources/containers/cadd_v1.6.sif'
-	tag "${meta.id}"
+	container "${params.cadd}"
 	memory '20 GB'
 	time '3h'
 
 	input:
-		set meta, file(vcf)
+		tuple val(meta), file(vcf)
 
 	output:
-		set meta, file("${meta.id}.indel_cadd.gz")
-		set meta, file("*versions.yml")
+		tuple val(meta), file("${meta.id}.indel_cadd.gz")
+		tuple val(meta), file("*versions.yml")
 
 	script:
 		"""

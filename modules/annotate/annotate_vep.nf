@@ -1,24 +1,23 @@
 // FIXME: Can I pass in the params as a value blob? Instead of doing global access
 
 process ANNOTATE_VEP {
-	container = "${params.container_vep}"
-	cpus 30
+
 	tag "${meta.id}"
-	memory '50 GB'
-	time '5h'
+	container "${params.container_vep}"
+    label 'process_large'
 
 	input:
-		set meta, file(vcf)
+		tuple val(meta), file(vcf)
 
 	output:
-		set meta, file("${group}.vep.vcf")
-		set meta, file("*versions.yml")
+		tuple val(meta), file("${meta.group}.vep.vcf")
+		tuple val(meta), file("*versions.yml")
 
 	script:
 		"""
 		vep \\
 			-i ${vcf} \\
-			-o ${group}.vep.vcf \\
+			-o ${meta.group}.vep.vcf \\
 			--offline \\
 			--sift b --polyphen b --ccds --hgvs --symbol --numbers --domains --regulatory --canonical --protein --biotype --af --af_1kg --max_af --pubmed --uniprot --mane --tsl --appris --variant_class --gene_phenotype --mirna \\
 			--merged \\
@@ -47,7 +46,7 @@ process ANNOTATE_VEP {
 
 	stub:
 		"""
-		touch "${group}.vep.vcf"
+		touch "${meta.group}.vep.vcf"
 		${annotate_vep_version(task)}
 		"""
 }

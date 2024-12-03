@@ -1,27 +1,28 @@
 process ADD_CADD_SCORES_TO_VCF {
-    cpus 4
-    tag "$group"
-    memory '1 GB'
-    time '5m'
+
+	tag "${meta.id}"
+	container "${params.containers.base}"
+    label 'process_small'
     container "${params.container_genmod}"
 
     input: 
-        set group, file(vcf), file(cadd_scores), file(cadd_scores_tbi)
+        tuple val(meta), file(vcf)
+        tuple file(cadd_scores), file(cadd_scores_tbi)
 
     output:
-        set group, file("${group}.cadd.vcf")
-        set group, file("*versions.yml")
+        tuple val(meta), file("${meta.group}.cadd.vcf")
+        tuple val(meta), file("*versions.yml")
 
     script:
         """
-        genmod annotate --cadd-file ${cadd_scores} ${vcf} > ${group}.cadd.vcf
+        genmod annotate --cadd-file ${cadd_scores} ${vcf} > ${meta.group}.cadd.vcf
 
         ${add_cadd_scores_to_vcf_version(task)}
         """
 
     stub:
         """
-        touch "${group}.cadd.vcf"
+        touch "${meta.group}.cadd.vcf"
         ${add_cadd_scores_to_vcf_version(task)}
         """
 }

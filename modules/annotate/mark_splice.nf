@@ -1,14 +1,15 @@
 process MARK_SPLICE {
-	cpus 2
-	tag "$meta.id"
-	memory '1 GB'
-	time '1h'
+
+	tag "${meta.id}"
+	container "${params.containers.base}"
+    label 'process_small'
+
 
 	input:
-		set meta, file(vcf)
+		tuple val(meta), file(vcf)
 
 	output:
-		set meta, file("${meta.id}.marksplice.vcf")
+		tuple val(meta), file("${meta.id}.marksplice.vcf")
 
 	script:
 		"""

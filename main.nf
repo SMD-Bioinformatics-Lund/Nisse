@@ -76,29 +76,20 @@ workflow  {
     Channel
         .fromPath(params.csv)
         .splitCsv(header:true)
-        .set { meta }
+        .set { meta_ch }
 
-    // 
+    variant_ch = meta_ch.map { meta -> tuple(meta, params.variant_calls, params.variant_calls_tbi) }
 
-    preprocess_drop(meta, params.fraser_results, params.hgnc_map)
+    preprocess_drop(meta_ch, params.fraser_results, params.hgnc_map)
         .set { fraser_out_ch }
 
-    preprocess_drop(meta, params.outrider_results, params.hgnc_map)
+    preprocess_drop(meta_ch, params.outrider_results, params.hgnc_map)
         .set { fraser_out_ch }
 
 
-    // results/call_variants/ID_split_rmdup_info.vcf.gz
+    snv_annotate(variant_ch)
 
-    // snv_annotate(out_ch)
-    //     .set { annotated_ch }
-
-    // snv_score(out_ch)
-    //     .set { annotated_ch }
-
-    // postprocess(annotated_ch)
-    //     .set { final_ch }
-
-    // final_ch.view()
+    snv_score(variant_ch.out.ped, variant_ch.out.vcf)
 }
 
 workflow preprocess_drop {
@@ -114,47 +105,48 @@ workflow preprocess_drop {
         goodbye_ch
 }
 
-// Something from /fs1/jakob/proj/240613_run_tomte/load_cases/4_rank_scores_run/prepare_annot_run.sh needed?
-// Haven't I already implemented this?
-
 workflow snv_annotate {
     take:
-        unsure_ch
-    main:
-        hello(unsure_ch)
-            .set { after_hello_ch }
-        goodbye(after_hello_ch)
-            .set { goodbye_ch }
+        ch_vcf  // channel: [mandatory] [ val(meta), path(vcf), path(vcf_tbi) ]
+        ch_cadd // channel: [mandatory] [ path(cadd), path(cadd_tbi) ]
 
-        // What are the steps
-        // [create_ped] create_ped.pl
-        // [extract_indels_for_cadd] bcftools view
-        // [indel_vep] vep + filter_indels.pl
-        // [calculate_indel_cadd] /CADD-scripts/CADD.sh
-        // [annotate_vep] vep
-        // [vcfanno] vcfanno_linux64
-        // [modify_vcf] modify_vcf_scout.pl
-        // [mark_splice] /opt/bin/mark_spliceindels.pl
-        // [add_cadd_scores_to_vcf] genmod annotate --cadd-file
-        // [vcf_completion] sed + bgzip + tabix
+    main:
+
+        CREATE_PED(ch_vcf[0])
+            .set { ch_ped }
+
+        // CADD indels
+        EXTRACT_INDELS_FOR_CADD(ch_vcf)
+        INDEL_VEP(ch_vcf).set { ch_vep_indels_only }
+        CALCULATE_INDEL_CADD(ch_vep_indels_only).set { ch_cadd_indels }
+
+        ANNOTATE_VEP(ch_vcf).set { ch_vep }
+        VCF_ANNO(ch_vep).set { ch_vcf_anno }
+        MODIFY_VCF(ch_vcf_anno).set { ch_scout_modified }
+        MARK_SPLICE(ch_scout_modified).set { ch_mark_splice }
+
+        ADD_CADD_SCORES_TO_VCF(ch_mark_splice, ch_cadd).set { ch_vcf_with_cadd }
+        VCF_COMPLETION(ch_vcf_with_cadd).set { ch_vcf_completed }
+    
     emit:
-        goodbye_ch
+        ped = ch_ped
+        vcf = ch_vcf
 }
 
 workflow snv_score {
 
-    // [inher_models] genmod models
-    // [genmodscore] genmod score + genmod compound + sed + genmod sort
-
     take:
-        unsure_ch
+        ch_annotated_vcf // channel: [mandatory] [ val(meta), path(vcf), path(vcf_tbi) ]
+        ch_ped // channel: [mandatory] [ path(ped) ]
     
     main:
-        hello(unsure_ch)
-            .set { after_hello_ch }
+        GENMOD_MODELS(ch_annotated_vcf, ch_ped).set { ch_genmod_models }
+        GENMOD_ANNOTATE(ch_genmod_models).set { ch_genmod_annotate }
+        GENMOD_COMPOUND(ch_genmod_annotate).set { ch_genmod_compound }
+        GENMOD_SCORE(ch_genmod_compound).set { ch_genmod_score }
     
     emit:
-        goodbye_ch
+        ch_genmod_score
 }
 
 workflow postprocess {

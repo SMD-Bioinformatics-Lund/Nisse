@@ -1,9 +1,10 @@
 process VCF_ANNO {
-	memory '1GB'
-	time '1h'
+
+	tag "${meta.id}"
+	container "${params.containers.base}"
+    label 'process_small'
 	errorStrategy 'retry'
 	maxErrors 5
-	cpus 2
 
 	input:
 		tuple val(meta), file(vcf)

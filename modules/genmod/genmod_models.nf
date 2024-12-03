@@ -3,11 +3,11 @@ process GENMOD_MODELS {
     cpus 40
 
     input:
-        tuple val(prefix), path(vcf)
+        tuple val(meta), val(prefix), path(vcf)
         path(family)
 
     output:
-        tuple val(prefix), path("*_models.vcf"), emit: vcf
+        tuple val(meta), val(prefix), path("*_models.vcf"), emit: vcf
 
     script:
     """

@@ -1,22 +1,21 @@
 process INDEL_VEP {
 	cpus 5
-	container = "${params.container_vep}"
-	tag "$meta.id"
+	container "${params.container_vep}"
 	memory '10 GB'
 	time '3h'
 
 	input:
-		set meta, file(vcf)
+		tuple val(meta), file(vcf)
 
 	output:
-		set meta, file("${meta.id}.only_indels.vep.filtered.vcf")
-		set meta, file("*versions.yml")
+		tuple val(meta), file("${meta.id}.only_indels.vep.filtered.vcf")
+		tuple val(meta), file("*versions.yml")
 
 	script:
 		"""
 		vep \\
 			-i $vcf \\
-			-o ${group}.only_indels.vep.vcf \\
+			-o ${meta.group}.only_indels.vep.vcf \\
 			--offline \\
 			--cache \\
 			--merged \\

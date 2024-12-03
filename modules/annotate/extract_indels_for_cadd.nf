@@ -1,25 +1,24 @@
 process EXTRACT_INDELS_FOR_CADD {
 	cpus 2
-	tag "$group"
 	memory '1 GB'
 	time '1h'
 
 	input:
-		set group, id, file(vcf)
+		tuple val(meta), file(vcf), file(vcf_tbi)
 	
 	output:
-		set group, file("${group}.only_indels.vcf")
-		set group, file("*versions.yml")
+		tuple val(meta), file("${meta.case}.only_indels.vcf")
+		tuple val(meta), file("*versions.yml")
 
 	script:
 		"""
-		bcftools view $vcf -V snps -o ${group}.only_indels.vcf
+		bcftools view $vcf -V snps -o ${meta.case}.only_indels.vcf
 		${extract_indels_for_cadd_version(task)}
 		"""
 
 	stub:
 		"""
-		touch "${group}.only_indels.vcf"
+		touch "${meta.case}.only_indels.vcf"
 		${extract_indels_for_cadd_version(task)}
 		""" 
 }

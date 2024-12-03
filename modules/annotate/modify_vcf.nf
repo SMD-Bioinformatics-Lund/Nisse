@@ -1,7 +1,7 @@
 process MODIFY_VCF {
-	cpus 2
-	memory '1 GB'
-	time '1h'
+	
+	tag "${meta.id}"
+    label 'process_small'
 
 	input:
 		tuple val(meta), file(vcf)
