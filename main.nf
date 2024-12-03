@@ -1,8 +1,6 @@
-include { hello } from './modules/hello'
-include { goodbye } from './modules/goodbye'
-
-include { PREPARE_DROP } from './modules/prepare_drop'
-include { scout_yaml } from './modules/scout_yaml'
+// Preprocessing
+include { PREPARE_DROP as PREPARE_DROP_FRASER } from './modules/prepare_drop'
+include { PREPARE_DROP as PREPARE_DROP_OUTRIDER } from './modules/prepare_drop'
 
 // Annotations
 include { ADD_CADD_SCORES_TO_VCF } from './modules/annotate/add_cadd_scores_to_vcf.nf'
@@ -22,6 +20,7 @@ include { GENMOD_MODELS } from './modules/genmod/genmod_models.nf'
 include { GENMOD_SCORE } from './modules/genmod/genmod_score.nf'
 include { GENMOD_COMPOUND } from './modules/genmod/genmod_compound.nf'
 
+// Postprocessing
 include { FILTER_VARIANTS_ON_SCORE } from './modules/postprocessing/filter_variants_on_score.nf'
 include { PARSE_TOMTE_QC } from './modules/postprocessing/parse_tomte_qc.nf'
 include { MAKE_SCOUT_YAML } from './modules/postprocessing/make_scout_yaml.nf'
@@ -33,6 +32,7 @@ include { MAKE_SCOUT_YAML } from './modules/postprocessing/make_scout_yaml.nf'
 // In reality the DROP results will be for a single sample, isn't it?
 // We can maybe assume that pre-processing here
 
+// OK, and now I can start with drafting the stub run
 
 
 def assignDefaultParams(target_params, user_params) {
@@ -85,36 +85,57 @@ workflow  {
 
     validateAllParams()
 
+    // FIXME: Check that the input CSV has only one line
+
     Channel
         .fromPath(params.csv)
         .splitCsv(header:true)
         .set { meta_ch }
 
-    variant_ch = meta_ch.map { meta -> tuple(meta, params.variant_calls, params.variant_calls_tbi) }
+    // vcf_ch = meta_ch.map { meta -> tuple(meta, params.variant_calls, params.variant_calls_tbi) }
 
-    preprocess_drop(meta_ch, params.fraser_results, params.hgnc_map)
+    Channel
+        .fromPath(params.hgnc_map)
+        .set { hgnc_map_ch }
+
+    Channel
+        .fromPath(params.fraser_results)
+        .set { fraser_results_ch }
+
+    Channel
+        .fromPath(params.outrider_results)
+        .set { outrider_results_ch }
+
+    preprocess(meta_ch, fraser_results_ch, outrider_results_ch, hgnc_map_ch)
         .set { fraser_out_ch }
 
-    preprocess_drop(meta_ch, params.outrider_results, params.hgnc_map)
-        .set { fraser_out_ch }
+    // Channel
+    //     .of(tuple(params.cadd, params.cadd_tbi))
+    //     .set { cadd_ch }
 
+    // vcf_ch.view()
 
-    snv_annotate(variant_ch)
+    // snv_annotate(vcf_ch, cadd_ch)
 
-    snv_score(variant_ch.out.ped, variant_ch.out.vcf)
+    // snv_score(vcf_ch.out.ped, vcf_ch.out.vcf, params.score_config)
 }
 
-workflow preprocess_drop {
+workflow preprocess {
     take:
-        meta
-        drop_results
-        hgnc_map
+        ch_meta
+        ch_fraser_results
+        ch_outrider_results
+        ch_hgnc_map
     main:
-        PREPARE_DROP(meta, drop_results, hgnc_map)
-            .set { goodbye_ch }
+        PREPARE_DROP_FRASER(ch_meta, "FRASER", ch_fraser_results, ch_hgnc_map)
+            .set { fraser_ch }
+
+        PREPARE_DROP_OUTRIDER(ch_meta, "OUTRIDER", ch_outrider_results, ch_hgnc_map)
+            .set { outrider_ch }
 
     emit:
-        goodbye_ch
+        fraser_ch
+        outrider_ch
 }
 
 workflow snv_annotate {
@@ -150,12 +171,13 @@ workflow snv_score {
     take:
         ch_annotated_vcf // channel: [mandatory] [ val(meta), path(vcf), path(vcf_tbi) ]
         ch_ped // channel: [mandatory] [ path(ped) ]
+        ch_score_config // channel: [mandatory] [ path(score_config) ]
     
     main:
         GENMOD_MODELS(ch_annotated_vcf, ch_ped).set { ch_genmod_models }
         GENMOD_ANNOTATE(ch_genmod_models).set { ch_genmod_annotate }
         GENMOD_COMPOUND(ch_genmod_annotate).set { ch_genmod_compound }
-        GENMOD_SCORE(ch_genmod_compound).set { ch_genmod_score }
+        GENMOD_SCORE(ch_genmod_compound, ch_ped, ch_score_config).set { ch_genmod_score }
     
     emit:
         ch_genmod_score

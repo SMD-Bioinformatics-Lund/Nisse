@@ -5,20 +5,21 @@
 
 process PREPARE_DROP {
     input:
-    val(meta)
-    path(drop_full)
-    path(hgn_map)
+        val(meta)
+        val(label)
+        path(drop_full)
+        path(hgn_map)
 
     output:
-    path 'hello_out.txt'
+        path "${meta.sample}_${label}_drop.tsv"
 
     script:
     """
-    prepare_drop.sh ${hgn_map} > "hello_out.txt"
+    prepare_drop.sh ${hgn_map} > "${meta.sample}_${label}_drop.tsv"
     """
 
     stub:
     """
-    touch hello_out.txt
+    touch "${meta.sample}_${label}_drop.tsv"
     """
 }
