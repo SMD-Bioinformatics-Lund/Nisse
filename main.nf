@@ -22,6 +22,18 @@ include { GENMOD_MODELS } from './modules/genmod/genmod_models.nf'
 include { GENMOD_SCORE } from './modules/genmod/genmod_score.nf'
 include { GENMOD_COMPOUND } from './modules/genmod/genmod_compound.nf'
 
+include { FILTER_VARIANTS_ON_SCORE } from './modules/postprocessing/filter_variants_on_score.nf'
+include { PARSE_TOMTE_QC } from './modules/postprocessing/parse_tomte_qc.nf'
+include { MAKE_SCOUT_YAML } from './modules/postprocessing/make_scout_yaml.nf'
+
+// OK some thinking
+// In point is output from Tomte
+// 1. SNV calls on RNA-seq
+// 2. DROP results
+// In reality the DROP results will be for a single sample, isn't it?
+// We can maybe assume that pre-processing here
+
+
 
 def assignDefaultParams(target_params, user_params) {
     target_params.each { param ->
@@ -156,12 +168,12 @@ workflow postprocess {
         multiqc_ch // Both general stats and the picard
     
     main:
-        filter_variants_on_score(scored_vcf_ch, params.score_threshold)
+        FILTER_VARIANTS_ON_SCORE(scored_vcf_ch, params.score_threshold)
 
-        scout_yaml(csv_ch)
+        MAKE_SCOUT_YAML(csv_ch)
             .set { after_hello_ch }
 
-        parse_tomte_qc(multiqc_ch)
+        PARSE_TOMTE_QC(multiqc_ch)
         
     emit:
         after_hello_ch

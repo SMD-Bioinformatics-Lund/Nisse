@@ -1,4 +1,4 @@
-process scout_yaml {
+process MAKE_SCOUT_YAML {
     input:
     path input_file
 

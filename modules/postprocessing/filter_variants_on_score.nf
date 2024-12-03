@@ -1,4 +1,4 @@
-process filter_variants_on_score {
+process FILTER_VARIANTS_ON_SCORE {
     input:
     tuple path(scored_vcf), path(scored_vcf_tbi)
     val(threshold)
