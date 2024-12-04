@@ -74,6 +74,8 @@ workflow {
     CREATE_PED(meta_ch)
     SNV_ANNOTATE(vcf_ch, cadd_ch)
     SNV_SCORE(SNV_ANNOTATE.out.vcf, CREATE_PED.out.ped, score_config_ch)
+
+    // FIXME: Collect versions
 }
 
     // ch_annotated_vcf // channel: [mandatory] [ val(meta), path(vcf), path(vcf_tbi) ]
