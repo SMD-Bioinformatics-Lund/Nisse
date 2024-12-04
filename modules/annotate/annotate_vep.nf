@@ -1,10 +1,8 @@
-// FIXME: Can I pass in the params as a value blob? Instead of doing global access
-
 process ANNOTATE_VEP {
 
 	tag "${meta.sample}"
-	// container "${params.container_vep}"
     label 'process_large'
+	container "${params.container_vep}"
 
 	input:
 		tuple val(meta), file(vcf)

@@ -181,7 +181,7 @@ def validateParams(targetParams, search_scope, type) {
 
 
 def validateAllParams() {
-    def containers = ['genmod', 'vep', 'ol_wgs']
+    def containers = ['genmod', 'vep', 'cadd', 'base']
     def vepParams = [
         'VEP_SYNONYMS',
         'VEP_FASTA',
