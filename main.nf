@@ -30,24 +30,29 @@ workflow {
     validateAllParams()
 
     // FIXME: Check that the input CSV has only one line
+    fraser_results = "${params.tomte_results}/analyse_transcripts/drop/${params.case_id}_fraser_top_hits_research.tsv"
+    outrider_results = "${params.tomte_results}/analyse_transcripts/drop/${params.case_id}_outrider_top_hits_research.tsv"
+    variant_calls = "${params.tomte_results}/call_variants/${params.sample_id}_split_rmdup_info.vcf.gz"
+    variant_calls_tbi = "${variant_calls}.tbi"
+
 
     Channel
         .fromPath(params.csv)
         .splitCsv(header: true)
         .set { meta_ch }
 
-    vcf_ch = meta_ch.map { meta -> tuple(meta, params.variant_calls, params.variant_calls_tbi) }
+    vcf_ch = meta_ch.map { meta -> tuple(meta, variant_calls, variant_calls_tbi) }
 
     Channel
         .fromPath(params.hgnc_map)
         .set { hgnc_map_ch }
 
     Channel
-        .fromPath(params.fraser_results)
+        .fromPath(fraser_results)
         .set { fraser_results_ch }
 
     Channel
-        .fromPath(params.outrider_results)
+        .fromPath(outrider_results)
         .set { outrider_results_ch }
 
     preprocess(meta_ch, fraser_results_ch, outrider_results_ch, hgnc_map_ch).set { fraser_out_ch }
