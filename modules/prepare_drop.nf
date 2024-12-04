@@ -2,7 +2,7 @@ process PREPARE_DROP {
 
     tag "${meta.sample}"
 	label "process_small"
-	container "${params.base}"
+	container "${params.containers.base}"
 
     input:
         val(meta)

@@ -2,7 +2,7 @@ process CREATE_PED {
 
     tag "${meta.sample}"
 	label "process_low"
-	container "${params.base}"
+	container "${params.containers.base}"
 
     input:
         val(meta)

@@ -2,8 +2,8 @@ process FILTER_VARIANTS_ON_SCORE {
 
     tag "${meta.sample}"
 	label "process_small"
-	container "${params.base}"
-    
+	container "${params.containers.base}"
+
     input:
     tuple val(meta), path(scored_vcf), path(scored_vcf_tbi)
     val(threshold)
