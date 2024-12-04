@@ -5,7 +5,7 @@ process PREPARE_VCF {
     container "${params.containers.bcftools}"
 
     input:
-    tuple val(meta), path(vcf)
+    tuple val(meta), path(vcf), path(vcf_tbi)
 
     output:
     tuple val(meta), path("${meta.sample}_prepared.vcf.gz"), path("${meta.sample}_prepared.vcf.gz.tbi"), emit: vcf
