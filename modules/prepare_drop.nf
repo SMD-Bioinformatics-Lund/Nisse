@@ -19,7 +19,7 @@ process PREPARE_DROP {
     def stat_cutoff = 0.5
     def hgnc_symbol_col = "hgncSymbol"
     """
-    python3 prepare_drop.py \\
+    prepare_drop.py \\
         --in_path "${drop_full}" \\
         --out_path "${meta.sample}_drop_parsed.tsv" \\
         --stat_col "${stat_col}" \\
