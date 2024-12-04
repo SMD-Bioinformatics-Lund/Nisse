@@ -63,7 +63,7 @@ workflow {
     }
 
     // FIXME: Look into DROP processing at the end
-    // preprocess(fraser_results_ch, outrider_results_ch, hgnc_map_ch)
+    preprocess(fraser_results_ch, outrider_results_ch, hgnc_map_ch)
 
     Channel
         .of(tuple(params.cadd, params.cadd_tbi))
@@ -91,13 +91,8 @@ workflow preprocess {
     ch_hgnc_map
 
     main:
-    PREPARE_DROP_FRASER("FRASER", ch_fraser_results, ch_hgnc_map).set { fraser_ch }
-
-    PREPARE_DROP_OUTRIDER("OUTRIDER", ch_outrider_results, ch_hgnc_map).set { outrider_ch }
-
-    emit:
-    fraser_ch
-    outrider_ch
+    PREPARE_DROP_FRASER("FRASER", ch_fraser_results, ch_hgnc_map)
+    PREPARE_DROP_OUTRIDER("OUTRIDER", ch_outrider_results, ch_hgnc_map)
 }
 
 workflow SNV_ANNOTATE {
