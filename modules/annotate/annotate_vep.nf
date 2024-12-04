@@ -47,7 +47,7 @@ process ANNOTATE_VEP {
 
 	stub:
 		"""
-		touch "${meta.group}.vep.vcf"
+		touch "${meta.sample}.vep.vcf"
 		${annotate_vep_version(task)}
 		"""
 }

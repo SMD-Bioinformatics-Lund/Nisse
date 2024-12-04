@@ -15,7 +15,7 @@ process VCF_ANNO {
 
 	script:
 		"""
-		vcfanno_linux64 -lua $params.VCFANNO_LUA $params.vcfanno $vcf > ${meta.id}.clinvar.loqusdb.gene.vcf
+		vcfanno_linux64 -lua "${params.vep.VCFANNO_LUA}" "${params.vep.vcfanno}" "${vcf}" > ${meta.id}.clinvar.loqusdb.gene.vcf
 		${vcfanno_version(task)}
 		"""
 
