@@ -5,9 +5,8 @@ process PREPARE_DROP {
 	container "${params.containers.base}"
 
     input:
-        val(meta)
         val(label)
-        path(drop_full)
+        tuple val(meta), path(drop_full)
         path(hgn_map)
 
     output:
