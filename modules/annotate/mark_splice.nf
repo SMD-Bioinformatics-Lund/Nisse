@@ -1,7 +1,7 @@
 process MARK_SPLICE {
 
 	tag "${meta.sample}"
-    label 'process_small'
+    label 'process_low'
 	container "${params.containers.base}"
 
 

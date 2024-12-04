@@ -1,7 +1,7 @@
 process FILTER_VARIANTS_ON_SCORE {
 
     tag "${meta.sample}"
-	label "process_small"
+	label "process_low"
 	container "${params.containers.base}"
 
     input:

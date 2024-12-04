@@ -1,7 +1,7 @@
 process ADD_CADD_SCORES_TO_VCF {
 
     tag "${meta.sample}"
-    label 'process_small'
+    label 'process_low'
     container "${params.container_genmod}"
 
     input: 

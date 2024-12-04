@@ -1,7 +1,7 @@
 process VCF_COMPLETION {
 
     tag "${meta.sample}"
-	label "process_small"
+	label "process_low"
 	container "${params.containers.base}"
 
 	input:

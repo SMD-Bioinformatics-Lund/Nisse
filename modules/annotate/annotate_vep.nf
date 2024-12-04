@@ -1,7 +1,7 @@
 process ANNOTATE_VEP {
 
 	tag "${meta.sample}"
-    label 'process_large'
+    label 'process_high'
 	container "${params.containers.vep}"
 
 	input:
