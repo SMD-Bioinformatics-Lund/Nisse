@@ -98,6 +98,7 @@ workflow SNV_ANNOTATE {
     ch_cadd // channel: [mandatory] [ path(cadd), path(cadd_tbi) ]
 
     main:
+    ch_vcf.view()
 
     // CADD indels
     EXTRACT_INDELS_FOR_CADD(ch_vcf)
@@ -121,9 +122,7 @@ workflow SNV_SCORE {
     ch_ped // channel: [mandatory] [ path(ped) ]
     ch_score_config // channel: [mandatory] [ path(score_config) ]
 
-
     main:
-
     GENMOD_MODELS(ch_annotated_vcf, ch_ped)
     GENMOD_ANNOTATE(GENMOD_MODELS.out.vcf)
     GENMOD_COMPOUND(GENMOD_ANNOTATE.out.vcf)
