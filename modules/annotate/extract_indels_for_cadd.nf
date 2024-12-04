@@ -13,7 +13,7 @@ process EXTRACT_INDELS_FOR_CADD {
 
 	script:
 		"""
-		bcftools view $vcf -V snps -o ${meta.sample}.only_indels.vcf
+		bcftools view "${vcf}" -V snps -o "${meta.sample}.only_indels.vcf"
 		${extract_indels_for_cadd_version(task)}
 		"""
 
