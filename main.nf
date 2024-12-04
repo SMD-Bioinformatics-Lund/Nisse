@@ -3,6 +3,7 @@ include { PREPARE_DROP as PREPARE_DROP_FRASER } from './modules/prepare_drop'
 include { PREPARE_DROP as PREPARE_DROP_OUTRIDER } from './modules/prepare_drop'
 
 include { BGZIP_INDEL_CADD } from './modules/bgzip_indel_cadd.nf'
+include { PREPARE_VCF } from './modules/prepare_vcf.nf'
 
 // Annotations
 include { ADD_CADD_SCORES_TO_VCF } from './modules/annotate/add_cadd_scores_to_vcf.nf'
@@ -63,7 +64,7 @@ workflow {
     }
 
     // FIXME: Look into DROP processing at the end
-    preprocess(fraser_results_ch, outrider_results_ch, hgnc_map_ch)
+    PREPROCESS(fraser_results_ch, outrider_results_ch, hgnc_map_ch, vcf_ch)
 
     Channel
         .of(tuple(params.cadd, params.cadd_tbi))
@@ -74,7 +75,7 @@ workflow {
         .set { score_config_ch }
 
     CREATE_PED(meta_ch)
-    SNV_ANNOTATE(vcf_ch, cadd_ch)
+    SNV_ANNOTATE(PREPROCESS.out.vcf)
     SNV_SCORE(SNV_ANNOTATE.out.vcf, CREATE_PED.out.ped, score_config_ch)
 
     // FIXME: Collect versions
@@ -84,24 +85,27 @@ workflow {
     // ch_ped // channel: [mandatory] [ path(ped) ]
     // ch_score_config // channel: [mandatory] [ path(score_config) ]
 
-workflow preprocess {
+workflow PREPROCESS {
     take:
     ch_fraser_results
     ch_outrider_results
     ch_hgnc_map
+    ch_vcf
 
     main:
     PREPARE_DROP_FRASER("FRASER", ch_fraser_results, ch_hgnc_map)
     PREPARE_DROP_OUTRIDER("OUTRIDER", ch_outrider_results, ch_hgnc_map)
+    PREPARE_VCF(ch_vcf)
+
+    emit:
+    vcf = PREPARE_VCF.out.vcf
 }
 
 workflow SNV_ANNOTATE {
     take:
     ch_vcf // channel: [mandatory] [ val(meta), path(vcf), path(vcf_tbi) ]
-    ch_cadd // channel: [mandatory] [ path(cadd), path(cadd_tbi) ]
 
     main:
-
     ANNOTATE_VEP(ch_vcf)
     VCF_ANNO(ANNOTATE_VEP.out.vcf)
     MODIFY_VCF(VCF_ANNO.out.vcf)
@@ -114,9 +118,6 @@ workflow SNV_ANNOTATE {
     BGZIP_INDEL_CADD(CALCULATE_INDEL_CADD.out.vcf)
 
     cadd_ch = MARK_SPLICE.out.vcf.join(BGZIP_INDEL_CADD.out.cadd)
-
-    cadd_ch.view()
-
     ADD_CADD_SCORES_TO_VCF(cadd_ch)
 
     emit:
@@ -133,7 +134,6 @@ workflow SNV_SCORE {
     GENMOD_MODELS(ch_annotated_vcf, ch_ped)
     GENMOD_ANNOTATE(GENMOD_MODELS.out.vcf)
     GENMOD_COMPOUND(GENMOD_ANNOTATE.out.vcf)
-
     GENMOD_SCORE(GENMOD_COMPOUND.out.vcf, ch_ped, ch_score_config)
     VCF_COMPLETION(GENMOD_SCORE.out.vcf)
 
@@ -149,9 +149,7 @@ workflow postprocess {
 
     main:
     FILTER_VARIANTS_ON_SCORE(scored_vcf_ch, params.score_threshold)
-
     MAKE_SCOUT_YAML(csv_ch).set { after_hello_ch }
-
     PARSE_TOMTE_QC(multiqc_ch)
 
     emit:
