@@ -3,3 +3,4 @@ work/
 data/
 .nextflow/
 main.run
+slurm_logs/
