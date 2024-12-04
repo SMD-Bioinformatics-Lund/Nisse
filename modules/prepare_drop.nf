@@ -11,17 +11,23 @@ process PREPARE_DROP {
     path(hgnc_map)
 
     output:
-    path "${meta.sample}_${label}_drop.tsv"
+    path "${meta.sample}_drop_parsed.tsv"
 
     script:
     def in_path = ""
-    def out_dir = ""
-    def fdr_col = "pValue/padjust"
+    def out_path = ""
+    def fdr_col = "pValue" // pValue or padjust
     def fdr_cutoff = ""
     def hgnc_symbol_col = ""
     def sample_col = ""
     """
-    prepare_drop.sh ${hgnc_map} > "${meta.sample}_${label}_drop.tsv"
+    prepare_drop.py \\
+        --in_path ${drop_full} \\
+        --out_path ${meta.sample}_drop_parsed.tsv \\
+        --stat_col "pValue" \\
+        --stat_cutoff 0.5 \\
+        --hgnc_symbol_col "hgncSymbol" \
+        --sample_col "sampleID"
     """
 
     stub:
