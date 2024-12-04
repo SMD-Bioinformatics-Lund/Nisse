@@ -24,7 +24,8 @@ process PREPARE_DROP {
         --out_path "${meta.sample}_drop_parsed.tsv" \\
         --stat_col "${stat_col}" \\
         --stat_cutoff "${stat_cutoff}" \\
-        --hgnc_symbol_col "${hgnc_symbol_col}"
+        --hgnc_symbol_col "${hgnc_symbol_col}" \\
+        --hgnc_symbol_id_map "${hgnc_map}"
     """
 
     stub:

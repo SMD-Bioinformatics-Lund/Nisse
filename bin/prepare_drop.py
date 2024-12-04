@@ -73,7 +73,7 @@ def main(
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--in_path", required=True)
-    parser.add_argument("--out_dir", required=True)
+    parser.add_argument("--out_path", required=True)
     parser.add_argument("--stat_col", required=True)
     parser.add_argument("--stat_cutoff", required=True, type=float)
     parser.add_argument("--hgnc_symbol_col", required=True)
@@ -89,7 +89,7 @@ if __name__ == "__main__":
     args = parse_arguments()
     main(
         args.in_path,
-        args.out_dir,
+        args.out_path,
         args.stat_col,
         args.stat_cutoff,
         args.hgnc_symbol_col,
