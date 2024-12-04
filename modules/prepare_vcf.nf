@@ -8,7 +8,7 @@ process PREPARE_VCF {
     tuple val(meta), path(vcf)
 
     output:
-    tuple path("${meta.sample}_prepared.vcf.gz"), path("${meta.sample}_prepared.vcf.gz.tbi"), emit: vcf
+    tuple val(meta), path("${meta.sample}_prepared.vcf.gz"), path("${meta.sample}_prepared.vcf.gz.tbi"), emit: vcf
 
     script:
     """
