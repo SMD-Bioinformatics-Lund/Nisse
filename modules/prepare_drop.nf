@@ -14,20 +14,17 @@ process PREPARE_DROP {
     path "${meta.sample}_drop_parsed.tsv"
 
     script:
-    def in_path = ""
-    def out_path = ""
-    def fdr_col = "pValue" // pValue or padjust
-    def fdr_cutoff = ""
-    def hgnc_symbol_col = ""
-    def sample_col = ""
+    // FIXME: What to use here? What did we use during validation?
+    def stat_col = "pValue" // pValue or padjust
+    def stat_cutoff = 0.5
+    def hgnc_symbol_col = "hgncSymbol"
     """
     prepare_drop.py \\
-        --in_path ${drop_full} \\
-        --out_path ${meta.sample}_drop_parsed.tsv \\
-        --stat_col "pValue" \\
-        --stat_cutoff 0.5 \\
-        --hgnc_symbol_col "hgncSymbol" \
-        --sample_col "sampleID"
+        --in_path "${drop_full}" \\
+        --out_path "${meta.sample}_drop_parsed.tsv" \\
+        --stat_col "${stat_col}" \\
+        --stat_cutoff "${stat_cutoff}" \\
+        --hgnc_symbol_col "${hgnc_symbol_col}"
     """
 
     stub:

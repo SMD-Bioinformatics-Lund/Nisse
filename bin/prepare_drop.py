@@ -13,12 +13,12 @@ Splits it per sample into out_dir
 
 def main(
     in_path: Path,
-    out_dir: Path,
+    out_path: Path,
     stat_col: str,
     stat_cutoff: float,
     hgnc_symbol_col: str,
-    sample_col: str,
     hgnc_symbol_id_map: str,
+    verbose: bool,
 ):
     
     # Add HGNC ID
@@ -53,16 +53,20 @@ def main(
             if pass_stat_cutoff and has_hgnc_symbol and has_hgnc_id:
                 row['hgncID'] = hgnc_id
                 output_rows.append(row)
-        
-        print(stats)
-            # print(hgnc_id)
-            # print(row)
     
+    headers = list(output_rows[0].keys())
 
+    print(f"Writing {len(output_rows)} rows to {out_path}")
+    with open(out_path, "w", newline='') as out_fh:
+        writer = csv.DictWriter(out_fh, fieldnames=headers)
 
-    # print(f"All rows: {len(rows_all)}")
-    # print(f"Number of rows left: {len(rows_passing_stat)}")
+        writer.writeheader()
+        writer.writerows(output_rows)
 
+    if verbose:
+        for key, count in stats.items():
+            print(f"{key}: {count}")
+    
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
@@ -71,9 +75,9 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--stat_col", required=True)
     parser.add_argument("--stat_cutoff", required=True, type=float)
     parser.add_argument("--hgnc_symbol_col", required=True)
-    parser.add_argument("--sample_col", required=True)
 
     parser.add_argument("--hgnc_symbol_id_map", required=True)
+    parser.add_argument("--verbose", action="store_true")
 
     args = parser.parse_args()
     return args
@@ -87,6 +91,6 @@ if __name__ == "__main__":
         args.stat_col,
         args.stat_cutoff,
         args.hgnc_symbol_col,
-        args.sample_col,
-        args.hgnc_symbol_id_map
+        args.hgnc_symbol_id_map,
+        args.verbose
     )
