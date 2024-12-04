@@ -30,10 +30,6 @@ workflow {
     validateAllParams()
 
     // FIXME: Check that the input CSV has only one line
-    fraser_results = "${params.tomte_results}/analyse_transcripts/drop/${params.case_id}_fraser_top_hits_research.tsv"
-    outrider_results = "${params.tomte_results}/analyse_transcripts/drop/${params.case_id}_outrider_top_hits_research.tsv"
-    variant_calls = "${params.tomte_results}/call_variants/${params.sample_id}_split_rmdup_info.vcf.gz"
-    variant_calls_tbi = "${variant_calls}.tbi"
 
 
     Channel
@@ -41,22 +37,31 @@ workflow {
         .splitCsv(header: true)
         .set { meta_ch }
 
-    vcf_ch = meta_ch.map { meta -> tuple(meta, variant_calls, variant_calls_tbi) }
+    vcf_ch = meta_ch.map { meta -> 
+        def sample_id = meta.sample
+        def variant_calls = "${params.tomte_results}/call_variants/${sample_id}_split_rmdup_info.vcf.gz"
+        def variant_calls_tbi = "${variant_calls}.tbi"
+        tuple(meta, file(variant_calls), file(variant_calls_tbi)) 
+    }
 
     Channel
         .fromPath(params.hgnc_map)
         .set { hgnc_map_ch }
 
-    Channel
-        .fromPath(fraser_results)
-        .set { fraser_results_ch }
+    fraser_results_ch = meta_ch.map { meta ->
+        def case_id = meta.case
+        def fraser_results = "${params.tomte_results}/analyse_transcripts/drop/${case_id}_fraser_top_hits_research.tsv"
+        tuple(meta, file(fraser_results))
+    }
 
-    Channel
-        .fromPath(outrider_results)
-        .set { outrider_results_ch }
+    outrider_results_ch = meta_ch.map { meta ->
+        def case_id = meta.case
+        def outrider_results = "${params.tomte_results}/analyse_transcripts/drop/${case_id}_outrider_top_hits_research.tsv"
+        tuple(meta, file(outrider_results))
+    }
 
     // FIXME: Look into DROP processing at the end
-    // preprocess(meta_ch, fraser_results_ch, outrider_results_ch, hgnc_map_ch)
+    // preprocess(fraser_results_ch, outrider_results_ch, hgnc_map_ch)
 
     Channel
         .of(tuple(params.cadd, params.cadd_tbi))
@@ -77,15 +82,14 @@ workflow {
 
 workflow preprocess {
     take:
-    ch_meta
     ch_fraser_results
     ch_outrider_results
     ch_hgnc_map
 
     main:
-    PREPARE_DROP_FRASER(ch_meta, "FRASER", ch_fraser_results, ch_hgnc_map).set { fraser_ch }
+    PREPARE_DROP_FRASER("FRASER", ch_fraser_results, ch_hgnc_map).set { fraser_ch }
 
-    PREPARE_DROP_OUTRIDER(ch_meta, "OUTRIDER", ch_outrider_results, ch_hgnc_map).set { outrider_ch }
+    PREPARE_DROP_OUTRIDER("OUTRIDER", ch_outrider_results, ch_hgnc_map).set { outrider_ch }
 
     emit:
     fraser_ch
