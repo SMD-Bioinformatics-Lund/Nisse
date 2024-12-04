@@ -2,8 +2,8 @@ process GENMOD_SCORE {
 
     tag "${meta.sample}"
 	label "process_small"
-	container "${params.base}"
-    
+	container "${params.containers.base}"
+
     input:
         tuple val(meta), path(vcf)
         tuple val(meta2), path(ped)

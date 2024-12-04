@@ -2,7 +2,7 @@ process GENMOD_ANNOTATE {
 
     tag "${meta.sample}"
 	label "process_small"
-	container "${params.base}"
+	container "${params.containers.base}"
 
     input:
         tuple val(meta), path(vcf)
