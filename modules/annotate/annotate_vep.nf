@@ -30,6 +30,7 @@ process ANNOTATE_VEP {
 			--dir_plugins "${params.vep.VEP_PLUGINS}" \\
 			--distance "${params.vep.VEP_TRANSCRIPT_DISTANCE}" \\
 			-cache \\
+			--format vcf \\
 			--plugin "CADD,${params.vep.CADD}" \\
 			--plugin "LoFtool" \\
 			--plugin "MaxEntScan,${params.vep.MAXENTSCAN},SWA,NCSS" \\
