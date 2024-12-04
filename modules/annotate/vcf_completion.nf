@@ -1,7 +1,5 @@
 process VCF_COMPLETION {
-	cpus 16
-	time '1h'
-	memory '5 GB'
+	label "process_small"
 
 	input:
 		tuple val(meta), file(vcf)

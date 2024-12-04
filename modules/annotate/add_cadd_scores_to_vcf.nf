@@ -1,7 +1,6 @@
 process ADD_CADD_SCORES_TO_VCF {
 
 	tag "${meta.id}"
-	container "${params.containers.base}"
     label 'process_small'
     container "${params.container_genmod}"
 

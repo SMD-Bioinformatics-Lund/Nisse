@@ -1,8 +1,6 @@
 process CALCULATE_INDEL_CADD {
-	cpus 2
-	container "${params.cadd}"
-	memory '20 GB'
-	time '3h'
+	// container "${params.cadd}"
+	label "process_medium"
 
 	input:
 		tuple val(meta), file(vcf)

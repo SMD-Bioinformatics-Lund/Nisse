@@ -1,7 +1,5 @@
 process EXTRACT_INDELS_FOR_CADD {
-	cpus 2
-	memory '1 GB'
-	time '1h'
+	label "process_low"
 
 	input:
 		tuple val(meta), file(vcf), file(vcf_tbi)

@@ -1,7 +1,7 @@
 process VCF_ANNO {
 
 	tag "${meta.id}"
-	container "${params.containers.base}"
+	// container "${params.containers.base}"
     label 'process_small'
 	errorStrategy 'retry'
 	maxErrors 5
