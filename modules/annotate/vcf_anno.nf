@@ -4,7 +4,7 @@ process VCF_ANNO {
     label 'process_small'
 	errorStrategy 'retry'
 	maxErrors 5
-	// container "${params.containers.base}"
+	container "${params.containers.base}"
 
 	input:
 		tuple val(meta), file(vcf)

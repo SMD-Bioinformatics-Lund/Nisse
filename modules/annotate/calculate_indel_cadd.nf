@@ -2,7 +2,7 @@ process CALCULATE_INDEL_CADD {
 
     tag "${meta.sample}"
 	label "process_medium"
-	// container "${params.cadd}"
+	container "${params.cadd}"
 
 	input:
 		tuple val(meta), file(vcf)

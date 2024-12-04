@@ -2,6 +2,7 @@ process EXTRACT_INDELS_FOR_CADD {
 
     tag "${meta.sample}"
 	label "process_low"
+	container "${params.base}"
 
 	input:
 		tuple val(meta), file(vcf), file(vcf_tbi)

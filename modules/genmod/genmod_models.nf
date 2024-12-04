@@ -1,7 +1,9 @@
 process GENMOD_MODELS {
 
     tag "${meta.sample}"
-
+	label "process_small"
+	container "${params.base}"
+    
     input:
         tuple val(meta), path(vcf)
         tuple val(meta2), path(family)

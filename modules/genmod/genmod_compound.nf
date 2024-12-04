@@ -1,6 +1,8 @@
 process GENMOD_COMPOUND {
 
     tag "${meta.sample}"
+	label "process_small"
+	container "${params.base}"
 
     input:
         tuple val(meta), path(vcf)

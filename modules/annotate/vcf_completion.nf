@@ -1,7 +1,8 @@
 process VCF_COMPLETION {
-	
+
     tag "${meta.sample}"
 	label "process_small"
+	container "${params.base}"
 
 	input:
 		tuple val(meta), file(vcf)

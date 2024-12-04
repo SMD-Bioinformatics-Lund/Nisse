@@ -2,7 +2,7 @@ process ADD_CADD_SCORES_TO_VCF {
 
     tag "${meta.sample}"
     label 'process_small'
-    // container "${params.container_genmod}"
+    container "${params.container_genmod}"
 
     input: 
         tuple val(meta), file(vcf)

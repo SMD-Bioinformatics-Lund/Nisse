@@ -1,9 +1,9 @@
-// What exactly is this part performing?
-
-// HGNC ID map
-// Split 
-
 process PREPARE_DROP {
+
+    tag "${meta.sample}"
+	label "process_small"
+	container "${params.base}"
+
     input:
         val(meta)
         val(label)

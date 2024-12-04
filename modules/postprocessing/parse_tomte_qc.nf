@@ -1,7 +1,9 @@
 process PARSE_TOMTE_QC {
 
     tag "${meta.sample}"
-
+	label "process_small"
+	container "${params.base}"
+    
     input:
     tuple val(meta), path(multiqc_general_stats), path(picard_rna_coverage)
 
