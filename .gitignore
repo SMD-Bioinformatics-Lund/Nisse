@@ -2,3 +2,4 @@
 work/
 data/
 .nextflow/
+main.run
