@@ -55,7 +55,8 @@ workflow {
         .fromPath(outrider_results)
         .set { outrider_results_ch }
 
-    preprocess(meta_ch, fraser_results_ch, outrider_results_ch, hgnc_map_ch).set { fraser_out_ch }
+    // FIXME: Look into DROP processing at the end
+    // preprocess(meta_ch, fraser_results_ch, outrider_results_ch, hgnc_map_ch)
 
     Channel
         .of(tuple(params.cadd, params.cadd_tbi))
@@ -66,8 +67,6 @@ workflow {
         .set { score_config_ch }
 
     CREATE_PED(meta_ch)
-
-
     SNV_ANNOTATE(vcf_ch, cadd_ch)
     SNV_SCORE(SNV_ANNOTATE.out.vcf, CREATE_PED.out.ped, score_config_ch)
 }
