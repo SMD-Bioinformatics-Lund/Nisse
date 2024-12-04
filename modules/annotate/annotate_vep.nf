@@ -2,7 +2,7 @@ process ANNOTATE_VEP {
 
 	tag "${meta.sample}"
     label 'process_large'
-	container "${params.container_vep}"
+	container "${params.containers.vep}"
 
 	input:
 		tuple val(meta), file(vcf)

@@ -2,7 +2,7 @@ process INDEL_VEP {
 
     tag "${meta.sample}"
 	label "process_medium"
-	container "${params.container_vep}"
+	container "${params.containers.vep}"
 
 	input:
 		tuple val(meta), file(vcf)
