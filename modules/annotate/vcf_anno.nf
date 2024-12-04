@@ -10,8 +10,8 @@ process VCF_ANNO {
 		tuple val(meta), file(vcf)
 
 	output:
-		tuple val(meta), file("${meta.id}.clinvar.loqusdb.gene.vcf")
-		tuple val(meta), file("*versions.yml")
+		tuple val(meta), file("${meta.id}.clinvar.loqusdb.gene.vcf"), emit: vcf
+		tuple val(meta), file("*versions.yml"), emit: versions
 
 	script:
 		"""

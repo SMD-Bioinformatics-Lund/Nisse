@@ -9,7 +9,7 @@ process MARK_SPLICE {
 		tuple val(meta), file(vcf)
 
 	output:
-		tuple val(meta), file("${meta.id}.marksplice.vcf")
+		tuple val(meta), file("${meta.id}.marksplice.vcf"), emit: vcf
 
 	script:
 		"""

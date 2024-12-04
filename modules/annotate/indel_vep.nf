@@ -8,8 +8,8 @@ process INDEL_VEP {
 		tuple val(meta), file(vcf)
 
 	output:
-		tuple val(meta), file("${meta.id}.only_indels.vep.filtered.vcf")
-		tuple val(meta), file("*versions.yml")
+		tuple val(meta), file("${meta.id}.only_indels.vep.filtered.vcf"), emit: vcf
+		tuple val(meta), file("*versions.yml"), emit: versions
 
 	script:
 		"""

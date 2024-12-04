@@ -10,8 +10,8 @@ process ANNOTATE_VEP {
 		tuple val(meta), file(vcf)
 
 	output:
-		tuple val(meta), file("${meta.group}.vep.vcf")
-		tuple val(meta), file("*versions.yml")
+		tuple val(meta), file("${meta.group}.vep.vcf"), emit: vcf
+		tuple val(meta), file("*versions.yml"), emit: versions
 
 	script:
 		"""

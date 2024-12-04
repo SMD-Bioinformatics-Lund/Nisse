@@ -92,7 +92,7 @@ workflow  {
         .splitCsv(header:true)
         .set { meta_ch }
 
-    // vcf_ch = meta_ch.map { meta -> tuple(meta, params.variant_calls, params.variant_calls_tbi) }
+    vcf_ch = meta_ch.map { meta -> tuple(meta, params.variant_calls, params.variant_calls_tbi) }
 
     Channel
         .fromPath(params.hgnc_map)
@@ -109,13 +109,13 @@ workflow  {
     preprocess(meta_ch, fraser_results_ch, outrider_results_ch, hgnc_map_ch)
         .set { fraser_out_ch }
 
-    // Channel
-    //     .of(tuple(params.cadd, params.cadd_tbi))
-    //     .set { cadd_ch }
+    Channel
+        .of(tuple(params.cadd, params.cadd_tbi))
+        .set { cadd_ch }
 
     // vcf_ch.view()
 
-    // snv_annotate(vcf_ch, cadd_ch)
+    snv_annotate(vcf_ch, cadd_ch)
 
     // snv_score(vcf_ch.out.ped, vcf_ch.out.vcf, params.score_config)
 }
@@ -145,25 +145,28 @@ workflow snv_annotate {
 
     main:
 
-        CREATE_PED(ch_vcf[0])
-            .set { ch_ped }
+        ch_vcf.view()
+
+        ch_meta = ch_vcf.map { it[0] }
+
+        CREATE_PED(ch_meta)
 
         // CADD indels
         EXTRACT_INDELS_FOR_CADD(ch_vcf)
-        INDEL_VEP(ch_vcf).set { ch_vep_indels_only }
-        CALCULATE_INDEL_CADD(ch_vep_indels_only).set { ch_cadd_indels }
+        INDEL_VEP(EXTRACT_INDELS_FOR_CADD.out.vcf)
+        CALCULATE_INDEL_CADD(INDEL_VEP.out.vcf)
 
-        ANNOTATE_VEP(ch_vcf).set { ch_vep }
-        VCF_ANNO(ch_vep).set { ch_vcf_anno }
-        MODIFY_VCF(ch_vcf_anno).set { ch_scout_modified }
-        MARK_SPLICE(ch_scout_modified).set { ch_mark_splice }
+        ANNOTATE_VEP(CALCULATE_INDEL_CADD.out.vcf)
+        VCF_ANNO(ANNOTATE_VEP.out.vcf)
+        MODIFY_VCF(VCF_ANNO.out.vcf)
+        MARK_SPLICE(MODIFY_VCF.out.vcf)
 
-        ADD_CADD_SCORES_TO_VCF(ch_mark_splice, ch_cadd).set { ch_vcf_with_cadd }
-        VCF_COMPLETION(ch_vcf_with_cadd).set { ch_vcf_completed }
+        ADD_CADD_SCORES_TO_VCF(MARK_SPLICE.out.vcf, ch_cadd)
+        VCF_COMPLETION(ADD_CADD_SCORES_TO_VCF.out.vcf)
     
     emit:
-        ped = ch_ped
-        vcf = ch_vcf
+        ped = CREATE_PED.out.ped
+        vcf = VCF_COMPLETION.out.vcf
 }
 
 workflow snv_score {

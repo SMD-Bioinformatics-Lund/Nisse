@@ -10,8 +10,8 @@ process ADD_CADD_SCORES_TO_VCF {
         tuple file(cadd_scores), file(cadd_scores_tbi)
 
     output:
-        tuple val(meta), file("${meta.group}.cadd.vcf")
-        tuple val(meta), file("*versions.yml")
+        tuple val(meta), file("${meta.group}.cadd.vcf"), emit: vcf
+        tuple val(meta), file("*versions.yml"), emit: versions
 
     script:
         """

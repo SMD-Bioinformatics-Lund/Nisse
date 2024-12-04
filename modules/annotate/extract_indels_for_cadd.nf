@@ -7,8 +7,8 @@ process EXTRACT_INDELS_FOR_CADD {
 		tuple val(meta), file(vcf), file(vcf_tbi)
 	
 	output:
-		tuple val(meta), file("${meta.case}.only_indels.vcf")
-		tuple val(meta), file("*versions.yml")
+		tuple val(meta), file("${meta.case}.only_indels.vcf"), emit: vcf
+		tuple val(meta), file("*versions.yml"), emit: versions
 
 	script:
 		"""

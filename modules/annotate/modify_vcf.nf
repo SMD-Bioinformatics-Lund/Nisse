@@ -7,7 +7,7 @@ process MODIFY_VCF {
 		tuple val(meta), file(vcf)
 
 	output:
-		tuple val(meta), file("${meta.id}.mod.vcf")
+		tuple val(meta), file("${meta.id}.mod.vcf"), emit: vcf
 
 	script:
 		"""
