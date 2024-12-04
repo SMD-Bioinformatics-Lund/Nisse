@@ -2,6 +2,8 @@
 include { PREPARE_DROP as PREPARE_DROP_FRASER } from './modules/prepare_drop'
 include { PREPARE_DROP as PREPARE_DROP_OUTRIDER } from './modules/prepare_drop'
 
+include { BGZIP_INDEL_CADD } from './modules/bgzip_indel_cadd.nf'
+
 // Annotations
 include { ADD_CADD_SCORES_TO_VCF } from './modules/annotate/add_cadd_scores_to_vcf.nf'
 include { ANNOTATE_VEP } from './modules/annotate/annotate_vep.nf'
@@ -104,17 +106,22 @@ workflow SNV_ANNOTATE {
     ch_cadd // channel: [mandatory] [ path(cadd), path(cadd_tbi) ]
 
     main:
-    // CADD indels
-    EXTRACT_INDELS_FOR_CADD(ch_vcf)
-    INDEL_VEP(EXTRACT_INDELS_FOR_CADD.out.vcf)
-    CALCULATE_INDEL_CADD(INDEL_VEP.out.vcf)
 
-    ANNOTATE_VEP(CALCULATE_INDEL_CADD.out.vcf)
+    ANNOTATE_VEP(ch_vcf)
     VCF_ANNO(ANNOTATE_VEP.out.vcf)
     MODIFY_VCF(VCF_ANNO.out.vcf)
     MARK_SPLICE(MODIFY_VCF.out.vcf)
 
-    ADD_CADD_SCORES_TO_VCF(MARK_SPLICE.out.vcf, ch_cadd)
+
+    // CADD indels
+    EXTRACT_INDELS_FOR_CADD(ch_vcf)
+    INDEL_VEP(EXTRACT_INDELS_FOR_CADD.out.vcf)
+    CALCULATE_INDEL_CADD(INDEL_VEP.out.vcf)
+    BGZIP_INDEL_CADD(CALCULATE_INDEL_CADD.out.vcf)
+
+    combined_ch = MARK_SPLICE.out.vcf.join(BGZIP_INDEL_CADD.out.vcf)
+
+    ADD_CADD_SCORES_TO_VCF(combined_ch, ch_cadd)
 
     emit:
     vcf = ADD_CADD_SCORES_TO_VCF.out.vcf
