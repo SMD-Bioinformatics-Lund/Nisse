@@ -5,7 +5,7 @@ process ANNOTATE_VEP {
 	container "${params.containers.vep}"
 
 	input:
-		tuple val(meta), file(vcf)
+		tuple val(meta), file(vcf), file(vcf_tbi)
 
 	output:
 		tuple val(meta), file("${meta.sample}.vep.vcf"), emit: vcf
