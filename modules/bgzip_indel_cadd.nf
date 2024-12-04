@@ -8,7 +8,7 @@ process BGZIP_INDEL_CADD {
 		tuple val(meta), file(cadd_scores)
 	
 	output:
-		tuple val(meta), file("${meta.sample}.cadd.gz"), file("${meta.sample}.cadd.gz.tbi"), emit: vcf
+		tuple val(meta), file("${meta.sample}.cadd.gz"), file("${meta.sample}.cadd.gz.tbi"), emit: cadd
 		tuple val(meta), file("*versions.yml"), emit: versions
 	
 	script:

@@ -5,8 +5,7 @@ process ADD_CADD_SCORES_TO_VCF {
     container "${params.container_genmod}"
 
     input: 
-        tuple val(meta), file(vcf)
-        tuple file(cadd_scores), file(cadd_scores_tbi)
+        tuple val(meta), file(vcf), file(cadd_scores), file(cadd_scores_tbi)
 
     output:
         tuple val(meta), file("${meta.sample}.cadd.vcf"), emit: vcf

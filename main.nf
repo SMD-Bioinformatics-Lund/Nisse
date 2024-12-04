@@ -112,16 +112,17 @@ workflow SNV_ANNOTATE {
     MODIFY_VCF(VCF_ANNO.out.vcf)
     MARK_SPLICE(MODIFY_VCF.out.vcf)
 
-
     // CADD indels
     EXTRACT_INDELS_FOR_CADD(ch_vcf)
     INDEL_VEP(EXTRACT_INDELS_FOR_CADD.out.vcf)
     CALCULATE_INDEL_CADD(INDEL_VEP.out.vcf)
     BGZIP_INDEL_CADD(CALCULATE_INDEL_CADD.out.vcf)
 
-    combined_ch = MARK_SPLICE.out.vcf.join(BGZIP_INDEL_CADD.out.vcf)
+    cadd_ch = MARK_SPLICE.out.vcf.join(BGZIP_INDEL_CADD.out.cadd)
 
-    ADD_CADD_SCORES_TO_VCF(combined_ch, ch_cadd)
+    cadd_ch.view()
+
+    ADD_CADD_SCORES_TO_VCF(cadd_ch)
 
     emit:
     vcf = ADD_CADD_SCORES_TO_VCF.out.vcf
