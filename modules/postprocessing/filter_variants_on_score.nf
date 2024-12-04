@@ -12,12 +12,13 @@ process FILTER_VARIANTS_ON_SCORE {
     path "${meta.sample}_out.txt"
 
     script:
+    def score_threshold = 17
     """
-    bash hello.sh ${scored_vcf} > "${meta.sample}_out.txt"
+    filter_score.py "${scored_vcf}" "${score_threshold}" > "${meta.sample}_filtered.vcf"
     """
 
     stub:
     """
-    touch ${meta.sample}_out.txt
+    touch "${meta.sample}_filtered.vcf"
     """
 }

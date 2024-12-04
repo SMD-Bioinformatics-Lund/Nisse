@@ -149,7 +149,7 @@ workflow postprocess {
 
     main:
     FILTER_VARIANTS_ON_SCORE(scored_vcf_ch, params.score_threshold)
-    MAKE_SCOUT_YAML(csv_ch).set { after_hello_ch }
+    MAKE_SCOUT_YAML(csv_ch)
     PARSE_TOMTE_QC(multiqc_ch)
 
     emit:
