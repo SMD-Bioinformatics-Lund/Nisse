@@ -102,8 +102,6 @@ workflow SNV_ANNOTATE {
     ch_cadd // channel: [mandatory] [ path(cadd), path(cadd_tbi) ]
 
     main:
-    ch_vcf.view()
-
     // CADD indels
     EXTRACT_INDELS_FOR_CADD(ch_vcf)
     INDEL_VEP(EXTRACT_INDELS_FOR_CADD.out.vcf)
