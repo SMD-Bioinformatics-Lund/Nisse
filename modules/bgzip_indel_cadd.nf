@@ -2,7 +2,7 @@ process BGZIP_INDEL_CADD {
 
     tag "${meta.sample}"
 	label "process_medium"
-	container "${params.container_bcftools}"
+	container "${params.container.bcftools}"
 
 	input:
 		tuple val(meta), file(cadd_scores)
