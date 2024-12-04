@@ -30,7 +30,7 @@ workflow {
     validateAllParams()
 
     // FIXME: Check that the input CSV has only one line
-
+    // FIXME: Early verification of the input files
 
     Channel
         .fromPath(params.csv)
