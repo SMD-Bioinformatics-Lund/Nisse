@@ -1,18 +1,21 @@
 process FILTER_VARIANTS_ON_SCORE {
+
+    tag "${meta.sample}"
+
     input:
-    tuple path(scored_vcf), path(scored_vcf_tbi)
+    tuple val(meta), path(scored_vcf), path(scored_vcf_tbi)
     val(threshold)
 
     output:
-    path 'hello_out.txt'
+    path "${meta.sample}_out.txt"
 
     script:
     """
-    bash hello.sh ${scored_vcf} > "hello_out.txt"
+    bash hello.sh ${scored_vcf} > "${meta.sample}_out.txt"
     """
 
     stub:
     """
-    touch hello_out.txt
+    touch ${meta.sample}_out.txt
     """
 }

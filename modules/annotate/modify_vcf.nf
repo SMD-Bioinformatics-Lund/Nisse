@@ -1,21 +1,21 @@
 process MODIFY_VCF {
 	
-	tag "${meta.id}"
+	tag "${meta.sample}"
     label 'process_small'
 
 	input:
 		tuple val(meta), file(vcf)
 
 	output:
-		tuple val(meta), file("${meta.id}.mod.vcf"), emit: vcf
+		tuple val(meta), file("${meta.sample}.mod.vcf"), emit: vcf
 
 	script:
 		"""
-		modify_vcf_scout.pl $vcf > ${meta.id}.mod.vcf
+		modify_vcf_scout.pl $vcf > ${meta.sample}.mod.vcf
 		"""
 
 	stub:
 		"""
-		touch "${meta.id}.mod.vcf"
+		touch "${meta.sample}.mod.vcf"
 		"""
 } 

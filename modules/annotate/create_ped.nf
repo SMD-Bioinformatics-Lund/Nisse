@@ -1,35 +1,31 @@
 process CREATE_PED {
+
     tag "${meta.sample}"
-    time '20m'
-    memory '1 GB'
+	label "process_low"
 
     input:
         val(meta)
 
     output:
-        tuple val(meta), file("${meta.case}_base.ped"), emit: ped
+        tuple val(meta), file("${meta.sample}_base.ped"), emit: ped
 
     script:
         father = "0"
         mother = "0"
         type_fa = "fa"
         type_ma = "ma"
-        def group = "${meta.case}"
-        def sample = "${meta.sample}"
-        def sex = "${meta.sex}"
         """
-        create_ped.pl --mother "${mother}" --father "${father}" --group "${group}" --id "${sample}" --sex "${sex}"
+        create_ped.pl --mother "${mother}" --father "${father}" --group "${meta.sample}" --id "${meta.sample}" --sex "${meta.sex}"
         """
 
     stub:
         type_fa = "fa"
         type_ma = "ma"
-        def group = "${meta.case}"
         """
-        touch "${group}_base.ped"
-        touch "${group}_ma.ped"
-        touch "${group}_fa.ped"
+        touch "${meta.sample}_base.ped"
+        touch "${meta.sample}_ma.ped"
+        touch "${meta.sample}_fa.ped"
 
-        echo $type_fa $type_ma > ${group}_base.ped
+        echo $type_fa $type_ma > ${meta.sample}_base.ped
         """
 }

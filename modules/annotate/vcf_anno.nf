@@ -1,27 +1,27 @@
 process VCF_ANNO {
 
-	tag "${meta.id}"
-	// container "${params.containers.base}"
+	tag "${meta.sample}"
     label 'process_small'
 	errorStrategy 'retry'
 	maxErrors 5
+	// container "${params.containers.base}"
 
 	input:
 		tuple val(meta), file(vcf)
 
 	output:
-		tuple val(meta), file("${meta.id}.clinvar.loqusdb.gene.vcf"), emit: vcf
+		tuple val(meta), file("${meta.sample}.clinvar.loqusdb.gene.vcf"), emit: vcf
 		tuple val(meta), file("*versions.yml"), emit: versions
 
 	script:
 		"""
-		vcfanno_linux64 -lua "${params.vep.VCFANNO_LUA}" "${params.vep.vcfanno}" "${vcf}" > ${meta.id}.clinvar.loqusdb.gene.vcf
+		vcfanno_linux64 -lua "${params.vep.VCFANNO_LUA}" "${params.vep.vcfanno}" "${vcf}" > ${meta.sample}.clinvar.loqusdb.gene.vcf
 		${vcfanno_version(task)}
 		"""
 
 	stub:
 		"""
-		touch "${meta.id}.clinvar.loqusdb.gene.vcf"
+		touch "${meta.sample}.clinvar.loqusdb.gene.vcf"
 		${vcfanno_version(task)}
 		"""
 }

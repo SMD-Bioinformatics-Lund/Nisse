@@ -1,9 +1,12 @@
 process GENMOD_ANNOTATE {
+
+    tag "${meta.sample}"
+
     input:
-        tuple val(prefix), path(vcf)
+        tuple val(meta), path(vcf)
 
     output:
-        tuple val(prefix), path("*_annotate.vcf"), emit: vcf
+        tuple val(meta), path("*_annotate.vcf"), emit: vcf
 
     script:
     """
@@ -11,12 +14,12 @@ process GENMOD_ANNOTATE {
         annotate \\
         --annotate_regions \\
         --genome-build 38 \\
-        --outfile ${prefix}_annotate.vcf \\
+        --outfile ${meta.sample}_annotate.vcf \\
         ${vcf}
     """
 
     stub:
     """
-    touch ${prefix}_annotate.vcf
+    touch ${meta.sample}_annotate.vcf
     """
 }

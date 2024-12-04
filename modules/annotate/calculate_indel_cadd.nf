@@ -1,23 +1,25 @@
 process CALCULATE_INDEL_CADD {
-	// container "${params.cadd}"
+
+    tag "${meta.sample}"
 	label "process_medium"
+	// container "${params.cadd}"
 
 	input:
 		tuple val(meta), file(vcf)
 
 	output:
-		tuple val(meta), file("${meta.id}.indel_cadd.gz"), emit: vcf
+		tuple val(meta), file("${meta.sample}.indel_cadd.gz"), emit: vcf
 		tuple val(meta), file("*versions.yml"), emit: versions
 
 	script:
 		"""
-		/CADD-scripts/CADD.sh -c ${task.cpus} -g GRCh38 -o ${meta.id}.indel_cadd.gz $vcf
+		/CADD-scripts/CADD.sh -c ${task.cpus} -g GRCh38 -o ${meta.sample}.indel_cadd.gz $vcf
 		${calculate_indel_cadd_version(task)}
 		"""
 
 	stub:
 		"""
-		touch "${meta.id}.indel_cadd.gz"
+		touch "${meta.sample}.indel_cadd.gz"
 		${calculate_indel_cadd_version(task)}
 		"""
 }

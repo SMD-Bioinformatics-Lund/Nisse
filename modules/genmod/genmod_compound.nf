@@ -1,24 +1,24 @@
 process GENMOD_COMPOUND {
 
-    cpus 40
+    tag "${meta.sample}"
 
     input:
-        tuple val(prefix), path(vcf)
+        tuple val(meta), path(vcf)
 
     output:
-        tuple val(prefix), path("*_compound.vcf"), emit: vcf
+        tuple val(meta), path("*_compound.vcf"), emit: vcf
 
     script:
     """
     genmod \\
         compound \\
         --processes ${task.cpus} \\
-        --outfile ${prefix}_compound.vcf \\
+        --outfile ${meta.sample}_compound.vcf \\
         ${vcf}
     """
 
     stub:
     """
-    touch ${prefix}_compound.vcf
+    touch ${meta.sample}_compound.vcf
     """
 }

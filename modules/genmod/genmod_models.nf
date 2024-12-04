@@ -1,13 +1,13 @@
 process GENMOD_MODELS {
 
-    cpus 40
+    tag "${meta.sample}"
 
     input:
-        tuple val(meta), val(prefix), path(vcf)
-        path(family)
+        tuple val(meta), path(vcf)
+        tuple val(meta2), path(family)
 
     output:
-        tuple val(meta), val(prefix), path("*_models.vcf"), emit: vcf
+        tuple val(meta), path("${meta.sample}_models.vcf"), emit: vcf
 
     script:
     """
@@ -16,12 +16,12 @@ process GENMOD_MODELS {
         --whole_gene \\
         --processes ${task.cpus} \\
         --family_file ${family} \\
-        --outfile ${prefix}_models.vcf \\
+        --outfile ${meta.sample}_models.vcf \\
         ${vcf}
     """
 
     stub:
     """
-    touch ${prefix}_models.vcf
+    touch ${meta.sample}_models.vcf
     """
 }

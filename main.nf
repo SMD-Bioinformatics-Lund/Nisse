@@ -25,6 +25,129 @@ include { FILTER_VARIANTS_ON_SCORE } from './modules/postprocessing/filter_varia
 include { PARSE_TOMTE_QC } from './modules/postprocessing/parse_tomte_qc.nf'
 include { MAKE_SCOUT_YAML } from './modules/postprocessing/make_scout_yaml.nf'
 
+workflow {
+
+    validateAllParams()
+
+    // FIXME: Check that the input CSV has only one line
+
+    Channel
+        .fromPath(params.csv)
+        .splitCsv(header: true)
+        .set { meta_ch }
+
+    vcf_ch = meta_ch.map { meta -> tuple(meta, params.variant_calls, params.variant_calls_tbi) }
+
+    Channel
+        .fromPath(params.hgnc_map)
+        .set { hgnc_map_ch }
+
+    Channel
+        .fromPath(params.fraser_results)
+        .set { fraser_results_ch }
+
+    Channel
+        .fromPath(params.outrider_results)
+        .set { outrider_results_ch }
+
+    preprocess(meta_ch, fraser_results_ch, outrider_results_ch, hgnc_map_ch).set { fraser_out_ch }
+
+    Channel
+        .of(tuple(params.cadd, params.cadd_tbi))
+        .set { cadd_ch }
+
+    Channel
+        .fromPath(params.score_config)
+        .set { score_config_ch }
+
+    CREATE_PED(meta_ch)
+
+
+    SNV_ANNOTATE(vcf_ch, cadd_ch)
+    SNV_SCORE(SNV_ANNOTATE.out.vcf, CREATE_PED.out.ped, score_config_ch)
+}
+
+    // ch_annotated_vcf // channel: [mandatory] [ val(meta), path(vcf), path(vcf_tbi) ]
+    // ch_ped // channel: [mandatory] [ path(ped) ]
+    // ch_score_config // channel: [mandatory] [ path(score_config) ]
+
+workflow preprocess {
+    take:
+    ch_meta
+    ch_fraser_results
+    ch_outrider_results
+    ch_hgnc_map
+
+    main:
+    PREPARE_DROP_FRASER(ch_meta, "FRASER", ch_fraser_results, ch_hgnc_map).set { fraser_ch }
+
+    PREPARE_DROP_OUTRIDER(ch_meta, "OUTRIDER", ch_outrider_results, ch_hgnc_map).set { outrider_ch }
+
+    emit:
+    fraser_ch
+    outrider_ch
+}
+
+workflow SNV_ANNOTATE {
+    take:
+    ch_vcf // channel: [mandatory] [ val(meta), path(vcf), path(vcf_tbi) ]
+    ch_cadd // channel: [mandatory] [ path(cadd), path(cadd_tbi) ]
+
+    main:
+
+    // CADD indels
+    EXTRACT_INDELS_FOR_CADD(ch_vcf)
+    INDEL_VEP(EXTRACT_INDELS_FOR_CADD.out.vcf)
+    CALCULATE_INDEL_CADD(INDEL_VEP.out.vcf)
+
+    ANNOTATE_VEP(CALCULATE_INDEL_CADD.out.vcf)
+    VCF_ANNO(ANNOTATE_VEP.out.vcf)
+    MODIFY_VCF(VCF_ANNO.out.vcf)
+    MARK_SPLICE(MODIFY_VCF.out.vcf)
+
+    ADD_CADD_SCORES_TO_VCF(MARK_SPLICE.out.vcf, ch_cadd)
+
+    emit:
+    vcf = ADD_CADD_SCORES_TO_VCF.out.vcf
+}
+
+workflow SNV_SCORE {
+    take:
+    ch_annotated_vcf // channel: [mandatory] [ val(meta), path(vcf), path(vcf_tbi) ]
+    ch_ped // channel: [mandatory] [ path(ped) ]
+    ch_score_config // channel: [mandatory] [ path(score_config) ]
+
+
+    main:
+
+    GENMOD_MODELS(ch_annotated_vcf, ch_ped)
+    GENMOD_ANNOTATE(GENMOD_MODELS.out.vcf)
+    GENMOD_COMPOUND(GENMOD_ANNOTATE.out.vcf)
+
+    GENMOD_SCORE(GENMOD_COMPOUND.out.vcf, ch_ped, ch_score_config)
+    VCF_COMPLETION(GENMOD_SCORE.out.vcf)
+
+    emit:
+    vcf = VCF_COMPLETION.out.vcf
+}
+
+workflow postprocess {
+    take:
+    scored_vcf_ch
+    csv_ch
+    multiqc_ch // Both general stats and the picard
+
+    main:
+    FILTER_VARIANTS_ON_SCORE(scored_vcf_ch, params.score_threshold)
+
+    MAKE_SCOUT_YAML(csv_ch).set { after_hello_ch }
+
+    PARSE_TOMTE_QC(multiqc_ch)
+
+    emit:
+    after_hello_ch
+}
+
 // OK some thinking
 // In point is output from Tomte
 // 1. SNV calls on RNA-seq
@@ -38,7 +161,7 @@ include { MAKE_SCOUT_YAML } from './modules/postprocessing/make_scout_yaml.nf'
 def assignDefaultParams(target_params, user_params) {
     target_params.each { param ->
         if (!user_params.containers.containsKey(param)) {
-            user_params.containers[param] = null 
+            user_params.containers[param] = null
         }
     }
 }
@@ -47,7 +170,7 @@ def validateParams(targetParams, search_scope, type) {
     def missingParams = targetParams.findAll { !search_scope[it] }
     if (!missingParams.isEmpty()) {
         def missingList = missingParams.collect { "--${it}" }.join(", ")
-        error "Error: Missing required parameter(s) in $type: ${missingList}"
+        error("Error: Missing required parameter(s) in ${type}: ${missingList}")
     }
 }
 
@@ -80,127 +203,3 @@ def validateAllParams() {
     validateParams(containers, params.containers, "containers")
     validateParams(vepParams, params.vep, "vep")
 }
-
-workflow  {
-
-    validateAllParams()
-
-    // FIXME: Check that the input CSV has only one line
-
-    Channel
-        .fromPath(params.csv)
-        .splitCsv(header:true)
-        .set { meta_ch }
-
-    vcf_ch = meta_ch.map { meta -> tuple(meta, params.variant_calls, params.variant_calls_tbi) }
-
-    Channel
-        .fromPath(params.hgnc_map)
-        .set { hgnc_map_ch }
-
-    Channel
-        .fromPath(params.fraser_results)
-        .set { fraser_results_ch }
-
-    Channel
-        .fromPath(params.outrider_results)
-        .set { outrider_results_ch }
-
-    preprocess(meta_ch, fraser_results_ch, outrider_results_ch, hgnc_map_ch)
-        .set { fraser_out_ch }
-
-    Channel
-        .of(tuple(params.cadd, params.cadd_tbi))
-        .set { cadd_ch }
-
-    // vcf_ch.view()
-
-    snv_annotate(vcf_ch, cadd_ch)
-
-    // snv_score(vcf_ch.out.ped, vcf_ch.out.vcf, params.score_config)
-}
-
-workflow preprocess {
-    take:
-        ch_meta
-        ch_fraser_results
-        ch_outrider_results
-        ch_hgnc_map
-    main:
-        PREPARE_DROP_FRASER(ch_meta, "FRASER", ch_fraser_results, ch_hgnc_map)
-            .set { fraser_ch }
-
-        PREPARE_DROP_OUTRIDER(ch_meta, "OUTRIDER", ch_outrider_results, ch_hgnc_map)
-            .set { outrider_ch }
-
-    emit:
-        fraser_ch
-        outrider_ch
-}
-
-workflow snv_annotate {
-    take:
-        ch_vcf  // channel: [mandatory] [ val(meta), path(vcf), path(vcf_tbi) ]
-        ch_cadd // channel: [mandatory] [ path(cadd), path(cadd_tbi) ]
-
-    main:
-
-        ch_vcf.view()
-
-        ch_meta = ch_vcf.map { it[0] }
-
-        CREATE_PED(ch_meta)
-
-        // CADD indels
-        EXTRACT_INDELS_FOR_CADD(ch_vcf)
-        INDEL_VEP(EXTRACT_INDELS_FOR_CADD.out.vcf)
-        CALCULATE_INDEL_CADD(INDEL_VEP.out.vcf)
-
-        ANNOTATE_VEP(CALCULATE_INDEL_CADD.out.vcf)
-        VCF_ANNO(ANNOTATE_VEP.out.vcf)
-        MODIFY_VCF(VCF_ANNO.out.vcf)
-        MARK_SPLICE(MODIFY_VCF.out.vcf)
-
-        ADD_CADD_SCORES_TO_VCF(MARK_SPLICE.out.vcf, ch_cadd)
-        VCF_COMPLETION(ADD_CADD_SCORES_TO_VCF.out.vcf)
-    
-    emit:
-        ped = CREATE_PED.out.ped
-        vcf = VCF_COMPLETION.out.vcf
-}
-
-workflow snv_score {
-
-    take:
-        ch_annotated_vcf // channel: [mandatory] [ val(meta), path(vcf), path(vcf_tbi) ]
-        ch_ped // channel: [mandatory] [ path(ped) ]
-        ch_score_config // channel: [mandatory] [ path(score_config) ]
-    
-    main:
-        GENMOD_MODELS(ch_annotated_vcf, ch_ped).set { ch_genmod_models }
-        GENMOD_ANNOTATE(ch_genmod_models).set { ch_genmod_annotate }
-        GENMOD_COMPOUND(ch_genmod_annotate).set { ch_genmod_compound }
-        GENMOD_SCORE(ch_genmod_compound, ch_ped, ch_score_config).set { ch_genmod_score }
-    
-    emit:
-        ch_genmod_score
-}
-
-workflow postprocess {
-    take:
-        scored_vcf_ch
-        csv_ch
-        multiqc_ch // Both general stats and the picard
-    
-    main:
-        FILTER_VARIANTS_ON_SCORE(scored_vcf_ch, params.score_threshold)
-
-        MAKE_SCOUT_YAML(csv_ch)
-            .set { after_hello_ch }
-
-        PARSE_TOMTE_QC(multiqc_ch)
-        
-    emit:
-        after_hello_ch
-}
-

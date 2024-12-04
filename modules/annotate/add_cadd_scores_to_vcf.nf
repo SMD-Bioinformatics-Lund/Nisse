@@ -1,6 +1,6 @@
 process ADD_CADD_SCORES_TO_VCF {
 
-	tag "${meta.id}"
+    tag "${meta.sample}"
     label 'process_small'
     // container "${params.container_genmod}"
 
@@ -9,19 +9,19 @@ process ADD_CADD_SCORES_TO_VCF {
         tuple file(cadd_scores), file(cadd_scores_tbi)
 
     output:
-        tuple val(meta), file("${meta.group}.cadd.vcf"), emit: vcf
+        tuple val(meta), file("${meta.sample}.cadd.vcf"), emit: vcf
         tuple val(meta), file("*versions.yml"), emit: versions
 
     script:
         """
-        genmod annotate --cadd-file ${cadd_scores} ${vcf} > ${meta.group}.cadd.vcf
+        genmod annotate --cadd-file ${cadd_scores} ${vcf} > ${meta.sample}.cadd.vcf
 
         ${add_cadd_scores_to_vcf_version(task)}
         """
 
     stub:
         """
-        touch "${meta.group}.cadd.vcf"
+        touch "${meta.sample}.cadd.vcf"
         ${add_cadd_scores_to_vcf_version(task)}
         """
 }

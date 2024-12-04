@@ -1,19 +1,21 @@
 process INDEL_VEP {
-	// container "${params.container_vep}"
+
+    tag "${meta.sample}"
 	label "process_medium"
+	// container "${params.container_vep}"
 
 	input:
 		tuple val(meta), file(vcf)
 
 	output:
-		tuple val(meta), file("${meta.id}.only_indels.vep.filtered.vcf"), emit: vcf
+		tuple val(meta), file("${meta.sample}.only_indels.vep.filtered.vcf"), emit: vcf
 		tuple val(meta), file("*versions.yml"), emit: versions
 
 	script:
 		"""
 		vep \\
 			-i "${vcf}" \\
-			-o "${meta.group}.only_indels.vep.vcf" \\
+			-o "${meta.sample}.only_indels.vep.vcf" \\
 			--offline \\
 			--cache \\
 			--merged \\
@@ -26,13 +28,13 @@ process INDEL_VEP {
 			--force_overwrite \\
 			--no_stats \\
 			--fork "${task.cpus}"
-		filter_indels.pl "${meta.id}.only_indels.vep.vcf" > "${meta.id}.only_indels.vep.filtered.vcf"
+		filter_indels.pl "${meta.sample}.only_indels.vep.vcf" > "${meta.sample}.only_indels.vep.filtered.vcf"
 		${indel_vep_version(task)}
 		"""
 
 	stub:
 		"""
-		touch "${meta.id}.only_indels.vep.filtered.vcf"
+		touch "${meta.sample}.only_indels.vep.filtered.vcf"
 		${indel_vep_version(task)}
 		"""
 }

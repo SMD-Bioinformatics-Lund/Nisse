@@ -1,12 +1,14 @@
 process GENMOD_SCORE {
 
+    tag "${meta.sample}"
+
     input:
-        tuple val(prefix), path(vcf)
+        tuple val(meta), path(vcf)
+        tuple val(meta2), path(ped)
         path(score_config)
-        path(ped)
 
     output:
-        tuple val(prefix), path("*_score.vcf"), emit: vcf
+        tuple val(meta), path("*_score.vcf"), emit: vcf
 
     script:
     """
@@ -15,12 +17,12 @@ process GENMOD_SCORE {
         --score_config ${score_config} \\
         --family_file ${ped} \\
         --rank_results \\
-        --outfile ${prefix}_score.vcf \\
+        --outfile ${meta.sample}_score.vcf \\
         ${vcf}
     """
 
     stub:
     """
-    touch ${prefix}_score.vcf
+    touch ${meta.sample}_score.vcf
     """
 }

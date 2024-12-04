@@ -1,11 +1,13 @@
 process VCF_COMPLETION {
+	
+    tag "${meta.sample}"
 	label "process_small"
 
 	input:
 		tuple val(meta), file(vcf)
 
 	output:
-		tuple val(meta), file("${meta.id}.scored.vcf.gz"), file("${meta.id}.scored.vcf.gz.tbi"), emit: vcf
+		tuple val(meta), file("${meta.sample}.scored.vcf.gz"), file("${meta.sample}.scored.vcf.gz.tbi"), emit: vcf
 		tuple val(meta), file("*versions.yml"), emit: versions
 
 	script:
@@ -20,8 +22,8 @@ process VCF_COMPLETION {
 
 	stub:
 		"""
-		touch "${meta.id}.scored.vcf.gz"
-		touch "${meta.id}.scored.vcf.gz.tbi"
+		touch "${meta.sample}.scored.vcf.gz"
+		touch "${meta.sample}.scored.vcf.gz.tbi"
 
 		${vcf_completion_version(task)}
 		"""

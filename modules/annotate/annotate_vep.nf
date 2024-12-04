@@ -14,7 +14,7 @@ process ANNOTATE_VEP {
 		tuple val(meta), file("*versions.yml"), emit: versions
 
 	script:
-		def group = "${meta.case}"
+		def group = "${meta.sample}"
 		"""
 		vep \\
 			-i "${vcf}" \\

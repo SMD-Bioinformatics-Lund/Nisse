@@ -1,6 +1,6 @@
 process MARK_SPLICE {
 
-	tag "${meta.id}"
+	tag "${meta.sample}"
 	// container "${params.containers.base}"
     label 'process_small'
 
@@ -9,15 +9,15 @@ process MARK_SPLICE {
 		tuple val(meta), file(vcf)
 
 	output:
-		tuple val(meta), file("${meta.id}.marksplice.vcf"), emit: vcf
+		tuple val(meta), file("${meta.sample}.marksplice.vcf"), emit: vcf
 
 	script:
 		"""
-		/opt/bin/mark_spliceindels.pl $vcf > ${meta.id}.marksplice.vcf
+		/opt/bin/mark_spliceindels.pl $vcf > ${meta.sample}.marksplice.vcf
 		"""
 
 	stub:
 		"""
-		touch "${meta.id}.marksplice.vcf"
+		touch "${meta.sample}.marksplice.vcf"
 		"""
 }
