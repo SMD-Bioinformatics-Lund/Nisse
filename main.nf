@@ -150,7 +150,6 @@ workflow SNV_ANNOTATE {
     ch_versions.mix(INDEL_VEP.out.versions)
     ch_versions.mix(CALCULATE_INDEL_CADD.out.versions)
     ch_versions.mix(BGZIP_INDEL_CADD.out.versions)
-    ch_versions.mix(MARK_SPLICE.out.versions)
 
     emit:
     vcf = ADD_CADD_SCORES_TO_VCF.out.vcf
