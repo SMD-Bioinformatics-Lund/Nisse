@@ -37,10 +37,6 @@ workflow {
         .splitCsv(header: true)
         .set { meta_ch }
 
-    meta_count = meta_ch.count()
-    meta_count
-        .ifEmpty { error "CSV file is empty or missing data rows." }
-
     vcf_ch = meta_ch.map { meta -> 
         def sample_id = meta.sample
         def variant_calls = "${params.tomte_results}/call_variants/${sample_id}_split_rmdup_info.vcf.gz"
@@ -150,8 +146,6 @@ workflow SNV_ANNOTATE {
     ch_versions = Channel.empty()
     ch_versions.mix(ANNOTATE_VEP.out.versions)
     ch_versions.mix(VCF_ANNO.out.versions)
-    ch_versions.mix(MODIFY_VCF.out.versions)
-    ch_versions.mix(MARK_SPLICE.out.versions)
     ch_versions.mix(EXTRACT_INDELS_FOR_CADD.out.versions)
     ch_versions.mix(INDEL_VEP.out.versions)
     ch_versions.mix(CALCULATE_INDEL_CADD.out.versions)
