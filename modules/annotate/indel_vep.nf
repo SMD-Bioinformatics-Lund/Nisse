@@ -27,7 +27,8 @@ process INDEL_VEP {
 			--dir_cache "${params.vep.VEP_CACHE}" \\
 			--force_overwrite \\
 			--no_stats \\
-			--fork "${task.cpus}"
+			--fork "${task.cpus}" \\
+			--format vcf
 		filter_indels.pl "${meta.sample}.only_indels.vep.vcf" > "${meta.sample}.only_indels.vep.filtered.vcf"
 		${indel_vep_version(task)}
 		"""

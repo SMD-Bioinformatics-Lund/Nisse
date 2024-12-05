@@ -11,7 +11,7 @@ process PREPARE_DROP {
     path(hgnc_map)
 
     output:
-    path "${meta.sample}_drop_parsed.tsv"
+    path "${meta.sample}_drop_parsed.tsv", emit: drop
 
     script:
     // FIXME: What to use here? What did we use during validation?

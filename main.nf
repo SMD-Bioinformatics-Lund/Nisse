@@ -47,6 +47,12 @@ workflow {
         tuple(meta, file(variant_calls), file(variant_calls_tbi)) 
     }
 
+    multiqc_ch = meta_ch.map { meta -> 
+        def multiqc_summary = "${params.tomte_results}/multiqc/multiqc_data/multiqc_general_stats.txt"
+        def picard_coverage = "${params.tomte_results}/multiqc/multiqc_data/picard_rna_coverage.txt"
+        tuple(meta, file(multiqc_summary), file(picard_coverage))
+    }
+
     Channel
         .fromPath(params.hgnc_map)
         .set { hgnc_map_ch }
@@ -78,6 +84,10 @@ workflow {
     SNV_ANNOTATE(PREPROCESS.out.vcf)
     SNV_SCORE(SNV_ANNOTATE.out.vcf, CREATE_PED.out.ped, score_config_ch)
 
+    drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
+
+    POSTPROCESS(SNV_SCORE.out.vcf, drop_results, multiqc_ch)
+
     // FIXME: Collect versions
 }
 
@@ -99,6 +109,8 @@ workflow PREPROCESS {
 
     emit:
     vcf = PREPARE_VCF.out.vcf
+    fraser = PREPARE_DROP_FRASER.out.drop
+    outrider = PREPARE_DROP_OUTRIDER.out.drop
 }
 
 workflow SNV_ANNOTATE {
@@ -141,19 +153,17 @@ workflow SNV_SCORE {
     vcf = VCF_COMPLETION.out.vcf
 }
 
-workflow postprocess {
+workflow POSTPROCESS {
     take:
     scored_vcf_ch
-    csv_ch
+    ch_drop_results
     multiqc_ch // Both general stats and the picard
 
     main:
     FILTER_VARIANTS_ON_SCORE(scored_vcf_ch, params.score_threshold)
-    MAKE_SCOUT_YAML(csv_ch)
+    MAKE_SCOUT_YAML(ch_drop_results, params.tomte_results, params.template_yaml)
     PARSE_TOMTE_QC(multiqc_ch)
 
-    emit:
-    after_hello_ch
 }
 
 // OK some thinking

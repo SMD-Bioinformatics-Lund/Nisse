@@ -2,6 +2,7 @@ process PARSE_TOMTE_QC {
 
     tag "${meta.sample}"
 	label "process_low"
+    // FIXME: Does this container work?
 	container "${params.containers.base}"
 
     input:
@@ -12,7 +13,11 @@ process PARSE_TOMTE_QC {
 
     script:
     """
-    bash hello.sh "placeholder" > "${meta.sample}_out.json"
+    parse_tomte_qc.py \\
+        --multiqc_general_stats "" \\
+        --sample_id "" \\
+        --picard_rna_coverage "" \\
+        --output_file "${meta.sample}_out.json"
     """
 
     stub:

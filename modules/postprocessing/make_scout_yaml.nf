@@ -5,14 +5,22 @@ process MAKE_SCOUT_YAML {
 	container "${params.containers.base}"
 
     input:
-    tuple val(meta), path(input_file)
+    tuple val(meta), path(fraser), path(outrider)
+    path(results_dir)
+    path(template_yaml)
 
     output:
-    path 'hello_out.txt', emit: yaml
+    path "${meta.sample}.yaml", emit: yaml
 
     script:
     """
-    bash hello.sh ${input_file} > "${meta.sample}_out.txt"
+    bash produce_yaml.sh \
+        "${template_yaml}" \
+        "${meta.sample}" \
+        "${results_dir}" \
+        "${fraser}" \
+        "${outrider}" \
+        "${meta.sample}.yaml"
     """
 
     stub:
