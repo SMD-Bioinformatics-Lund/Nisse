@@ -14,9 +14,9 @@ process PARSE_TOMTE_QC {
     script:
     """
     parse_tomte_qc.py \\
-        --multiqc_general_stats "" \\
-        --sample_id "" \\
-        --picard_rna_coverage "" \\
+        --multiqc_general_stats "${multiqc_general_stats}" \\
+        --sample_id "${meta.sample}" \\
+        --picard_rna_coverage "${picard_rna_coverage}" \\
         --output_file "${meta.sample}_out.json"
     """
 

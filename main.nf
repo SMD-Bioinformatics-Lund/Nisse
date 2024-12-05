@@ -163,7 +163,6 @@ workflow POSTPROCESS {
     FILTER_VARIANTS_ON_SCORE(scored_vcf_ch, params.score_threshold)
     MAKE_SCOUT_YAML(ch_drop_results, params.tomte_results, params.template_yaml)
     PARSE_TOMTE_QC(multiqc_ch)
-
 }
 
 // OK some thinking
