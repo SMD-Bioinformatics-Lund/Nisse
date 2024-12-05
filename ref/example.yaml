@@ -1,0 +1,26 @@
+---
+
+owner: rnaseq
+family: <FAMILY_ID>
+family_name: <FAMILY_NAME>
+synopsis:
+    - 'First batch of Tomte samples'
+samples:
+    - analysis_type: wgs
+      sample_id: <SAMPLE_ID>
+      sample_name: <SAMPLE_NAME>
+      sex: male
+      phenotype: affected
+      tissue_type: blood
+      bam_path: <BAM>
+      rna_alignment_path: <RNA_BAM>
+      rna_coverage_bigwig: <RNA_BIGWIG>
+      splice_junctions_bed: <RNA_SPLICE>
+vcf_snv: <VCF>
+omics_files:
+    fraser: <FRASER>
+    outrider: <OUTRIDER>
+default_gene_panels: []
+gene_panels: []
+human_genome_build: '38'
+rna_human_genome_build: '38'
