@@ -129,17 +129,26 @@ def make_combined_dict(
 
     shared_out_dict = {}
     for new_key, old_key in shared_keys.items():
-        value = shared_dict[old_key]
+        value = shared_dict.get(old_key)
+        if value is None:
+            valid_keys = list(shared_dict.keys())
+            raise ValueError(f"Tried getting key: {old_key}, valid keys are: {', '.join(valid_keys)})")
         shared_out_dict[new_key] = value
 
     fw_out_dict = {}
     for new_key, old_key in single_keys.items():
-        value = fw_dict[old_key]
+        value = fw_dict.get(old_key)
+        if value is None:
+            valid_keys = list(fw_dict.keys())
+            raise ValueError(f"Tried getting key: {old_key}, valid keys are: {', '.join(valid_keys)})")
         fw_out_dict[f"fw_{new_key}"] = value
 
     rv_out_dict = {}
     for new_key, old_key in single_keys.items():
         value = rv_dict[old_key]
+        if value is None:
+            valid_keys = list(rv_dict.keys())
+            raise ValueError(f"Tried getting key: {old_key}, valid keys are: {', '.join(valid_keys)})")
         rv_out_dict[f"rv_{new_key}"] = value
 
     shared_out_dict.update(fw_out_dict)
