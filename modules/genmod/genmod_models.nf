@@ -10,7 +10,7 @@ process GENMOD_MODELS {
 
     output:
         tuple val(meta), path("${meta.sample}_models.vcf"), emit: vcf
-        path("*_versions.yaml"), emit: versions
+        path("*_versions.yml"), emit: versions
 
     script:
     """
