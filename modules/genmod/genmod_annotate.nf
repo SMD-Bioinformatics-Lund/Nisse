@@ -9,7 +9,7 @@ process GENMOD_ANNOTATE {
 
     output:
         tuple val(meta), path("*_annotate.vcf"), emit: vcf
-        path("versions.yaml"), emit: vcf
+        path("*_versions.yaml"), emit: vcf
 
     script:
     """
@@ -20,12 +20,20 @@ process GENMOD_ANNOTATE {
         --outfile ${meta.sample}_annotate.vcf \\
         ${vcf}
 
-    echo "FIXME" > "versions.yaml"
+    ${genmodscore_version(task)}
     """
 
     stub:
     """
     touch ${meta.sample}_annotate.vcf
-    echo "FIXME" > "versions.yaml"
+    ${genmodscore_version(task)}
     """
+}
+def genmodscore_version(task) {
+	"""
+	cat <<-END_VERSIONS > ${task.process}_versions.yml
+	${task.process}:
+	    genmod: \$(echo \$(genmod --version 2>&1) | sed -e "s/^.*genmod version: //")
+	END_VERSIONS	
+	"""
 }

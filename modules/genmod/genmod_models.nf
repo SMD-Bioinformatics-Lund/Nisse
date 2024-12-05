@@ -10,7 +10,7 @@ process GENMOD_MODELS {
 
     output:
         tuple val(meta), path("${meta.sample}_models.vcf"), emit: vcf
-        path("versions.yaml"), emit: versions
+        path("*_versions.yaml"), emit: versions
 
     script:
     """
@@ -22,12 +22,20 @@ process GENMOD_MODELS {
         --outfile "${meta.sample}_models.vcf" \\
         "${vcf}"
     
-    echo "FIXME" > "versions.yaml"
+    ${genmodscore_version(task)}
     """
 
     stub:
     """
     touch "${meta.sample}_models.vcf"
-    echo "FIXME" > "versions.yaml"
+    ${genmodscore_version(task)}
     """
+}
+def genmodscore_version(task) {
+	"""
+	cat <<-END_VERSIONS > ${task.process}_versions.yml
+	${task.process}:
+	    genmod: \$(echo \$(genmod --version 2>&1) | sed -e "s/^.*genmod version: //")
+	END_VERSIONS	
+	"""
 }

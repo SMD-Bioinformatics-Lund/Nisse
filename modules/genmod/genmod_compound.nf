@@ -9,7 +9,7 @@ process GENMOD_COMPOUND {
 
     output:
         tuple val(meta), path("*_compound.vcf"), emit: vcf
-        path("versions.yaml"), emit: versions
+        path("*_versions.yaml"), emit: versions
 
     script:
     """
@@ -19,12 +19,20 @@ process GENMOD_COMPOUND {
         --outfile ${meta.sample}_compound.vcf \\
         --penalty 0 \\
         ${vcf}
-    echo "FIXME" > "versions.yaml"
+    ${genmodscore_version(task)}
     """
 
     stub:
     """
     touch ${meta.sample}_compound.vcf
-    echo "FIXME" > "versions.yaml"
+    ${genmodscore_version(task)}
     """
+}
+def genmodscore_version(task) {
+	"""
+	cat <<-END_VERSIONS > ${task.process}_versions.yml
+	${task.process}:
+	    genmod: \$(echo \$(genmod --version 2>&1) | sed -e "s/^.*genmod version: //")
+	END_VERSIONS	
+	"""
 }
