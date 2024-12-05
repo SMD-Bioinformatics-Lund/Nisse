@@ -2,13 +2,13 @@
 
 import argparse
 import json
-from typing import Any
+from typing import Any, Optional, Dict, List
 import numpy as np
 from ast import literal_eval
 
 
 def main(
-    multiqc_general_stats: str, picard_rna_coverage: str, output_file: str, sample_id: str | None
+    multiqc_general_stats: str, picard_rna_coverage: str, output_file: str, sample_id: Optional[str]
 ):
 
     in_fp = multiqc_general_stats
@@ -47,13 +47,13 @@ def main(
         for sample, coverage_values in coverage_data.items():
             slope = calculate_slope(coverage_values)
             results[sample]["genebody_cov_slope"] = slope
-            results[sample]["genebody_cov"] = list(coverage_values)
+            results[sample]["genebody_cov"] = List(coverage_values)
 
     if output_file:
         write_results(results, output_file, sample_id)
 
 
-def write_results(data: dict[str, Any], output_path: str, sample_id: str | None) -> None:
+def write_results(data: Dict[str, Any], output_path: str, sample_id: Optional[str]) -> None:
     """
     Write json blob with general statistics and rna cov values to a file.
 
@@ -72,7 +72,7 @@ def write_results(data: dict[str, Any], output_path: str, sample_id: str | None)
     print(f"Results written to {output_path}.")
 
 
-def build_dict(headers: list[str], fields: list[str]) -> dict[str, str]:
+def build_dict(headers: List[str], fields: List[str]) -> Dict[str, str]:
     assert len(headers) == len(
         fields
     ), f"Headers and fields nbrs differs {len(headers)} {len(fields)}"
@@ -85,11 +85,11 @@ def build_dict(headers: list[str], fields: list[str]) -> dict[str, str]:
 
 
 def make_combined_dict(
-    headers: list[str],
-    shared_fields: list[str],
-    fw_fields: list[str],
-    rv_fields: list[str],
-) -> tuple[str, dict[str, str]]:
+    headers: List[str],
+    shared_fields: List[str],
+    fw_fields: List[str],
+    rv_fields: List[str],
+) -> tuple[str, Dict[str, str]]:
     sample = shared_fields[0]
 
     nbr_shared = len(shared_fields) - 1
@@ -148,7 +148,7 @@ def make_combined_dict(
     return sample, shared_out_dict
 
 
-def load_coverage_data(file_path: str) -> dict[str, list[float]]:
+def load_coverage_data(file_path: str) -> Dict[str, List[float]]:
     """
     Load RNA coverage data from a file.
 
@@ -181,7 +181,7 @@ def load_coverage_data(file_path: str) -> dict[str, list[float]]:
     return data
 
 
-def calculate_slope(coverage_values: list[float]) -> float:
+def calculate_slope(coverage_values: List[float]) -> float:
     """
     Calculate the slope of RNA coverage values using linear regression.
     Considering only the 20-80% percentiles of the gene body.
