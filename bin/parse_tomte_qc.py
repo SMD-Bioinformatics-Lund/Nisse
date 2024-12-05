@@ -47,7 +47,7 @@ def main(
         for sample, coverage_values in coverage_data.items():
             slope = calculate_slope(coverage_values)
             results[sample]["genebody_cov_slope"] = slope
-            results[sample]["genebody_cov"] = List(coverage_values)
+            results[sample]["genebody_cov"] = list(coverage_values)
 
     if output_file:
         write_results(results, output_file, sample_id)
