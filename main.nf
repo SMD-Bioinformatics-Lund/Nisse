@@ -28,6 +28,9 @@ include { FILTER_VARIANTS_ON_SCORE } from './modules/postprocessing/filter_varia
 include { PARSE_TOMTE_QC } from './modules/postprocessing/parse_tomte_qc.nf'
 include { MAKE_SCOUT_YAML } from './modules/postprocessing/make_scout_yaml.nf'
 
+// FIXME: Publish dirs, what results to retain
+// Control from config?
+
 workflow {
 
     validateAllParams()
