@@ -9,6 +9,7 @@ process GENMOD_COMPOUND {
 
     output:
         tuple val(meta), path("*_compound.vcf"), emit: vcf
+        path("versions.yaml"), emit: versions
 
     script:
     """
@@ -18,10 +19,12 @@ process GENMOD_COMPOUND {
         --outfile ${meta.sample}_compound.vcf \\
         --penalty 0 \\
         ${vcf}
+    echo "FIXME" > "versions.yaml"
     """
 
     stub:
     """
     touch ${meta.sample}_compound.vcf
+    echo "FIXME" > "versions.yaml"
     """
 }

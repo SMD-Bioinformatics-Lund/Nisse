@@ -9,14 +9,13 @@ process PREPARE_DROP {
     val(label)
     tuple val(meta), path(drop_full)
     path(hgnc_map)
+    val(stat_col)
+    val(stat_cutoff)
 
     output:
     path "${meta.sample}_drop_parsed.tsv", emit: drop
 
     script:
-    // FIXME: What to use here? What did we use during validation?
-    def stat_col = "pValue" // pValue or padjust
-    def stat_cutoff = 0.5
     def hgnc_symbol_col = "hgncSymbol"
     """
     prepare_drop.py \\

@@ -10,20 +10,24 @@ process GENMOD_MODELS {
 
     output:
         tuple val(meta), path("${meta.sample}_models.vcf"), emit: vcf
+        path("versions.yaml"), emit: versions
 
     script:
     """
     genmod \\
         models \\
         --whole_gene \\
-        --processes ${task.cpus} \\
-        --family_file ${family} \\
-        --outfile ${meta.sample}_models.vcf \\
-        ${vcf}
+        --processes "${task.cpus}" \\
+        --family_file "${family}" \\
+        --outfile "${meta.sample}_models.vcf" \\
+        "${vcf}"
+    
+    echo "FIXME" > "versions.yaml"
     """
 
     stub:
     """
-    touch ${meta.sample}_models.vcf
+    touch "${meta.sample}_models.vcf"
+    echo "FIXME" > "versions.yaml"
     """
 }

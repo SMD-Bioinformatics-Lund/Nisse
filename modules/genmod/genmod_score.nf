@@ -11,6 +11,7 @@ process GENMOD_SCORE {
 
     output:
         tuple val(meta), path("*_score.vcf"), emit: vcf
+        path("versions.yaml"), emit: versions
 
     script:
     """
@@ -21,10 +22,12 @@ process GENMOD_SCORE {
         --rank_results \\
         --outfile ${meta.sample}_score.vcf \\
         ${vcf}
+    echo "FIXME" > "versions.yaml"
     """
 
     stub:
     """
     touch ${meta.sample}_score.vcf
+    echo "FIXME" > "versions.yaml"
     """
 }
