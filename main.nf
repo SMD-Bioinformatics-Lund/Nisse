@@ -48,8 +48,11 @@ workflow {
     }
 
     multiqc_ch = meta_ch.map { meta -> 
-        def multiqc_summary = "${params.tomte_results}/multiqc/multiqc_data/multiqc_general_stats.txt"
-        def picard_coverage = "${params.tomte_results}/multiqc/multiqc_data/picard_rna_coverage.txt"
+        // FIXME: Restore when up to date data is generated
+        // def multiqc_summary = "${params.tomte_results}/multiqc/multiqc_data/multiqc_general_stats.txt"
+        // def picard_coverage = "${params.tomte_results}/multiqc/multiqc_data/picard_rna_coverage.txt"
+        def multiqc_summary = "${params.multiqc_temp}"
+        def picard_coverage = "${params.picard_rna_coverage_temp}"
         tuple(meta, file(multiqc_summary), file(picard_coverage))
     }
 
