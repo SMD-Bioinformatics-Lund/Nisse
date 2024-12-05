@@ -64,6 +64,9 @@ def write_results(data: Dict[str, Any], output_path: str, sample_id: Optional[st
     with open(output_path, "w") as output_file:
         if sample_id is not None:
             print(f"Extracting only sample: {sample_id}")
+            # FIXME: Temporary fix to run with wrong annotation data
+            print(f"Temporary ugly solution to circumvent using wrong QC data, remove ASAP (241205 / Jakob)")
+            sample_id = list(data.keys())[0]
             sample_only_data = data.get(sample_id)
             if sample_only_data is None:
                 all_valid_ids = list(data.keys())
