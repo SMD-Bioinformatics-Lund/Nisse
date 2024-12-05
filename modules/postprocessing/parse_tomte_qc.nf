@@ -2,7 +2,6 @@ process PARSE_TOMTE_QC {
 
     tag "${meta.sample}"
 	label "process_low"
-    // FIXME: Does this container work?
 	container "${params.containers.base}"
 
     input:

@@ -98,15 +98,8 @@ workflow {
     drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
 
     POSTPROCESS(SNV_SCORE.out.vcf, drop_results, multiqc_ch)
-    // FIXME: Collect versions
 
-        // ch_versions = ch_versions.mix(CAT_FASTQ.out.versions.first())
-        // ch_versions = ch_versions.mix(FASTP.out.versions.first())
-        // ch_versions = ch_versions.mix(STAR_ALIGN.out.versions.first())
-        // ch_versions = ch_versions.mix(SAMTOOLS_INDEX.out.versions.first())
-        // ch_versions = ch_versions.mix(SAMTOOLS_VIEW.out.versions.first())
-        // ch_versions = ch_versions.mix(SALMON_QUANT.out.versions.first())
-
+    // FIXME: Test and gather more versions (Python)
     softwareVersionsToYAML(ch_versions)
         .collectFile(
             storeDir: "${params.outdir}/pipeline_info",
