@@ -32,13 +32,16 @@ workflow {
 
     validateAllParams()
 
-    // FIXME: Check that the input CSV has only one line
-    // FIXME: Early verification of the input files
-
     Channel
         .fromPath(params.csv)
         .splitCsv(header: true)
         .set { meta_ch }
+
+    meta_count = meta_ch.count()
+    meta_count
+        .ifEmpty { error "CSV file is empty or missing data rows." }
+        .filter { it == 1 }
+        .ifEmpty { error "CSV must contain exactly one data row, found ${meta_count.value}" }
 
     vcf_ch = meta_ch.map { meta -> 
         def sample_id = meta.sample
