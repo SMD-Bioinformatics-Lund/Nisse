@@ -2,7 +2,7 @@
 
 import argparse
 import json
-from typing import Any, Optional, Dict, List
+from typing import Any, Optional, Dict, List, Tuple
 import numpy as np
 from ast import literal_eval
 
@@ -89,7 +89,7 @@ def make_combined_dict(
     shared_fields: List[str],
     fw_fields: List[str],
     rv_fields: List[str],
-) -> tuple[str, Dict[str, str]]:
+) -> Tuple[str, Dict[str, str]]:
     sample = shared_fields[0]
 
     nbr_shared = len(shared_fields) - 1
