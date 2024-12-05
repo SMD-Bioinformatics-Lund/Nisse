@@ -9,7 +9,7 @@ process GENMOD_ANNOTATE {
 
     output:
         tuple val(meta), path("*_annotate.vcf"), emit: vcf
-        path("*_versions.yaml"), emit: vcf
+        path("*_versions.yaml"), emit: versions
 
     script:
     """
