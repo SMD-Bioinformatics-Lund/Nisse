@@ -64,7 +64,10 @@ def write_results(data: Dict[str, Any], output_path: str, sample_id: Optional[st
     with open(output_path, "w") as output_file:
         if sample_id is not None:
             print(f"Extracting only sample: {sample_id}")
-            sample_only_data = data[sample_id]
+            sample_only_data = data.get(sample_id)
+            if sample_only_data is None:
+                all_valid_ids = list(data.keys())
+                raise ValueError(f"Tried getting sample_id {sample_id}. Valid IDs are: {', '.join(all_valid_ids)}")
             output_file.write(json.dumps(sample_only_data))
         else:
             for sample_name, values in data.items():
