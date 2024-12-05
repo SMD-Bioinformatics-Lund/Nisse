@@ -28,6 +28,9 @@ include { FILTER_VARIANTS_ON_SCORE } from './modules/postprocessing/filter_varia
 include { PARSE_TOMTE_QC } from './modules/postprocessing/parse_tomte_qc.nf'
 include { MAKE_SCOUT_YAML } from './modules/postprocessing/make_scout_yaml.nf'
 
+include { validateAllParams } from './modules/utils'
+include { softwareVersionsToYAML } from './modules/utils'
+
 workflow {
 
     validateAllParams()
@@ -158,9 +161,9 @@ workflow SNV_ANNOTATE {
 
 workflow SNV_SCORE {
     take:
-    ch_annotated_vcf // channel: [mandatory] [ val(meta), path(vcf), path(vcf_tbi) ]
-    ch_ped // channel: [mandatory] [ path(ped) ]
-    ch_score_config // channel: [mandatory] [ path(score_config) ]
+    ch_annotated_vcf
+    ch_ped
+    ch_score_config
 
     main:
     GENMOD_MODELS(ch_annotated_vcf, ch_ped)
@@ -185,7 +188,7 @@ workflow POSTPROCESS {
     take:
     scored_vcf_ch
     ch_drop_results
-    multiqc_ch // Both general stats and the picard
+    multiqc_ch
 
     main:
     FILTER_VARIANTS_ON_SCORE(scored_vcf_ch, params.score_threshold)
@@ -193,68 +196,3 @@ workflow POSTPROCESS {
     PARSE_TOMTE_QC(multiqc_ch)
 }
 
-// OK some thinking
-// In point is output from Tomte
-// 1. SNV calls on RNA-seq
-// 2. DROP results
-// In reality the DROP results will be for a single sample, isn't it?
-// We can maybe assume that pre-processing here
-
-// OK, and now I can start with drafting the stub run
-
-
-def assignDefaultParams(target_params, user_params) {
-    target_params.each { param ->
-        if (!user_params.containers.containsKey(param)) {
-            user_params.containers[param] = null
-        }
-    }
-}
-
-def validateParams(targetParams, search_scope, type) {
-    def missingParams = targetParams.findAll { !search_scope[it] }
-    if (!missingParams.isEmpty()) {
-        def missingList = missingParams.collect { "--${it}" }.join(", ")
-        error("Error: Missing required parameter(s) in ${type}: ${missingList}")
-    }
-}
-
-
-def validateAllParams() {
-    def containers = ['genmod', 'vep', 'cadd', 'base']
-    def vepParams = [
-        'VEP_SYNONYMS',
-        'VEP_FASTA',
-        'VEP_CACHE',
-        'VEP_PLUGINS',
-        'VEP_TRANSCRIPT_DISTANCE',
-        'CADD',
-        'MAXENTSCAN',
-        'DBNSFP',
-        'GNOMAD_EXOMES',
-        'GNOMAD_GENOMES',
-        'GNOMAD_MT',
-        'PHYLOP',
-        'PHASTCONS'
-    ]
-
-    def otherParams = ['csv', 'score_thres', 'snv_calls']
-
-    assignDefaultParams(containers, params)
-    assignDefaultParams(vepParams, params)
-    assignDefaultParams(otherParams, params)
-
-    validateParams(otherParams, params, "base")
-    validateParams(containers, params.containers, "containers")
-    validateParams(vepParams, params.vep, "vep")
-}
-
-// Grabbed from Tomte
-def softwareVersionsToYAML(ch_versions) {
-    return ch_versions.unique().map { version -> processVersionsFromYAML(version) }.unique()
-}
-def processVersionsFromYAML(yaml_file) {
-    def yaml = new org.yaml.snakeyaml.Yaml()
-    def versions = yaml.load(yaml_file).collectEntries { k, v -> [k.tokenize(':')[-1], v] }
-    return yaml.dumpAsMap(versions).trim()
-}
