@@ -40,8 +40,6 @@ workflow {
     meta_count = meta_ch.count()
     meta_count
         .ifEmpty { error "CSV file is empty or missing data rows." }
-        .filter { it == 1 }
-        .ifEmpty { error "CSV must contain exactly one data row, found ${meta_count.value}" }
 
     vcf_ch = meta_ch.map { meta -> 
         def sample_id = meta.sample
