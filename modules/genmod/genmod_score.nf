@@ -2,7 +2,7 @@ process GENMOD_SCORE {
 
     tag "${meta.sample}"
 	label "process_low"
-	container "${params.containers.base}"
+	container "${params.containers.genmod}"
 
     input:
         tuple val(meta), path(vcf)
