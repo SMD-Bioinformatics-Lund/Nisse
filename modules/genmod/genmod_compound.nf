@@ -1,7 +1,7 @@
 process GENMOD_COMPOUND {
 
     tag "${meta.sample}"
-	label "process_low"
+	label "process_medium"
 	container "${params.containers.genmod}"
 
     input:
