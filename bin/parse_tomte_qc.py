@@ -105,27 +105,27 @@ def make_combined_dict(
 
     # Shared keys (fw+rv)
     shared_keys = {}
-    shared_keys["snvs"] = "bcftools_stats-number_of_SNPs"
-    shared_keys["indels"] = "bcftools_stats-number_of_indels"
-    shared_keys["ts_tv"] = "bcftools_stats-tstv"
-    shared_keys["insert_size"] = "picard_insertsizemetrics-summed_median"
-    shared_keys["pct_rrna"] = "picard_rnaseqmetrics-PCT_RIBOSOMAL_BASES"
-    shared_keys["pct_mrna"] = "picard_rnaseqmetrics-PCT_MRNA_BASES"
-    shared_keys["n_reads"] = "star-total_reads"
-    shared_keys["m_aligned"] = "star-uniquely_mapped"
-    shared_keys["pct_aligned"] = "star-uniquely_mapped_percent"
-    shared_keys["pct_dup"] = "fastp-pct_duplication"
-    shared_keys["m_reads_after_filtering"] = "fastp-filtering_result_passed_filter_reads"
-    shared_keys["gc"] = "fastp-after_filtering_gc_content"
-    shared_keys["pct_pass_filter"] = "fastp-after_filtering_q30_rate"
-    shared_keys["pct_adapter"] = "fastp-pct_adapter"
+    shared_keys["snvs"] = "bcftools_stats_number_of_SNPs"
+    shared_keys["indels"] = "bcftools_stats_number_of_indels"
+    shared_keys["ts_tv"] = "bcftools_stats_tstv"
+    shared_keys["insert_size"] = "picard_insertsizemetrics_summed_median"
+    shared_keys["pct_rrna"] = "picard_rnaseqmetrics_PCT_RIBOSOMAL_BASES"
+    shared_keys["pct_mrna"] = "picard_rnaseqmetrics_PCT_MRNA_BASES"
+    shared_keys["n_reads"] = "star_total_reads"
+    shared_keys["m_aligned"] = "star_uniquely_mapped"
+    shared_keys["pct_aligned"] = "star_uniquely_mapped_percent"
+    shared_keys["pct_dup"] = "fastp_pct_duplication"
+    shared_keys["m_reads_after_filtering"] = "fastp_filtering_result_passed_filter_reads"
+    shared_keys["gc"] = "fastp_after_filtering_gc_content"
+    shared_keys["pct_pass_filter"] = "fastp_after_filtering_q30_rate"
+    shared_keys["pct_adapter"] = "fastp_pct_adapter"
 
     # Single keys (fw or rv)
     single_keys = {}
-    single_keys["dups"] = "fastqc-percent_duplicates"
-    single_keys["gc"] = "fastqc-percent_gc"
-    single_keys["median_read_length"] = "fastqc-median_sequence_length"
-    single_keys["m_seqs"] = "fastqc-total_sequences"
+    single_keys["dups"] = "fastqc_percent_duplicates"
+    single_keys["gc"] = "fastqc_percent_gc"
+    single_keys["median_read_length"] = "fastqc_median_sequence_length"
+    single_keys["m_seqs"] = "fastqc_total_sequences"
 
     shared_out_dict = {}
     for new_key, old_key in shared_keys.items():
