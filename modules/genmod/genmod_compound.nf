@@ -2,7 +2,7 @@ process GENMOD_COMPOUND {
 
     tag "${meta.sample}"
 	label "process_low"
-	container "${params.containers.base}"
+	container "${params.containers.genmod}"
 
     input:
         tuple val(meta), path(vcf)
@@ -16,6 +16,7 @@ process GENMOD_COMPOUND {
         compound \\
         --processes ${task.cpus} \\
         --outfile ${meta.sample}_compound.vcf \\
+        --penalty 0 \\
         ${vcf}
     """
 
