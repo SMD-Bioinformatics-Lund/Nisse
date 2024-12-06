@@ -1,10 +1,10 @@
 Home for CMD [Tomte](https://github.com/genomic-medicine-sweden/tomte) post processing pipeline.
 
-### Basics
+### Running Nisse
 
 Takes the CSV-samplesheet used to run Tomte and and path to the Tomte results folder as input.
 
-Example run script:
+Example run script which can be executed using `sbatch`:
 
 ```
 #!/bin/bash
