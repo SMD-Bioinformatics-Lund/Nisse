@@ -41,23 +41,16 @@ workflow {
     Channel
         .fromPath(params.csv)
         .splitCsv(header: true)
-        .set { meta_ch }
+        .set { ch_meta }
 
-    cadd_ch = Channel.of(
-        tuple(
-            file(params.cadd),
-            file(params.cadd_tbi)
-        )
-    )
-
-    vcf_ch = meta_ch.map { meta -> 
+    ch_vcf = ch_meta.map { meta -> 
         def sample_id = meta.sample
         def variant_calls = "${params.tomte_results}/call_variants/${sample_id}_split_rmdup_info.vcf.gz"
         def variant_calls_tbi = "${variant_calls}.tbi"
         tuple(meta, file(variant_calls), file(variant_calls_tbi)) 
     }
 
-    multiqc_ch = meta_ch.map { meta -> 
+    ch_multiqc = ch_meta.map { meta -> 
         // FIXME: Use real Tomte results when a up-to-date HG002-MultiQC run is read
         // def multiqc_summary = "${params.tomte_results}/multiqc/multiqc_data/multiqc_general_stats.txt"
         // def picard_coverage = "${params.tomte_results}/multiqc/multiqc_data/picard_rna_coverage.txt"
@@ -66,29 +59,29 @@ workflow {
         tuple(meta, file(multiqc_summary), file(picard_coverage))
     }
 
-    fraser_results_ch = meta_ch.map { meta ->
+    ch_fraser_results = ch_meta.map { meta ->
         def case_id = meta.case
         def fraser_results = "${params.tomte_results}/analyse_transcripts/drop/${case_id}_fraser_top_hits_research.tsv"
         tuple(meta, file(fraser_results))
     }
 
-    outrider_results_ch = meta_ch.map { meta ->
+    ch_outrider_results = ch_meta.map { meta ->
         def case_id = meta.case
         def outrider_results = "${params.tomte_results}/analyse_transcripts/drop/${case_id}_outrider_top_hits_research.tsv"
         tuple(meta, file(outrider_results))
     }
 
-    PREPROCESS(fraser_results_ch, outrider_results_ch, vcf_ch, params.hgnc_map, params.stat_col, params.stat_cutoff)
-    CREATE_PED(meta_ch)
+    PREPROCESS(ch_fraser_results, ch_outrider_results, ch_vcf, params.hgnc_map, params.stat_col, params.stat_cutoff)
+    CREATE_PED(ch_meta)
 
-    SNV_ANNOTATE(PREPROCESS.out.vcf, cadd_ch, params.vep)
+    SNV_ANNOTATE(PREPROCESS.out.vcf, params.vep)
     ch_versions.mix(SNV_ANNOTATE.out.versions)
     
     SNV_SCORE(SNV_ANNOTATE.out.vcf, CREATE_PED.out.ped, params.score_config)
     ch_versions.mix(SNV_SCORE.out.versions)
 
     drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
-    POSTPROCESS(SNV_SCORE.out.vcf, drop_results, multiqc_ch)
+    POSTPROCESS(SNV_SCORE.out.vcf, drop_results, ch_multiqc)
     softwareVersionsToYAML(ch_versions)
         .collectFile(
             storeDir: "${params.outdir}/pipeline_info",
@@ -121,7 +114,6 @@ workflow PREPROCESS {
 workflow SNV_ANNOTATE {
     take:
     ch_vcf
-    ch_cadd_db
     val_vep_params
 
     main:
@@ -136,7 +128,7 @@ workflow SNV_ANNOTATE {
     BGZIP_INDEL_CADD(CALCULATE_INDEL_CADD.out.vcf)
 
     ch_cadd_vcf = MARK_SPLICE.out.vcf.join(BGZIP_INDEL_CADD.out.cadd)
-    ADD_CADD_SCORES_TO_VCF(ch_cadd_vcf, ch_cadd_db)
+    ADD_CADD_SCORES_TO_VCF(ch_cadd_vcf)
 
     ch_versions = Channel.empty()
     ch_versions.mix(ANNOTATE_VEP.out.versions)
