@@ -188,6 +188,7 @@ workflow POSTPROCESS {
 
     main:
     FILTER_VARIANTS_ON_SCORE(ch_scored_vcf, params.score_threshold)
-    MAKE_SCOUT_YAML(ch_drop_results, val_tomte_results_dir, path_template_yaml, val_output_dir)
+    ch_nisse_results = ch_drop_results.join(ch_scored_vcf)
+    MAKE_SCOUT_YAML(ch_nisse_results, val_tomte_results_dir, path_template_yaml, val_output_dir)
     PARSE_TOMTE_QC(ch_multiqc)
 }

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [[ $# -ne 6 ]]; then
-    echo "Usage: $0 <template> <sample ID> <results dir> <parsed DROP> <out fp>"
+if [[ $# -ne 7 ]]; then
+    echo "Usage: $0 <template> <sample ID> <results dir> <parsed DROP> <parsed VCF> <out fp>"
     exit 1
 fi
 
@@ -10,7 +10,8 @@ sample_id=$2
 results_dir=$3
 fraser_path=$4
 outrider_path=$5
-out_fp=$6
+vcf_path=$6
+out_fp=$7
 
 cat "${template}" > "${out_fp}"
 sed -i "s|<FAMILY_ID>|${sample_id}|" "${out_fp}"
@@ -36,7 +37,8 @@ splice_path="${results_dir}/junction/${sample_id}_junction.bed.gz"
 [ -f "${splice_path}" ] || { echo "Error: ${splice_path} is not a valid file"; exit 1; }
 sed -i "s|<RNA_SPLICE>|${splice_path}|" "${out_fp}"
 
-variants_path="${results_dir}/call_variants/${sample_id}.filtered.vcf.gz"
+# variants_path="${results_dir}/call_variants/${sample_id}.filtered.vcf.gz"
+variants_path="${vcf_path}"
 [ -f "${variants_path}" ] || { echo "Error: ${variants_path} is not a valid file"; exit 1; }
 sed -i "s|<VCF>|${variants_path}|" "${out_fp}"
 
