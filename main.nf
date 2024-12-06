@@ -80,9 +80,8 @@ workflow {
     SNV_SCORE(SNV_ANNOTATE.out.vcf, CREATE_PED.out.ped, params.score_config)
     ch_versions.mix(SNV_SCORE.out.versions)
 
-
-
     drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
+    drop_results.view()
     POSTPROCESS(SNV_SCORE.out.vcf, drop_results, ch_multiqc, params.tomte_results, params.template_yaml)
     softwareVersionsToYAML(ch_versions)
         .collectFile(
