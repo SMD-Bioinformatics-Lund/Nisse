@@ -28,7 +28,7 @@ def main():
                     continue
                 (key, val) = key_val.split("=")
                 if key == "RankScore":
-                    score = int(val.split(":")[1])
+                    score = float(val.split(":")[1])
        
      
         
