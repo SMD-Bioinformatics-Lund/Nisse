@@ -95,7 +95,6 @@ workflow {
 
     POSTPROCESS(SNV_SCORE.out.vcf, drop_results, multiqc_ch)
 
-    // FIXME: Test and gather more versions (Python)
     softwareVersionsToYAML(ch_versions)
         .collectFile(
             storeDir: "${params.outdir}/pipeline_info",
