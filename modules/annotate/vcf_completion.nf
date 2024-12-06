@@ -8,7 +8,7 @@ process VCF_COMPLETION {
 		tuple val(meta), file(vcf)
 
 	output:
-		tuple val(meta), file("${meta.sample}.scored.vcf.gz"), file("${meta.sample}.scored.vcf.gz.tbi"), emit: vcf
+		tuple val(meta), file("${meta.sample}_scored.vcf.gz"), file("${meta.sample}_scored.vcf.gz.tbi"), emit: vcf
 		tuple val(meta), file("*versions.yml"), emit: versions
 
 	script:
