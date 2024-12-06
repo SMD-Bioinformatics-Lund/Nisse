@@ -80,6 +80,10 @@ workflow {
     SNV_SCORE(SNV_ANNOTATE.out.vcf, CREATE_PED.out.ped, params.score_config)
     ch_versions.mix(SNV_SCORE.out.versions)
 
+    PREPROCESS.out.fraser.view()
+    PREPROCESS.out.outrider.view()
+    PREPROCESS.out.vcf.view()
+
     drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
     drop_results.view()
     POSTPROCESS(SNV_SCORE.out.vcf, drop_results, ch_multiqc, params.tomte_results, params.template_yaml)
@@ -90,6 +94,11 @@ workflow {
             sort: true,
             newLine: true
         ).set { ch_collated_versions }
+
+
+    workflow.onComplete {
+        log.info("Done")
+    }
 }
 
 workflow PREPROCESS {
