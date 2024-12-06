@@ -21,7 +21,7 @@ process MAKE_SCOUT_YAML {
         "${tomte_results_dir}" \
         "${output_dir}/${fraser}" \
         "${output_dir}/${outrider}" \
-        "${vcf}" \
+        "${output_dir}/${vcf}" \
         "${meta.sample}.yaml"
     """
 
