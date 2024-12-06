@@ -51,6 +51,29 @@ def main(
     fraser: Path,
     outrider: Path,
 ):
+    all_exists = True
+    if not bam_path.exists():
+        all_exists = False
+        print(f"File in {bam_path} not found (bam_path)")
+    if not rna_bigwig.exists():
+        all_exists = False
+        print(f"File in {rna_bigwig} not found (rna_bigwig)")
+    if not splice_junctions.exists():
+        all_exists = False
+        print(f"File in {splice_junctions} not found (splice_junctions)")
+    if not vcf.exists():
+        all_exists = False
+        print(f"File in {vcf} not found (vcf)")
+    if not fraser.exists():
+        all_exists = False
+        print(f"File in {fraser} not found (fraser)")
+    if not outrider.exists():
+        all_exists = False
+        print(f"File in {outrider} not found (outrider)")
+
+    if not all_exists:
+        raise ValueError(f"All required paths not present. See above warnings for further info.")
+
     yaml_dict = {
         'owner': 'rnaseq',
         'family': sample_id,
@@ -110,28 +133,29 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--sample_id", required=True)
     parser.add_argument("--tomte_results", required=True)
-    parser.add_argument("--fraser_path", required=True)
-    parser.add_argument("--outrider_path", required=True)
-    parser.add_argument("--vcf_path", required=True)
+    parser.add_argument("--vcf", required=True)
     parser.add_argument("--sex", required=True)
     parser.add_argument("--phenotype", required=True)
     parser.add_argument("--tissue", required=True)
     parser.add_argument("--fraser", required=True)
     parser.add_argument("--outrider", required=True)
+    parser.add_argument("--bam_path", required=True)
+    parser.add_argument("--splice_junctions", required=True)
+    parser.add_argument("--rna_bigwig", required=True)
     args = parser.parse_args()
     return args
 
 if __name__ == "__main__":
     args = parse_arguments()
     main(
-        args.sample_id,
-        args.sex,
-        args.phenotype,
-        args.tissue,
-        args.tomte_results,
-        args.fraser_path,
-        args.outrider_path,
-        args.vcf_path,
-        args.fraser,
-        args.outrider,
+        sample_id=args.sample_id,
+        sex=args.sex,
+        phenotype=args.phenotype,
+        tissue=args.tissue,
+        bam_path=Path(args.bam_path),
+        splice_junctions=Path(args.splice_junctions),
+        rna_bigwig=Path(args.rna_bigwig),
+        vcf=Path(args.vcf_path),
+        fraser=Path(args.fraser),
+        outrider=Path(args.outrider),
     )

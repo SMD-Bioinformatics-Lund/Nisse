@@ -1,28 +1,31 @@
 process MAKE_SCOUT_YAML {
 
     tag "${meta.sample}"
-	label "process_low"
-	container "${params.containers.base}"
+    label "process_low"
+    container "${params.containers.base}"
 
     input:
-    tuple val(meta), path(fraser), path(outrider), path(vcf), path(vcf_tbi)
-    val(tomte_results_dir)
-    path(template_yaml)
-    val(output_dir)
+    tuple val(meta), path(nisse_parsed_fraser), path(nisse_parsed_outrider), path(nisse_parsed_vcf), path(vcf_tbi)
+    val tomte_results_dir
+    path template_yaml
+    val nisse_output_dir
 
     output:
     path "${meta.sample}.yaml", emit: yaml
 
     script:
     """
-    bash produce_yaml.sh \
-        "${template_yaml}" \
-        "${meta.sample}" \
-        "${tomte_results_dir}" \
-        "${output_dir}/${fraser}" \
-        "${output_dir}/${outrider}" \
-        "${output_dir}/${vcf}" \
-        "${meta.sample}.yaml"
+    produce_yaml.py \
+        --sample_id "${meta.sample}" \
+        --fraser "${nisse_output_dir}/${nisse_parsed_fraser}" \
+        --outrider "${nisse_output_dir}/${nisse_parsed_outrider}" \
+        --vcf "${nisse_output_dir}/${nisse_parsed_vcf}" \
+        --sex "${meta.sex}" \
+        --phenotype "${meta.phenotype}" \
+        --tissue "${meta.tissue}" \
+        --bam_path "${tomte_results_dir}/alignment/${meta.sample_id}.cram" \
+        --splice_junctions "${tomte_results_dir}/junction/${meta.sample_id}_junction.bed.gz" \
+        --rna_bigwig "${tomte_results_dir}/ucsc/${meta.sample_id}.bw"
     """
 
     stub:
