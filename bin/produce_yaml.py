@@ -2,6 +2,10 @@
 
 import argparse
 from pathlib import Path
+from typing import List
+
+def get_space(level: int) -> str:
+    return " " * 4 * level
 
 class Sample:
     def __init__(
@@ -28,20 +32,11 @@ class Sample:
         self.rna_coverage_bigwig = rna_coverage_bigwig
         self.splice_junctions_bed = splice_junctions_bed
     
-    def __str__(self) -> str:
-        fields = [
-            f"- analysis_type: {self.analysis_type}",
-            f"  sample_id: {self.sample_id}",
-            f"  sample_name: {self.sample_name}",
-            f"  sex: {self.sex}"
-            f"  phenotype: {self.phenotype}"
-            f"  tissue_type: {self.tissue_type}"
-            f"  bam_path: {self.bam_path}"
-            f"  rna_alignment_path: {self.rna_alignment_path}"
-            f"  rna_coverage_bigwig: {self.rna_coverage_bigwig}"
-            f"  splice_junctions_bed: {self.splice_junctions_bed}"
-        ]
-        return "\n".join(fields)
+    def get_lines(self) -> List[str]:
+
+        keys = self.__dict__.keys()
+        fields = [f"{key}: {self.__dict__[key]}" for key in keys]
+        return fields
         
 
 def main(
@@ -62,7 +57,7 @@ def main(
         'family_name': sample_id,
         'synopsis': ['First batch of Tomte samples'],
         'samples': [
-            str(Sample(
+            Sample(
                 analysis_type="wgs",
                 sample_id=sample_id,
                 sample_name=sample_id,
@@ -73,7 +68,7 @@ def main(
                 rna_alignment_path=bam_path,
                 rna_coverage_bigwig=rna_bigwig,
                 splice_junctions_bed=splice_junctions,
-            ))
+            )
         ],
         'vcf_snv': vcf,
         'omics_files': [
@@ -81,19 +76,48 @@ def main(
             f'outrider: ${outrider}',
         ],
         "default_gene_panels": "[]",
-        "gene_panels": "[]"
+        "gene_panels": "[]",
+        "human_genome_build": "'38'",
+        "rna_human_genome_build": "'38'"
     }
+
+    for (key, value) in yaml_dict.items():
+        if isinstance(value, list):
+            value_it = value
+            print(f"{key}:")
+            for val in value_it:
+                if isinstance(val, Sample):
+                    sample_rows = val.get_lines()
+                    is_first = True
+                    for row in sample_rows:
+                        prefix = "  "
+                        if is_first:
+                            prefix = "- "
+                            is_first = False
+                        print(get_space(1) + prefix + row)
+                else:
+                    print(get_space(1) + val)
+        elif isinstance(value, Sample):
+            my_sample = value
+            print(f"{key}:")
+            for val in my_sample.get_lines():
+                print(get_space(1) + val)
+        else:
+            print(f"{key}: {value}")
 
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--sample_id")
-    parser.add_argument("--tomte_results")
-    parser.add_argument("--fraser_path")
-    parser.add_argument("--outrider_path")
-    parser.add_argument("--vcf_path")
-    parser.add_argument("--sex")
-    parser.add_argument("--phenotype")
+    parser.add_argument("--sample_id", required=True)
+    parser.add_argument("--tomte_results", required=True)
+    parser.add_argument("--fraser_path", required=True)
+    parser.add_argument("--outrider_path", required=True)
+    parser.add_argument("--vcf_path", required=True)
+    parser.add_argument("--sex", required=True)
+    parser.add_argument("--phenotype", required=True)
+    parser.add_argument("--tissue", required=True)
+    parser.add_argument("--fraser", required=True)
+    parser.add_argument("--outrider", required=True)
     args = parser.parse_args()
     return args
 
@@ -103,8 +127,11 @@ if __name__ == "__main__":
         args.sample_id,
         args.sex,
         args.phenotype,
+        args.tissue,
         args.tomte_results,
         args.fraser_path,
         args.outrider_path,
-        args.vcf_path
+        args.vcf_path,
+        args.fraser,
+        args.outrider,
     )
