@@ -12,7 +12,7 @@ process PREPARE_DROP {
     val(stat_cutoff)
 
     output:
-    path "${meta.sample}_${label}_parsed.tsv", emit: drop
+    tuple val(meta), path("${meta.sample}_${label}_parsed.tsv"), emit: drop
 
     script:
     def hgnc_symbol_col = "hgncSymbol"
