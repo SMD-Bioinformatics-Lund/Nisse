@@ -16,7 +16,7 @@ process GENMOD_SORT {
     genmod \\
         sort \\
         --p \\
-        --f "$" \\
+        --f "${meta.sample}" \\
         --o "${meta.sample}_scored.vcf" \\
         "${vcf}"
     
