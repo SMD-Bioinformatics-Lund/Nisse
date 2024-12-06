@@ -5,12 +5,12 @@ process INDEL_VEP {
 	container "${params.containers.vep}"
 
 	input:
-		tuple val(meta), file(vcf)
+		tuple val(meta), path(vcf)
 		val(vep_params)
 
 	output:
-		tuple val(meta), file("${meta.sample}.only_indels.vep.filtered.vcf"), emit: vcf
-		tuple val(meta), file("*versions.yml"), emit: versions
+		tuple val(meta), path("${meta.sample}.only_indels.vep.filtered.vcf"), emit: vcf
+		tuple val(meta), path("*versions.yml"), emit: versions
 
 	script:
 		"""

@@ -5,11 +5,11 @@ process ADD_CADD_SCORES_TO_VCF {
     container "${params.containers.genmod}"
 
     input: 
-        tuple val(meta), file(vcf), file(cadd_scores), file(cadd_scores_tbi)
+        tuple val(meta), path(vcf), path(cadd_scores), path(cadd_scores_tbi)
 
     output:
-        tuple val(meta), file("${meta.sample}.cadd.vcf"), emit: vcf
-        tuple val(meta), file("*versions.yml"), emit: versions
+        tuple val(meta), path("${meta.sample}.cadd.vcf"), emit: vcf
+        tuple val(meta), path("*versions.yml"), emit: versions
 
     script:
         """

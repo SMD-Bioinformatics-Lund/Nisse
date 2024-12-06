@@ -5,11 +5,11 @@ process VCF_COMPLETION {
 	container "${params.containers.base}"
 
 	input:
-		tuple val(meta), file(vcf)
+		tuple val(meta), path(vcf)
 
 	output:
-		tuple val(meta), file("${meta.sample}_scored.vcf.gz"), file("${meta.sample}_scored.vcf.gz.tbi"), emit: vcf
-		tuple val(meta), file("*versions.yml"), emit: versions
+		tuple val(meta), path("${meta.sample}_scored.vcf.gz"), path("${meta.sample}_scored.vcf.gz.tbi"), emit: vcf
+		tuple val(meta), path("*versions.yml"), emit: versions
 
 	script:
 		"""

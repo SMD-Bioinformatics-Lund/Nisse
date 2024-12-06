@@ -5,12 +5,12 @@ process ANNOTATE_VEP {
 	container "${params.containers.vep}"
 
 	input:
-		tuple val(meta), file(vcf), file(vcf_tbi)
+		tuple val(meta), path(vcf), path(vcf_tbi)
 		val(vep_params)
 
 	output:
-		tuple val(meta), file("${meta.sample}.vep.vcf"), emit: vcf
-		tuple val(meta), file("*versions.yml"), emit: versions
+		tuple val(meta), path("${meta.sample}.vep.vcf"), emit: vcf
+		tuple val(meta), path("*versions.yml"), emit: versions
 
 	script:
 		def group = "${meta.sample}"

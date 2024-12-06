@@ -7,12 +7,12 @@ process VCF_ANNO {
 	container "${params.containers.base}"
 
 	input:
-		tuple val(meta), file(vcf)
+		tuple val(meta), path(vcf)
 		val(vep_params)
 
 	output:
-		tuple val(meta), file("${meta.sample}.clinvar.loqusdb.gene.vcf"), emit: vcf
-		tuple val(meta), file("*versions.yml"), emit: versions
+		tuple val(meta), path("${meta.sample}.clinvar.loqusdb.gene.vcf"), emit: vcf
+		tuple val(meta), path("*versions.yml"), emit: versions
 
 	script:
 		"""

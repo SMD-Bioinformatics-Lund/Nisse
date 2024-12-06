@@ -47,7 +47,7 @@ workflow {
         def sample_id = meta.sample
         def variant_calls = "${params.tomte_results}/call_variants/${sample_id}_split_rmdup_info.vcf.gz"
         def variant_calls_tbi = "${variant_calls}.tbi"
-        tuple(meta, file(variant_calls), file(variant_calls_tbi)) 
+        tuple(meta, path(variant_calls), path(variant_calls_tbi)) 
     }
 
     ch_multiqc = ch_meta.map { meta -> 
@@ -56,19 +56,19 @@ workflow {
         // def picard_coverage = "${params.tomte_results}/multiqc/multiqc_data/picard_rna_coverage.txt"
         def multiqc_summary = "${params.multiqc_temp}"
         def picard_coverage = "${params.picard_rna_coverage_temp}"
-        tuple(meta, file(multiqc_summary), file(picard_coverage))
+        tuple(meta, path(multiqc_summary), path(picard_coverage))
     }
 
     ch_fraser_results = ch_meta.map { meta ->
         def case_id = meta.case
         def fraser_results = "${params.tomte_results}/analyse_transcripts/drop/${case_id}_fraser_top_hits_research.tsv"
-        tuple(meta, file(fraser_results))
+        tuple(meta, path(fraser_results))
     }
 
     ch_outrider_results = ch_meta.map { meta ->
         def case_id = meta.case
         def outrider_results = "${params.tomte_results}/analyse_transcripts/drop/${case_id}_outrider_top_hits_research.tsv"
-        tuple(meta, file(outrider_results))
+        tuple(meta, path(outrider_results))
     }
 
     PREPROCESS(ch_fraser_results, ch_outrider_results, ch_vcf, params.hgnc_map, params.stat_col, params.stat_cutoff)
