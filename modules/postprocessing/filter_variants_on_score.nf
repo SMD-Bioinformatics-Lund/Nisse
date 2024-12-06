@@ -9,7 +9,7 @@ process FILTER_VARIANTS_ON_SCORE {
     val(threshold)
 
     output:
-    path "${meta.sample}_out.txt"
+    path "${meta.sample}_filtered.vcf", emit: vcf
 
     script:
     def score_threshold = 17
