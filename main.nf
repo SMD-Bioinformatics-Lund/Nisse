@@ -16,12 +16,13 @@ include { MARK_SPLICE } from './modules/annotate/mark_splice.nf'
 include { MODIFY_VCF } from './modules/annotate/modify_vcf.nf'
 include { VCF_ANNO } from './modules/annotate/vcf_anno.nf'
 include { VCF_COMPLETION } from './modules/annotate/vcf_completion.nf'
+include { GENMOD_ANNOTATE_CADD } from './modules/genmod/genmod_annotate_cadd.nf'
 
 // Genmod
-include { GENMOD_ANNOTATE } from './modules/genmod/genmod_annotate.nf'
 include { GENMOD_MODELS } from './modules/genmod/genmod_models.nf'
 include { GENMOD_SCORE } from './modules/genmod/genmod_score.nf'
 include { GENMOD_COMPOUND } from './modules/genmod/genmod_compound.nf'
+include { GENMOD_SORT } from './modules/genmod/genmod_sort.nf'
 
 // Postprocessing
 include { FILTER_VARIANTS_ON_SCORE } from './modules/postprocessing/filter_variants_on_score.nf'
@@ -74,7 +75,7 @@ workflow {
     PREPROCESS(fraser_results_ch, outrider_results_ch, vcf_ch, params.hgnc_map, params.stat_col, params.stat_cutoff)
     CREATE_PED(meta_ch)
 
-    SNV_ANNOTATE(PREPROCESS.out.vcf, params.vep)
+    SNV_ANNOTATE(PREPROCESS.out.vcf, [params.cadd, params.cadd_tbi], params.vep)
     ch_versions.mix(SNV_ANNOTATE.out.versions)
     
     SNV_SCORE(SNV_ANNOTATE.out.vcf, CREATE_PED.out.ped, params.score_config)
@@ -114,6 +115,7 @@ workflow PREPROCESS {
 workflow SNV_ANNOTATE {
     take:
     ch_vcf
+    paths_cadd
     val_vep_params
 
     main:
@@ -121,13 +123,14 @@ workflow SNV_ANNOTATE {
     VCF_ANNO(ANNOTATE_VEP.out.vcf, val_vep_params)
     MODIFY_VCF(VCF_ANNO.out.vcf)
     MARK_SPLICE(MODIFY_VCF.out.vcf)
+    GENMOD_ANNOTATE_CADD(MARK_SPLICE.out.vcf, paths_cadd)
 
     EXTRACT_INDELS_FOR_CADD(ch_vcf)
     INDEL_VEP(EXTRACT_INDELS_FOR_CADD.out.vcf, val_vep_params)
     CALCULATE_INDEL_CADD(INDEL_VEP.out.vcf)
     BGZIP_INDEL_CADD(CALCULATE_INDEL_CADD.out.vcf)
 
-    cadd_ch = MARK_SPLICE.out.vcf.join(BGZIP_INDEL_CADD.out.cadd)
+    cadd_ch = GENMOD_ANNOTATE_CADD.out.vcf.join(BGZIP_INDEL_CADD.out.cadd)
     ADD_CADD_SCORES_TO_VCF(cadd_ch)
 
     ch_versions = Channel.empty()
@@ -137,6 +140,7 @@ workflow SNV_ANNOTATE {
     ch_versions.mix(INDEL_VEP.out.versions)
     ch_versions.mix(CALCULATE_INDEL_CADD.out.versions)
     ch_versions.mix(BGZIP_INDEL_CADD.out.versions)
+    ch_versions.mix(GENMOD_ANNOTATE_CADD.out.versions)
 
     emit:
     vcf = ADD_CADD_SCORES_TO_VCF.out.vcf
@@ -151,16 +155,16 @@ workflow SNV_SCORE {
 
     main:
     GENMOD_MODELS(ch_annotated_vcf, ch_ped)
-    GENMOD_ANNOTATE(GENMOD_MODELS.out.vcf)
-    GENMOD_COMPOUND(GENMOD_ANNOTATE.out.vcf)
-    GENMOD_SCORE(GENMOD_COMPOUND.out.vcf, ch_ped, val_score_config)
-    VCF_COMPLETION(GENMOD_SCORE.out.vcf)
+    GENMOD_SCORE(GENMOD_MODELS.out.vcf, ch_ped, val_score_config)
+    GENMOD_COMPOUND(GENMOD_SCORE.out.vcf)
+    GENMOD_SORT(GENMOD_COMPOUND.out.vcf)
+    VCF_COMPLETION(GENMOD_SORT.out.vcf)
 
     ch_versions = Channel.empty()
     ch_versions.mix(GENMOD_MODELS.out.versions)
-    ch_versions.mix(GENMOD_ANNOTATE.out.versions)
     ch_versions.mix(GENMOD_COMPOUND.out.versions)
     ch_versions.mix(GENMOD_SCORE.out.versions)
+    ch_versions.mix(GENMOD_SORT.out.versions)
     ch_versions.mix(VCF_COMPLETION.out.versions)
 
     emit:

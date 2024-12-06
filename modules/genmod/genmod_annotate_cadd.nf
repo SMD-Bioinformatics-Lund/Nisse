@@ -1,4 +1,4 @@
-process GENMOD_ANNOTATE {
+process GENMOD_ANNOTATE_CADD {
 
     tag "${meta.sample}"
 	label "process_low"
@@ -6,18 +6,18 @@ process GENMOD_ANNOTATE {
 
     input:
         tuple val(meta), path(vcf)
+        tuple path(cadd), val(cadd_tbi)
 
     output:
-        tuple val(meta), path("*_annotate.vcf"), emit: vcf
+        tuple val(meta), path("*_cadd_annotate.vcf"), emit: vcf
         path("*_versions.yml"), emit: versions
 
     script:
     """
     genmod \\
         annotate \\
-        --annotate_regions \\
-        --genome-build 38 \\
-        --outfile ${meta.sample}_annotate.vcf \\
+        --cadd-file "${cadd}" \\
+        --outfile ${meta.sample}_cadd_annotate.vcf \\
         ${vcf}
 
     ${genmodscore_version(task)}
@@ -25,7 +25,7 @@ process GENMOD_ANNOTATE {
 
     stub:
     """
-    touch ${meta.sample}_annotate.vcf
+    touch ${meta.sample}_cadd_annotate.vcf
     ${genmodscore_version(task)}
     """
 }
