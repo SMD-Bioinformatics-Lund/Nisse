@@ -6,6 +6,7 @@ process ANNOTATE_VEP {
 
 	input:
 		tuple val(meta), file(vcf), file(vcf_tbi)
+		val(vep_params)
 
 	output:
 		tuple val(meta), file("${meta.sample}.vep.vcf"), emit: vcf
@@ -22,24 +23,24 @@ process ANNOTATE_VEP {
 			--merged \\
 			--vcf \\
 			--no_stats \\
-			--synonyms "${params.vep.VEP_SYNONYMS}" \\
+			--synonyms "${vep_params.VEP_SYNONYMS}" \\
 			--fork "${task.cpus}" \\
 			--force_overwrite \\
-			--fasta "${params.vep.VEP_FASTA}" \\
-			--dir_cache "${params.vep.VEP_CACHE}" \\
-			--dir_plugins "${params.vep.VEP_PLUGINS}" \\
-			--distance "${params.vep.VEP_TRANSCRIPT_DISTANCE}" \\
+			--fasta "${vep_params.VEP_FASTA}" \\
+			--dir_cache "${vep_params.VEP_CACHE}" \\
+			--dir_plugins "${vep_params.VEP_PLUGINS}" \\
+			--distance "${vep_params.VEP_TRANSCRIPT_DISTANCE}" \\
 			-cache \\
 			--format vcf \\
-			--plugin "CADD,${params.vep.CADD}" \\
+			--plugin "CADD,${vep_params.CADD}" \\
 			--plugin "LoFtool" \\
-			--plugin "MaxEntScan,${params.vep.MAXENTSCAN},SWA,NCSS" \\
-			--plugin "dbNSFP,${params.vep.DBNSFP},transcript_match=1,REVEL_score,REVEL_rankscore" \\
-			-custom "${params.vep.GNOMAD_EXOMES},gnomADe,vcf,exact,0,AF_popmax,AF,popmax" \\
-			-custom "${params.vep.GNOMAD_GENOMES},gnomADg,vcf,exact,0,AF_popmax,AF,popmax" \\
-			-custom "${params.vep.GNOMAD_MT},gnomAD_mt,vcf,exact,0,AF_hom,AF_het" \\
-			-custom "${params.vep.PHYLOP},phyloP100way,bigwig" \\
-			-custom "${params.vep.PHASTCONS},phastCons,bigwig"
+			--plugin "MaxEntScan,${vep_params.MAXENTSCAN},SWA,NCSS" \\
+			--plugin "dbNSFP,${vep_params.DBNSFP},transcript_match=1,REVEL_score,REVEL_rankscore" \\
+			-custom "${vep_params.GNOMAD_EXOMES},gnomADe,vcf,exact,0,AF_popmax,AF,popmax" \\
+			-custom "${vep_params.GNOMAD_GENOMES},gnomADg,vcf,exact,0,AF_popmax,AF,popmax" \\
+			-custom "${vep_params.GNOMAD_MT},gnomAD_mt,vcf,exact,0,AF_hom,AF_het" \\
+			-custom "${vep_params.PHYLOP},phyloP100way,bigwig" \\
+			-custom "${vep_params.PHASTCONS},phastCons,bigwig"
 
 		${annotate_vep_version(task)}
 		"""

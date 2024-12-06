@@ -8,6 +8,7 @@ process VCF_ANNO {
 
 	input:
 		tuple val(meta), file(vcf)
+		val(vep_params)
 
 	output:
 		tuple val(meta), file("${meta.sample}.clinvar.loqusdb.gene.vcf"), emit: vcf
@@ -15,7 +16,7 @@ process VCF_ANNO {
 
 	script:
 		"""
-		vcfanno_linux64 -lua "${params.vep.VCFANNO_LUA}" "${params.vep.VCFANNO}" "${vcf}" > ${meta.sample}.clinvar.loqusdb.gene.vcf
+		vcfanno_linux64 -lua "${vep_params.VCFANNO_LUA}" "${vep_params.VCFANNO}" "${vcf}" > ${meta.sample}.clinvar.loqusdb.gene.vcf
 		${vcfanno_version(task)}
 		"""
 

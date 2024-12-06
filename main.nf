@@ -33,7 +33,9 @@ include { softwareVersionsToYAML } from './modules/utils'
 
 workflow {
 
-    validateAllParams()
+    // To ponder: Do we want to validate input parameters?
+    // Nice with early exit, not nice having to maintain in parallel with config
+    // validateAllParams()
     ch_versions = Channel.empty()
 
     Channel
@@ -71,12 +73,12 @@ workflow {
     PREPROCESS(fraser_results_ch, outrider_results_ch, vcf_ch, params.hgnc_map, params.stat_col, params.stat_cutoff)
     CREATE_PED(meta_ch)
 
-    SNV_ANNOTATE(PREPROCESS.out.vcf)
+    SNV_ANNOTATE(PREPROCESS.out.vcf, params.vep)
     ch_versions.mix(SNV_ANNOTATE.out.versions)
     
     SNV_SCORE(SNV_ANNOTATE.out.vcf, CREATE_PED.out.ped, params.score_config)
     ch_versions.mix(SNV_SCORE.out.versions)
-    
+
     drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
     POSTPROCESS(SNV_SCORE.out.vcf, drop_results, multiqc_ch)
     softwareVersionsToYAML(ch_versions)
@@ -111,22 +113,22 @@ workflow PREPROCESS {
 workflow SNV_ANNOTATE {
     take:
     ch_vcf
+    val_vep_params
 
     main:
-    ANNOTATE_VEP(ch_vcf)
-    VCF_ANNO(ANNOTATE_VEP.out.vcf)
+    ANNOTATE_VEP(ch_vcf, val_vep_params)
+    VCF_ANNO(ANNOTATE_VEP.out.vcf, val_vep_params)
     MODIFY_VCF(VCF_ANNO.out.vcf)
     MARK_SPLICE(MODIFY_VCF.out.vcf)
 
     // CADD indels
     EXTRACT_INDELS_FOR_CADD(ch_vcf)
-    INDEL_VEP(EXTRACT_INDELS_FOR_CADD.out.vcf)
+    INDEL_VEP(EXTRACT_INDELS_FOR_CADD.out.vcf, val_vep_params)
     CALCULATE_INDEL_CADD(INDEL_VEP.out.vcf)
     BGZIP_INDEL_CADD(CALCULATE_INDEL_CADD.out.vcf)
 
     cadd_ch = MARK_SPLICE.out.vcf.join(BGZIP_INDEL_CADD.out.cadd)
     ADD_CADD_SCORES_TO_VCF(cadd_ch)
-
 
     ch_versions = Channel.empty()
     ch_versions.mix(ANNOTATE_VEP.out.versions)

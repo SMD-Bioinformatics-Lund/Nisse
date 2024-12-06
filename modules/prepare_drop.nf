@@ -3,7 +3,6 @@ process PREPARE_DROP {
     tag "${meta.sample}"
     label "process_low"
     container "${params.containers.base}"
-    publishDir "${params.outdir}/drop/", mode: 'copy', pattern: "*.tsv", overwrite: true
 
     input:
     val(label)

@@ -6,6 +6,7 @@ process INDEL_VEP {
 
 	input:
 		tuple val(meta), file(vcf)
+		val(vep_params)
 
 	output:
 		tuple val(meta), file("${meta.sample}.only_indels.vep.filtered.vcf"), emit: vcf
@@ -20,11 +21,11 @@ process INDEL_VEP {
 			--cache \\
 			--merged \\
 			--vcf \\
-			--synonyms "${params.vep.VEP_SYNONYMS}" \\
-			--fasta "${params.vep.VEP_FASTA}" \\
-			-custom "${params.vep.GNOMAD_GENOMES},gnomADg,vcf,exact,0,AF" \\
-			-custom "${params.vep.GNOMAD_MT},gnomAD_mt,vcf,exact,0,AF_hom,AF_het" \\
-			--dir_cache "${params.vep.VEP_CACHE}" \\
+			--synonyms "${vep_params.VEP_SYNONYMS}" \\
+			--fasta "${vep_params.VEP_FASTA}" \\
+			-custom "${vep_params.GNOMAD_GENOMES},gnomADg,vcf,exact,0,AF" \\
+			-custom "${vep_params.GNOMAD_MT},gnomAD_mt,vcf,exact,0,AF_hom,AF_het" \\
+			--dir_cache "${vep_params.VEP_CACHE}" \\
 			--force_overwrite \\
 			--no_stats \\
 			--fork "${task.cpus}" \\
