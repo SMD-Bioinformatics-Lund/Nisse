@@ -47,7 +47,7 @@ workflow {
         def sample_id = meta.sample
         def variant_calls = "${params.tomte_results}/call_variants/${sample_id}_split_rmdup_info.vcf.gz"
         def variant_calls_tbi = "${variant_calls}.tbi"
-        tuple(meta, path(variant_calls), path(variant_calls_tbi)) 
+        tuple(meta, file(variant_calls), file(variant_calls_tbi)) 
     }
 
     ch_multiqc = ch_meta.map { meta -> 
@@ -56,19 +56,19 @@ workflow {
         // def picard_coverage = "${params.tomte_results}/multiqc/multiqc_data/picard_rna_coverage.txt"
         def multiqc_summary = "${params.multiqc_temp}"
         def picard_coverage = "${params.picard_rna_coverage_temp}"
-        tuple(meta, path(multiqc_summary), path(picard_coverage))
+        tuple(meta, file(multiqc_summary), file(picard_coverage))
     }
 
     ch_fraser_results = ch_meta.map { meta ->
         def case_id = meta.case
         def fraser_results = "${params.tomte_results}/analyse_transcripts/drop/${case_id}_fraser_top_hits_research.tsv"
-        tuple(meta, path(fraser_results))
+        tuple(meta, file(fraser_results))
     }
 
     ch_outrider_results = ch_meta.map { meta ->
         def case_id = meta.case
         def outrider_results = "${params.tomte_results}/analyse_transcripts/drop/${case_id}_outrider_top_hits_research.tsv"
-        tuple(meta, path(outrider_results))
+        tuple(meta, file(outrider_results))
     }
 
     PREPROCESS(ch_fraser_results, ch_outrider_results, ch_vcf, params.hgnc_map, params.stat_col, params.stat_cutoff)
@@ -80,13 +80,8 @@ workflow {
     SNV_SCORE(SNV_ANNOTATE.out.vcf, CREATE_PED.out.ped, params.score_config)
     ch_versions.mix(SNV_SCORE.out.versions)
 
-    PREPROCESS.out.fraser.view()
-    PREPROCESS.out.outrider.view()
-    PREPROCESS.out.vcf.view()
-
     drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
-    drop_results.view()
-    POSTPROCESS(SNV_SCORE.out.vcf, drop_results, ch_multiqc, params.tomte_results, params.template_yaml)
+    POSTPROCESS(SNV_SCORE.out.vcf, drop_results, ch_multiqc, params.tomte_results, params.template_yaml, params.outdir)
     softwareVersionsToYAML(ch_versions)
         .collectFile(
             storeDir: "${params.outdir}/pipeline_info",
@@ -95,9 +90,12 @@ workflow {
             newLine: true
         ).set { ch_collated_versions }
 
-
     workflow.onComplete {
-        log.info("Done")
+        log.info("Completed without errors")
+    }
+
+    workflow.onError {
+        log.error "Aborted with errors"
     }
 }
 
@@ -184,12 +182,12 @@ workflow POSTPROCESS {
     ch_scored_vcf
     ch_drop_results
     ch_multiqc
-    val_tomte_results
-    val_template_yaml
+    val_tomte_results_dir
+    path_template_yaml
+    val_output_dir
 
     main:
     FILTER_VARIANTS_ON_SCORE(ch_scored_vcf, params.score_threshold)
-    MAKE_SCOUT_YAML(ch_drop_results, val_tomte_results, val_template_yaml)
+    MAKE_SCOUT_YAML(ch_drop_results, val_tomte_results_dir, path_template_yaml, val_output_dir)
     PARSE_TOMTE_QC(ch_multiqc)
 }
-

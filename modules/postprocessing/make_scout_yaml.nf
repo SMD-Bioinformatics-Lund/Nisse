@@ -6,8 +6,9 @@ process MAKE_SCOUT_YAML {
 
     input:
     tuple val(meta), path(fraser), path(outrider)
-    path(results_dir)
+    val(tomte_results_dir)
     path(template_yaml)
+    val(output_dir)
 
     output:
     path "${meta.sample}.yaml", emit: yaml
@@ -17,9 +18,9 @@ process MAKE_SCOUT_YAML {
     bash produce_yaml.sh \
         "${template_yaml}" \
         "${meta.sample}" \
-        "${results_dir}" \
-        "${fraser}" \
-        "${outrider}" \
+        "${tomte_results_dir}" \
+        "${output_dir}/${fraser}" \
+        "${output_dir}/${outrider}" \
         "${meta.sample}.yaml"
     """
 
