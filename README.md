@@ -13,7 +13,7 @@ Example run script:
 #SBATCH --ntasks=4
 #SBATCH --mem=4gb
 #SBATCH --time=7-00:00:00
-#SBATCH --partition="lowest"
+#SBATCH --partition="grace-lowest"
 
 module load Java/13.0.2
 module load nextflow/24.04.3
