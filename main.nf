@@ -121,7 +121,7 @@ workflow PREPROCESS {
 workflow SNV_ANNOTATE {
     take:
     ch_vcf
-    ch_cadd
+    ch_cadd_db
     val_vep_params
 
     main:
@@ -135,8 +135,8 @@ workflow SNV_ANNOTATE {
     CALCULATE_INDEL_CADD(INDEL_VEP.out.vcf)
     BGZIP_INDEL_CADD(CALCULATE_INDEL_CADD.out.vcf)
 
-    cadd_ch = MARK_SPLICE.out.vcf.join(BGZIP_INDEL_CADD.out.cadd)
-    ADD_CADD_SCORES_TO_VCF(cadd_ch, ch_cadd)
+    ch_cadd_vcf = MARK_SPLICE.out.vcf.join(BGZIP_INDEL_CADD.out.cadd)
+    ADD_CADD_SCORES_TO_VCF(ch_cadd_vcf, ch_cadd_db)
 
     ch_versions = Channel.empty()
     ch_versions.mix(ANNOTATE_VEP.out.versions)
