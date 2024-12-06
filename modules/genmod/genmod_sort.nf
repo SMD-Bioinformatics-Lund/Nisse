@@ -16,8 +16,8 @@ process GENMOD_SORT {
     genmod \\
         sort \\
         -p \\
-        --f "${meta.sample}" \\
-        --o "${meta.sample}_scored.vcf" \\
+        -f "${meta.sample}" \\
+        -o "${meta.sample}_scored.vcf" \\
         "${vcf}"
     
     ${genmodscore_version(task)}
