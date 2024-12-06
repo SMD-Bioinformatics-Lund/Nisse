@@ -51,6 +51,7 @@ workflow {
     }
 
     multiqc_ch = meta_ch.map { meta -> 
+        // FIXME: Use real Tomte results when a up-to-date HG002-MultiQC run is read
         // def multiqc_summary = "${params.tomte_results}/multiqc/multiqc_data/multiqc_general_stats.txt"
         // def picard_coverage = "${params.tomte_results}/multiqc/multiqc_data/picard_rna_coverage.txt"
         def multiqc_summary = "${params.multiqc_temp}"
