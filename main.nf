@@ -16,7 +16,6 @@ include { MARK_SPLICE } from './modules/annotate/mark_splice.nf'
 include { MODIFY_VCF } from './modules/annotate/modify_vcf.nf'
 include { VCF_ANNO } from './modules/annotate/vcf_anno.nf'
 include { VCF_COMPLETION } from './modules/annotate/vcf_completion.nf'
-include { GENMOD_ANNOTATE_CADD } from './modules/genmod/genmod_annotate_cadd.nf'
 
 // Genmod
 include { GENMOD_MODELS } from './modules/genmod/genmod_models.nf'
@@ -124,7 +123,6 @@ workflow SNV_ANNOTATE {
     VCF_ANNO(ANNOTATE_VEP.out.vcf, val_vep_params)
     MODIFY_VCF(VCF_ANNO.out.vcf)
     MARK_SPLICE(MODIFY_VCF.out.vcf)
-    // GENMOD_ANNOTATE_CADD(MARK_SPLICE.out.vcf, paths_cadd)
 
     EXTRACT_INDELS_FOR_CADD(ch_vcf)
     INDEL_VEP(EXTRACT_INDELS_FOR_CADD.out.vcf, val_vep_params)
@@ -141,7 +139,7 @@ workflow SNV_ANNOTATE {
     ch_versions.mix(INDEL_VEP.out.versions)
     ch_versions.mix(CALCULATE_INDEL_CADD.out.versions)
     ch_versions.mix(BGZIP_INDEL_CADD.out.versions)
-    ch_versions.mix(GENMOD_ANNOTATE_CADD.out.versions)
+    ch_versions.mix(ADD_CADD_SCORES_TO_VCF.out.versions)
 
     emit:
     vcf = ADD_CADD_SCORES_TO_VCF.out.vcf
