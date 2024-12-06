@@ -1,4 +1,4 @@
-Home for CMD [Tomte]((https://github.com/genomic-medicine-sweden/tomte)) post processing pipeline.
+Home for CMD [Tomte](https://github.com/genomic-medicine-sweden/tomte) post processing pipeline.
 
 Takes the CSV-samplesheet used to run Tomte and and path to the Tomte results folder as input.
 
