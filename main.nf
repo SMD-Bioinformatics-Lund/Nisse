@@ -121,7 +121,6 @@ workflow SNV_ANNOTATE {
     MODIFY_VCF(VCF_ANNO.out.vcf)
     MARK_SPLICE(MODIFY_VCF.out.vcf)
 
-    // CADD indels
     EXTRACT_INDELS_FOR_CADD(ch_vcf)
     INDEL_VEP(EXTRACT_INDELS_FOR_CADD.out.vcf, val_vep_params)
     CALCULATE_INDEL_CADD(INDEL_VEP.out.vcf)
