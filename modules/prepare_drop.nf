@@ -12,14 +12,14 @@ process PREPARE_DROP {
     val(stat_cutoff)
 
     output:
-    path "${meta.sample}_drop_parsed.tsv", emit: drop
+    path "${meta.sample}_${label}_parsed.tsv", emit: drop
 
     script:
     def hgnc_symbol_col = "hgncSymbol"
     """
     prepare_drop.py \\
         --in_path "${drop_full}" \\
-        --out_path "${meta.sample}_drop_parsed.tsv" \\
+        --out_path "${meta.sample}_${label}_parsed.tsv" \\
         --stat_col "${stat_col}" \\
         --stat_cutoff "${stat_cutoff}" \\
         --hgnc_symbol_col "${hgnc_symbol_col}" \\
@@ -28,6 +28,6 @@ process PREPARE_DROP {
 
     stub:
     """
-    touch "${meta.sample}_${label}_drop.tsv"
+    touch "${meta.sample}_${label}_parsed.tsv"
     """
 }
