@@ -43,6 +43,13 @@ workflow {
         .splitCsv(header: true)
         .set { meta_ch }
 
+    cadd_ch = Channel.of(
+        tuple(
+            file(params.cadd),
+            file(params.cadd_tbi)
+        )
+    )
+
     vcf_ch = meta_ch.map { meta -> 
         def sample_id = meta.sample
         def variant_calls = "${params.tomte_results}/call_variants/${sample_id}_split_rmdup_info.vcf.gz"
@@ -74,7 +81,7 @@ workflow {
     PREPROCESS(fraser_results_ch, outrider_results_ch, vcf_ch, params.hgnc_map, params.stat_col, params.stat_cutoff)
     CREATE_PED(meta_ch)
 
-    SNV_ANNOTATE(PREPROCESS.out.vcf, params.cadd, params.cadd_tbi, params.vep)
+    SNV_ANNOTATE(PREPROCESS.out.vcf, cadd_ch, params.vep)
     ch_versions.mix(SNV_ANNOTATE.out.versions)
     
     SNV_SCORE(SNV_ANNOTATE.out.vcf, CREATE_PED.out.ped, params.score_config)
@@ -114,8 +121,7 @@ workflow PREPROCESS {
 workflow SNV_ANNOTATE {
     take:
     ch_vcf
-    path_cadd
-    path_cadd_tbi
+    ch_cadd
     val_vep_params
 
     main:
@@ -130,7 +136,7 @@ workflow SNV_ANNOTATE {
     BGZIP_INDEL_CADD(CALCULATE_INDEL_CADD.out.vcf)
 
     cadd_ch = MARK_SPLICE.out.vcf.join(BGZIP_INDEL_CADD.out.cadd)
-    ADD_CADD_SCORES_TO_VCF(cadd_ch, path_cadd, path_cadd_tbi)
+    ADD_CADD_SCORES_TO_VCF(cadd_ch, ch_cadd)
 
     ch_versions = Channel.empty()
     ch_versions.mix(ANNOTATE_VEP.out.versions)

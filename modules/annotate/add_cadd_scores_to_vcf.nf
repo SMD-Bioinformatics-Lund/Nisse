@@ -6,8 +6,7 @@ process ADD_CADD_SCORES_TO_VCF {
 
     input: 
         tuple val(meta), file(vcf)
-        file(cadd_scores)
-        file(cadd_scores_tbi)
+        tuple file(cadd_scores), file(cadd_scores_tbi)
 
     output:
         tuple val(meta), file("${meta.sample}.cadd.vcf"), emit: vcf
