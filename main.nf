@@ -34,6 +34,7 @@ include { softwareVersionsToYAML } from './modules/utils'
 workflow {
 
     validateAllParams()
+    ch_versions = Channel.empty()
 
     Channel
         .fromPath(params.csv)
@@ -55,10 +56,6 @@ workflow {
         tuple(meta, file(multiqc_summary), file(picard_coverage))
     }
 
-    Channel
-        .fromPath(params.hgnc_map)
-        .set { hgnc_map_ch }
-
     fraser_results_ch = meta_ch.map { meta ->
         def case_id = meta.case
         def fraser_results = "${params.tomte_results}/analyse_transcripts/drop/${case_id}_fraser_top_hits_research.tsv"
@@ -71,30 +68,17 @@ workflow {
         tuple(meta, file(outrider_results))
     }
 
-    ch_versions = Channel.empty()
-
-    PREPROCESS(fraser_results_ch, outrider_results_ch, hgnc_map_ch, vcf_ch, params.stat_col, params.stat_cutoff)
-
-    Channel
-        .of(tuple(params.cadd, params.cadd_tbi))
-        .set { cadd_ch }
-
-    Channel
-        .fromPath(params.score_config)
-        .set { score_config_ch }
-
+    PREPROCESS(fraser_results_ch, outrider_results_ch, vcf_ch, params.hgnc_map, params.stat_col, params.stat_cutoff)
     CREATE_PED(meta_ch)
 
     SNV_ANNOTATE(PREPROCESS.out.vcf)
     ch_versions.mix(SNV_ANNOTATE.out.versions)
-
-    SNV_SCORE(SNV_ANNOTATE.out.vcf, CREATE_PED.out.ped, score_config_ch)
+    
+    SNV_SCORE(SNV_ANNOTATE.out.vcf, CREATE_PED.out.ped, params.score_config)
     ch_versions.mix(SNV_SCORE.out.versions)
-
+    
     drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
-
     POSTPROCESS(SNV_SCORE.out.vcf, drop_results, multiqc_ch)
-
     softwareVersionsToYAML(ch_versions)
         .collectFile(
             storeDir: "${params.outdir}/pipeline_info",
@@ -108,14 +92,14 @@ workflow PREPROCESS {
     take:
     ch_fraser_results
     ch_outrider_results
-    ch_hgnc_map
     ch_vcf
-    stat_col
-    stat_cutoff
+    val_hgnc_map
+    val_stat_col
+    val_stat_cutoff
 
     main:
-    PREPARE_DROP_FRASER("FRASER", ch_fraser_results, ch_hgnc_map, stat_col, stat_cutoff)
-    PREPARE_DROP_OUTRIDER("OUTRIDER", ch_outrider_results, ch_hgnc_map, stat_col, stat_cutoff)
+    PREPARE_DROP_FRASER("FRASER", ch_fraser_results, val_hgnc_map, val_stat_col, val_stat_cutoff)
+    PREPARE_DROP_OUTRIDER("OUTRIDER", ch_outrider_results, val_hgnc_map, val_stat_col, val_stat_cutoff)
     PREPARE_VCF(ch_vcf)
 
     emit:
@@ -126,7 +110,7 @@ workflow PREPROCESS {
 
 workflow SNV_ANNOTATE {
     take:
-    ch_vcf // channel: [mandatory] [ val(meta), path(vcf), path(vcf_tbi) ]
+    ch_vcf
 
     main:
     ANNOTATE_VEP(ch_vcf)
@@ -161,13 +145,13 @@ workflow SNV_SCORE {
     take:
     ch_annotated_vcf
     ch_ped
-    ch_score_config
+    val_score_config
 
     main:
     GENMOD_MODELS(ch_annotated_vcf, ch_ped)
     GENMOD_ANNOTATE(GENMOD_MODELS.out.vcf)
     GENMOD_COMPOUND(GENMOD_ANNOTATE.out.vcf)
-    GENMOD_SCORE(GENMOD_COMPOUND.out.vcf, ch_ped, ch_score_config)
+    GENMOD_SCORE(GENMOD_COMPOUND.out.vcf, ch_ped, val_score_config)
     VCF_COMPLETION(GENMOD_SCORE.out.vcf)
 
     ch_versions = Channel.empty()
@@ -184,13 +168,13 @@ workflow SNV_SCORE {
 
 workflow POSTPROCESS {
     take:
-    scored_vcf_ch
+    ch_scored_vcf
     ch_drop_results
-    multiqc_ch
+    ch_multiqc
 
     main:
-    FILTER_VARIANTS_ON_SCORE(scored_vcf_ch, params.score_threshold)
+    FILTER_VARIANTS_ON_SCORE(ch_scored_vcf, params.score_threshold)
     MAKE_SCOUT_YAML(ch_drop_results, params.tomte_results, params.template_yaml)
-    PARSE_TOMTE_QC(multiqc_ch)
+    PARSE_TOMTE_QC(ch_multiqc)
 }
 
