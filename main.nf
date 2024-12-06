@@ -83,7 +83,7 @@ workflow {
 
 
     drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
-    POSTPROCESS(SNV_SCORE.out.vcf, drop_results, ch_multiqc, params.tomte_results, params.tomte_yaml)
+    POSTPROCESS(SNV_SCORE.out.vcf, drop_results, ch_multiqc, params.tomte_results, params.template_yaml)
     softwareVersionsToYAML(ch_versions)
         .collectFile(
             storeDir: "${params.outdir}/pipeline_info",
