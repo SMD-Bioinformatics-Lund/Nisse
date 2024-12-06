@@ -80,8 +80,10 @@ workflow {
     SNV_SCORE(SNV_ANNOTATE.out.vcf, CREATE_PED.out.ped, params.score_config)
     ch_versions.mix(SNV_SCORE.out.versions)
 
+
+
     drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
-    POSTPROCESS(SNV_SCORE.out.vcf, drop_results, ch_multiqc)
+    POSTPROCESS(SNV_SCORE.out.vcf, drop_results, ch_multiqc, params.tomte_results, params.tomte_yaml)
     softwareVersionsToYAML(ch_versions)
         .collectFile(
             storeDir: "${params.outdir}/pipeline_info",
@@ -174,10 +176,12 @@ workflow POSTPROCESS {
     ch_scored_vcf
     ch_drop_results
     ch_multiqc
+    val_tomte_results
+    val_template_yaml
 
     main:
     FILTER_VARIANTS_ON_SCORE(ch_scored_vcf, params.score_threshold)
-    MAKE_SCOUT_YAML(ch_drop_results, params.tomte_results, params.template_yaml)
+    MAKE_SCOUT_YAML(ch_drop_results, val_tomte_results, val_template_yaml)
     PARSE_TOMTE_QC(ch_multiqc)
 }
 
