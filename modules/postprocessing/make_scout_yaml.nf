@@ -5,7 +5,7 @@ process MAKE_SCOUT_YAML {
 	container "${params.containers.base}"
 
     input:
-    tuple val(meta), path(fraser), path(outrider), path(vcf)
+    tuple val(meta), path(fraser), path(outrider), path(vcf), path(vcf_tbi)
     val(tomte_results_dir)
     path(template_yaml)
     val(output_dir)
