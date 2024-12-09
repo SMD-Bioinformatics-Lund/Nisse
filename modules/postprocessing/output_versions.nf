@@ -13,7 +13,7 @@ process OUTPUT_VERSIONS {
     script:
     versions_joined = versions.join(' ')
     """
-    cat ${versions} > "versions.yaml"
+    cat ${versions_joined} > "versions.yaml"
     """
 
     stub:
