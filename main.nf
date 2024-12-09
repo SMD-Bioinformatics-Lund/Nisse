@@ -84,7 +84,7 @@ workflow {
     SNV_ANNOTATE(PREPROCESS.out.vcf, params.vep)
     ch_versions.mix(SNV_ANNOTATE.out.versions)
 
-    SNV_SCORE(SNV_ANNOTATE.out.vcf, CREATE_PED.out.ped, params.score_config)
+    SNV_SCORE(SNV_ANNOTATE.out.vcf, CREATE_PED.out.ped, params.score_config, params.score_threshold)
     ch_versions.mix(SNV_SCORE.out.versions)
 
     drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
@@ -165,6 +165,7 @@ workflow SNV_SCORE {
     ch_annotated_vcf
     ch_ped
     val_score_config
+    val_score_threshold
 
     main:
     GENMOD_MODELS(ch_annotated_vcf, ch_ped)
@@ -172,6 +173,7 @@ workflow SNV_SCORE {
     GENMOD_COMPOUND(GENMOD_SCORE.out.vcf)
     GENMOD_SORT(GENMOD_COMPOUND.out.vcf)
     VCF_COMPLETION(GENMOD_SORT.out.vcf)
+    FILTER_VARIANTS_ON_SCORE(VCF_COMPLETION.out.vcf, val_score_threshold)
 
     ch_versions = Channel.empty()
     ch_versions.mix(GENMOD_MODELS.out.versions)
@@ -181,7 +183,7 @@ workflow SNV_SCORE {
     ch_versions.mix(VCF_COMPLETION.out.versions)
 
     emit:
-    vcf = VCF_COMPLETION.out.vcf
+    vcf = FILTER_VARIANTS_ON_SCORE.out.vcf
     versions = ch_versions
 }
 
@@ -196,7 +198,6 @@ workflow POSTPROCESS {
     val_output_dir
 
     main:
-    FILTER_VARIANTS_ON_SCORE(ch_scored_vcf, params.score_threshold)
     ch_nisse_results = ch_drop_results.join(ch_scored_vcf)
     MAKE_SCOUT_YAML(ch_nisse_results, val_tomte_results_dir, path_template_yaml, val_output_dir)
     PARSE_TOMTE_QC(ch_multiqc)
