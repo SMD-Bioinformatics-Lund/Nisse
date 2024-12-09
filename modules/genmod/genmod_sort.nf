@@ -9,7 +9,7 @@ process GENMOD_SORT {
 
     output:
         tuple val(meta), path("${meta.sample}_scored.vcf"), emit: vcf
-        path("*_versions.yml"), emit: versions
+        tuple val(meta), path("*_versions.yml"), emit: versions
 
     script:
     """

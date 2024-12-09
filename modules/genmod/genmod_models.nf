@@ -1,16 +1,16 @@
 process GENMOD_MODELS {
 
     tag "${meta.sample}"
-	label "process_low"
-	container "${params.containers.genmod}"
+    label "process_low"
+    container "${params.containers.genmod}"
 
     input:
-        tuple val(meta), path(vcf)
-        tuple val(meta2), path(family)
+    tuple val(meta), path(vcf)
+    tuple val(meta2), path(family)
 
     output:
-        tuple val(meta), path("${meta.sample}_models.vcf"), emit: vcf
-        path("*_versions.yml"), emit: versions
+    tuple val(meta), path("${meta.sample}_models.vcf"), emit: vcf
+    tuple val(meta), path("*_versions.yml"), emit: versions
 
     script:
     """
@@ -32,7 +32,7 @@ process GENMOD_MODELS {
     """
 }
 def genmodscore_version(task) {
-	"""
+    """
 	cat <<-END_VERSIONS > ${task.process}_versions.yml
 	${task.process}:
 	    genmod: \$(echo \$(genmod --version 2>&1) | sed -e "s/^.*genmod version: //")
