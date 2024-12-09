@@ -27,6 +27,7 @@ include { GENMOD_SORT } from './modules/genmod/genmod_sort.nf'
 include { FILTER_VARIANTS_ON_SCORE } from './modules/postprocessing/filter_variants_on_score.nf'
 include { PARSE_TOMTE_QC } from './modules/postprocessing/parse_tomte_qc.nf'
 include { MAKE_SCOUT_YAML } from './modules/postprocessing/make_scout_yaml.nf'
+include { BGZIP_TABIX } from './modules/postprocessing/bgzip_tabix.nf'
 
 include { validateAllParams } from './modules/utils'
 include { softwareVersionsToYAML } from './modules/utils'
@@ -43,14 +44,20 @@ workflow {
         .splitCsv(header: true)
         .set { ch_meta }
 
-    ch_vcf = ch_meta.map { meta -> 
+    ch_vcf = ch_meta.map { meta ->
         def sample_id = meta.sample
         def variant_calls = "${params.tomte_results}/call_variants/${sample_id}_split_rmdup_info.vcf.gz"
         def variant_calls_tbi = "${variant_calls}.tbi"
-        tuple(meta, file(variant_calls), file(variant_calls_tbi)) 
+        tuple(meta, file(variant_calls), file(variant_calls_tbi))
     }
 
-    ch_multiqc = ch_meta.map { meta -> 
+    ch_junction_bed = ch_meta.map { meta ->
+        def sample_id = meta.sample
+        def junction_bed = "${params.tomte_results}/junction/${sample_id}_junction.bed"
+        tuple(meta, file(junction_bed))
+    }
+
+    ch_multiqc = ch_meta.map { meta ->
         // FIXME: Use real Tomte results when a up-to-date HG002-MultiQC run is read
         // def multiqc_summary = "${params.tomte_results}/multiqc/multiqc_data/multiqc_general_stats.txt"
         // def picard_coverage = "${params.tomte_results}/multiqc/multiqc_data/picard_rna_coverage.txt"
@@ -76,26 +83,27 @@ workflow {
 
     SNV_ANNOTATE(PREPROCESS.out.vcf, params.vep)
     ch_versions.mix(SNV_ANNOTATE.out.versions)
-    
+
     SNV_SCORE(SNV_ANNOTATE.out.vcf, CREATE_PED.out.ped, params.score_config)
     ch_versions.mix(SNV_SCORE.out.versions)
 
     drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
-    POSTPROCESS(SNV_SCORE.out.vcf, drop_results, ch_multiqc, params.tomte_results, params.template_yaml, params.outdir)
+    POSTPROCESS(SNV_SCORE.out.vcf, drop_results, ch_multiqc, ch_junction_bed, params.tomte_results, params.template_yaml, params.outdir)
     softwareVersionsToYAML(ch_versions)
         .collectFile(
             storeDir: "${params.outdir}/pipeline_info",
-            name:  'tomte_'  + 'pipeline_software_' +  'mqc_'  + 'versions.yml',
+            name: 'tomte_' + 'pipeline_software_' + 'mqc_' + 'versions.yml',
             sort: true,
             newLine: true
-        ).set { ch_collated_versions }
+        )
+        .set { ch_collated_versions }
 
     workflow.onComplete {
         log.info("Completed without errors")
     }
 
     workflow.onError {
-        log.error "Aborted with errors"
+        log.error("Aborted with errors")
     }
 }
 
@@ -182,6 +190,7 @@ workflow POSTPROCESS {
     ch_scored_vcf
     ch_drop_results
     ch_multiqc
+    ch_junction_bed
     val_tomte_results_dir
     path_template_yaml
     val_output_dir
@@ -191,4 +200,5 @@ workflow POSTPROCESS {
     ch_nisse_results = ch_drop_results.join(ch_scored_vcf)
     MAKE_SCOUT_YAML(ch_nisse_results, val_tomte_results_dir, path_template_yaml, val_output_dir)
     PARSE_TOMTE_QC(ch_multiqc)
+    BGZIP_TABIX(ch_junction_bed)
 }
