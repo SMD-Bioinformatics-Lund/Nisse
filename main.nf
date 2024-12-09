@@ -90,7 +90,7 @@ workflow {
     ch_versions.mix(SNV_SCORE.out.versions)
 
     drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
-    POSTPROCESS(SNV_SCORE.out.vcf, drop_results, ch_multiqc, ch_junction_bed, params.tomte_results, params.outdir)
+    POSTPROCESS(SNV_SCORE.out.vcf, drop_results, ch_multiqc, ch_junction_bed, params.tomte_results, params.outdir, params.phenotype, params.tissue)
     softwareVersionsToYAML(ch_versions)
         .collectFile(
             storeDir: "${params.outdir}/pipeline_info",
@@ -199,10 +199,12 @@ workflow POSTPROCESS {
     ch_junction_bed
     val_tomte_results_dir
     val_output_dir
+    val_phenotype
+    val_tissue
 
     main:
     ch_nisse_results = ch_drop_results.join(ch_scored_vcf)
-    MAKE_SCOUT_YAML(ch_nisse_results, val_tomte_results_dir, val_output_dir)
+    MAKE_SCOUT_YAML(ch_nisse_results, val_tomte_results_dir, val_output_dir, val_phenotype, val_tissue)
     PARSE_TOMTE_QC(ch_multiqc)
     BGZIP_TABIX_BED(ch_junction_bed)
 }

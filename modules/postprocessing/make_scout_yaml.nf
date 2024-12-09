@@ -8,14 +8,14 @@ process MAKE_SCOUT_YAML {
     tuple val(meta), path(nisse_parsed_fraser), path(nisse_parsed_outrider), path(nisse_parsed_vcf), path(vcf_tbi)
     val tomte_results_dir
     val nisse_output_dir
+    val phenotype
+    val tissue
 
     output:
     path "${meta.sample}_scout.yaml", emit: yaml
 
     script:
     // FIXME: Pull these out from the process
-    def phenotype = "affected"
-    def tissue = "blood"
     def sex = "${meta.sex}" == "M" ? "male" : "${meta.sex}" == "F" ? "female" : "unknown"
     """
     produce_yaml.py \
