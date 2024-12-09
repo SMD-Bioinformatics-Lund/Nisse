@@ -60,7 +60,7 @@ def main(
 
     print(f"Writing {len(output_rows)} rows to {out_path}")
     with open(out_path, "w", newline='') as out_fh:
-        writer = csv.DictWriter(out_fh, fieldnames=headers)
+        writer = csv.DictWriter(out_fh, fieldnames=headers, delimiter="\t")
 
         writer.writeheader()
         writer.writerows(output_rows)
