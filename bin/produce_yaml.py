@@ -148,13 +148,13 @@ if __name__ == "__main__":
     args = parse_arguments()
     main(
         sample_id=args.sample_id,
+        vcf=Path(args.vcf),
         sex=args.sex,
         phenotype=args.phenotype,
         tissue=args.tissue,
+        fraser=Path(args.fraser),
+        outrider=Path(args.outrider),
         bam_path=Path(args.bam_path),
         splice_junctions=Path(args.splice_junctions),
         rna_bigwig=Path(args.rna_bigwig),
-        vcf=Path(args.vcf_path),
-        fraser=Path(args.fraser),
-        outrider=Path(args.outrider),
     )
