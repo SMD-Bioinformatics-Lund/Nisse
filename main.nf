@@ -30,15 +30,13 @@ include { MAKE_SCOUT_YAML } from './modules/postprocessing/make_scout_yaml.nf'
 include { BGZIP_TABIX as BGZIP_TABIX_VCF } from './modules/postprocessing/bgzip_tabix.nf'
 include { BGZIP_TABIX as BGZIP_TABIX_BED } from './modules/postprocessing/bgzip_tabix.nf'
 
-include { validateAllParams } from './modules/utils'
-include { softwareVersionsToYAML } from './modules/utils'
 include { BGZIP_TABIX } from './modules/postprocessing/bgzip_tabix.nf'
+include { OUTPUT_VERSIONS } from './modules/postprocessing/output_versions.nf'
 
 workflow {
 
     // To ponder: Do we want to validate input parameters?
     // Nice with early exit, not nice having to maintain in parallel with config
-    // validateAllParams()
     ch_versions = Channel.empty()
 
     Channel
@@ -91,14 +89,7 @@ workflow {
 
     drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
     POSTPROCESS(SNV_SCORE.out.vcf, drop_results, ch_multiqc, ch_junction_bed, params.tomte_results, params.outdir, params.phenotype, params.tissue)
-    softwareVersionsToYAML(ch_versions)
-        .collectFile(
-            storeDir: "${params.outdir}/pipeline_info",
-            name: 'tomte_' + 'pipeline_software_' + 'mqc_' + 'versions.yml',
-            sort: true,
-            newLine: true
-        )
-        .set { ch_collated_versions }
+    OUTPUT_VERSIONS(ch_versions)
 
     workflow.onComplete {
         log.info("Completed without errors")
