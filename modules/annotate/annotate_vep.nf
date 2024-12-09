@@ -1,20 +1,20 @@
 process ANNOTATE_VEP {
 
 	tag "${meta.sample}"
-    label 'process_high'
+	label 'process_high'
 	container "${params.containers.vep}"
 
 	input:
-		tuple val(meta), path(vcf), path(vcf_tbi)
-		val(vep_params)
+	tuple val(meta), path(vcf), path(vcf_tbi)
+	val vep_params
 
 	output:
-		tuple val(meta), path("${meta.sample}.vep.vcf"), emit: vcf
-		tuple val(meta), path("*versions.yml"), emit: versions
+	tuple val(meta), path("${meta.sample}.vep.vcf"), emit: vcf
+	tuple val(meta), path("*versions.yml"), emit: versions
 
 	script:
-		def group = "${meta.sample}"
-		"""
+	def group = "${meta.sample}"
+	"""
 		vep \\
 			-i "${vcf}" \\
 			-o "${group}.vep.vcf" \\
@@ -46,7 +46,7 @@ process ANNOTATE_VEP {
 		"""
 
 	stub:
-		"""
+	"""
 		touch "${meta.sample}.vep.vcf"
 		${annotate_vep_version(task)}
 		"""
