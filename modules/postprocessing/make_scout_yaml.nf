@@ -23,9 +23,9 @@ process MAKE_SCOUT_YAML {
         --sex "${meta.sex}" \
         --phenotype "${meta.phenotype}" \
         --tissue "${meta.tissue}" \
-        --bam_path "${tomte_results_dir}/alignment/${meta.sample_id}.cram" \
-        --splice_junctions "${tomte_results_dir}/junction/${meta.sample_id}_junction.bed.gz" \
-        --rna_bigwig "${tomte_results_dir}/ucsc/${meta.sample_id}.bw"
+        --bam_path "${tomte_results_dir}/alignment/${meta.sample}.cram" \
+        --splice_junctions "${tomte_results_dir}/junction/${meta.sample}_junction.bed.gz" \
+        --rna_bigwig "${tomte_results_dir}/ucsc/${meta.sample}.bw"
     """
 
     stub:
