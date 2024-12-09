@@ -90,7 +90,7 @@ workflow {
     ch_versions.mix(SNV_SCORE.out.versions)
 
     drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
-    POSTPROCESS(SNV_SCORE.out.vcf, drop_results, ch_multiqc, ch_junction_bed, params.tomte_results, params.template_yaml, params.outdir)
+    POSTPROCESS(SNV_SCORE.out.vcf, drop_results, ch_multiqc, ch_junction_bed, params.tomte_results, params.outdir)
     softwareVersionsToYAML(ch_versions)
         .collectFile(
             storeDir: "${params.outdir}/pipeline_info",
@@ -198,13 +198,11 @@ workflow POSTPROCESS {
     ch_multiqc
     ch_junction_bed
     val_tomte_results_dir
-    path_template_yaml
     val_output_dir
 
     main:
     ch_nisse_results = ch_drop_results.join(ch_scored_vcf)
-    ch_nisse_results.view()
-    MAKE_SCOUT_YAML(ch_nisse_results, val_tomte_results_dir, path_template_yaml, val_output_dir)
+    MAKE_SCOUT_YAML(ch_nisse_results, val_tomte_results_dir, val_output_dir)
     PARSE_TOMTE_QC(ch_multiqc)
     BGZIP_TABIX_BED(ch_junction_bed)
 }

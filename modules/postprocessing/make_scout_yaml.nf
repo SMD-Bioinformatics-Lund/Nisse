@@ -7,7 +7,6 @@ process MAKE_SCOUT_YAML {
     input:
     tuple val(meta), path(nisse_parsed_fraser), path(nisse_parsed_outrider), path(nisse_parsed_vcf), path(vcf_tbi)
     val tomte_results_dir
-    path template_yaml
     val nisse_output_dir
 
     output:
