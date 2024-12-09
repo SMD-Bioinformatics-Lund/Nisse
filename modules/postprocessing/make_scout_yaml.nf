@@ -10,7 +10,7 @@ process MAKE_SCOUT_YAML {
     val nisse_output_dir
 
     output:
-    path "${meta.sample}.yaml", emit: yaml
+    path "${meta.sample}_scout.yaml", emit: yaml
 
     script:
     """
