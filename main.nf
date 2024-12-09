@@ -33,6 +33,11 @@ include { BGZIP_TABIX as BGZIP_TABIX_BED } from './modules/postprocessing/bgzip_
 include { BGZIP_TABIX } from './modules/postprocessing/bgzip_tabix.nf'
 include { OUTPUT_VERSIONS } from './modules/postprocessing/output_versions.nf'
 
+// For Tomte
+include { CREATE_PEDIGREE_FILE } from './modules/fortomte/fortomte.nf'
+include { PEDDY } from './modules/fortomte/fortomte.nf'
+include { ESTIMATE_HB_PERC } from './modules/fortomte/fortomte.nf'
+
 workflow {
 
     // To ponder: Do we want to validate input parameters?
@@ -43,6 +48,8 @@ workflow {
         .fromPath(params.csv)
         .splitCsv(header: true)
         .set { ch_meta }
+
+    // FIXME: Read list of hb genes
 
     ch_vcf = ch_meta.map { meta ->
         def sample_id = meta.sample
@@ -57,12 +64,18 @@ workflow {
         tuple(meta, file(junction_bed))
     }
 
+    ch_gene_counts = ch_meta.map { meta ->
+        def sample_id = meta.sample
+        def junction_bed = "${params.tomte_results}/align/${sample_id}.ReadsPerGene.out.tab"
+        tuple(meta, file(junction_bed))
+    }
+
     ch_multiqc = ch_meta.map { meta ->
         // FIXME: Use real Tomte results when a up-to-date HG002-MultiQC run is read
-        // def multiqc_summary = "${params.tomte_results}/multiqc/multiqc_data/multiqc_general_stats.txt"
-        // def picard_coverage = "${params.tomte_results}/multiqc/multiqc_data/picard_rna_coverage.txt"
-        def multiqc_summary = "${params.multiqc_temp}"
-        def picard_coverage = "${params.picard_rna_coverage_temp}"
+        def multiqc_summary = "${params.tomte_results}/multiqc/multiqc_data/multiqc_general_stats.txt"
+        def picard_coverage = "${params.tomte_results}/multiqc/multiqc_data/picard_rna_coverage.txt"
+        // def multiqc_summary = "${params.multiqc_temp}"
+        // def picard_coverage = "${params.picard_rna_coverage_temp}"
         tuple(meta, file(multiqc_summary), file(picard_coverage))
     }
 
@@ -91,6 +104,14 @@ workflow {
     POSTPROCESS(SNV_SCORE.out.vcf, drop_results, ch_multiqc, ch_junction_bed, params.tomte_results, params.outdir, params.phenotype, params.tissue)
     ch_joined_versions = ch_versions.collect { it[1] }
     OUTPUT_VERSIONS(ch_joined_versions)
+
+    // ch_meta
+    // ch_variants
+    // ch_pedfile
+    // ch_gene_counts
+    // ch_hb_genes
+
+    FOR_TOMTE(ch_meta, ch_vcf, ch_gene_counts, params.hb_genes)
 
     workflow.onComplete {
         log.info("Completed without errors")
@@ -199,4 +220,18 @@ workflow POSTPROCESS {
     MAKE_SCOUT_YAML(ch_nisse_results, val_tomte_results_dir, val_output_dir, val_phenotype, val_tissue)
     PARSE_TOMTE_QC(ch_multiqc)
     BGZIP_TABIX_BED(ch_junction_bed)
+}
+
+// Try things out first here before transferring into Tomte
+workflow FOR_TOMTE {
+    take:
+    ch_meta
+    ch_variants
+    ch_gene_counts
+    ch_hb_genes
+
+    main:
+    ch_pedfile = CREATE_PEDIGREE_FILE(ch_meta.toList()).ped
+    PEDDY(ch_variants, ch_pedfile)
+    ESTIMATE_HB_PERC(ch_gene_counts, ch_hb_genes)
 }
