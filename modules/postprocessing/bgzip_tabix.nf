@@ -2,7 +2,7 @@ process BGZIP_TABIX {
 
     tag "${meta.sample}"
     label "process_low"
-    container "${params.containers.base}"
+    container "${params.containers.bcftools}"
 
     input:
     tuple val(meta), path(junction_bed)
