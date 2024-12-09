@@ -131,7 +131,7 @@ def main(
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--sample_id", required=True, type=int)
+    parser.add_argument("--sample_id", required=True)
     parser.add_argument("--vcf", required=True)
     parser.add_argument("--sex", required=True)
     parser.add_argument("--phenotype", required=True)
