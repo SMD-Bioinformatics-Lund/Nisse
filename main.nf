@@ -27,10 +27,12 @@ include { GENMOD_SORT } from './modules/genmod/genmod_sort.nf'
 include { FILTER_VARIANTS_ON_SCORE } from './modules/postprocessing/filter_variants_on_score.nf'
 include { PARSE_TOMTE_QC } from './modules/postprocessing/parse_tomte_qc.nf'
 include { MAKE_SCOUT_YAML } from './modules/postprocessing/make_scout_yaml.nf'
-include { BGZIP_TABIX } from './modules/postprocessing/bgzip_tabix.nf'
+include { BGZIP_TABIX as BGZIP_TABIX_VCF } from './modules/postprocessing/bgzip_tabix.nf'
+include { BGZIP_TABIX as BGZIP_TABIX_BED } from './modules/postprocessing/bgzip_tabix.nf'
 
 include { validateAllParams } from './modules/utils'
 include { softwareVersionsToYAML } from './modules/utils'
+include { BGZIP_TABIX } from './modules/postprocessing/bgzip_tabix.nf'
 
 workflow {
 
@@ -174,6 +176,7 @@ workflow SNV_SCORE {
     GENMOD_SORT(GENMOD_COMPOUND.out.vcf)
     VCF_COMPLETION(GENMOD_SORT.out.vcf)
     FILTER_VARIANTS_ON_SCORE(VCF_COMPLETION.out.vcf, val_score_threshold)
+    BGZIP_TABIX_VCF(FILTER_VARIANTS_ON_SCORE.out.vcf)
 
     ch_versions = Channel.empty()
     ch_versions.mix(GENMOD_MODELS.out.versions)
@@ -181,9 +184,10 @@ workflow SNV_SCORE {
     ch_versions.mix(GENMOD_SCORE.out.versions)
     ch_versions.mix(GENMOD_SORT.out.versions)
     ch_versions.mix(VCF_COMPLETION.out.versions)
+    ch_versions.mix(BGZIP_TABIX_VCF.out.versions)
 
     emit:
-    vcf = FILTER_VARIANTS_ON_SCORE.out.vcf
+    vcf = BGZIP_TABIX_VCF.out.gz
     versions = ch_versions
 }
 
@@ -198,11 +202,9 @@ workflow POSTPROCESS {
     val_output_dir
 
     main:
-    ch_drop_results.view()
-    ch_scored_vcf.view()
     ch_nisse_results = ch_drop_results.join(ch_scored_vcf)
     ch_nisse_results.view()
     MAKE_SCOUT_YAML(ch_nisse_results, val_tomte_results_dir, path_template_yaml, val_output_dir)
     PARSE_TOMTE_QC(ch_multiqc)
-    BGZIP_TABIX(ch_junction_bed)
+    BGZIP_TABIX_BED(ch_junction_bed)
 }
