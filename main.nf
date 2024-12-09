@@ -84,10 +84,10 @@ workflow {
     CREATE_PED(ch_meta)
 
     SNV_ANNOTATE(PREPROCESS.out.vcf, params.vep)
-    ch_versions.mix(SNV_ANNOTATE.out.versions)
+    ch_versions = ch_versions.mix(SNV_ANNOTATE.out.versions)
 
     SNV_SCORE(SNV_ANNOTATE.out.vcf, CREATE_PED.out.ped, params.score_config, params.score_threshold)
-    ch_versions.mix(SNV_SCORE.out.versions)
+    ch_versions = ch_versions.mix(SNV_SCORE.out.versions)
 
     drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
     POSTPROCESS(SNV_SCORE.out.vcf, drop_results, ch_multiqc, ch_junction_bed, params.tomte_results, params.outdir, params.phenotype, params.tissue)
@@ -149,13 +149,13 @@ workflow SNV_ANNOTATE {
     ADD_CADD_SCORES_TO_VCF(ch_cadd_vcf)
 
     ch_versions = Channel.empty()
-    ch_versions.mix(ANNOTATE_VEP.out.versions)
-    ch_versions.mix(VCF_ANNO.out.versions)
-    ch_versions.mix(EXTRACT_INDELS_FOR_CADD.out.versions)
-    ch_versions.mix(INDEL_VEP.out.versions)
-    ch_versions.mix(CALCULATE_INDEL_CADD.out.versions)
-    ch_versions.mix(BGZIP_INDEL_CADD.out.versions)
-    ch_versions.mix(ADD_CADD_SCORES_TO_VCF.out.versions)
+    ch_versions = ch_versions.mix(ANNOTATE_VEP.out.versions)
+    ch_versions = ch_versions.mix(VCF_ANNO.out.versions)
+    ch_versions = ch_versions.mix(EXTRACT_INDELS_FOR_CADD.out.versions)
+    ch_versions = ch_versions.mix(INDEL_VEP.out.versions)
+    ch_versions = ch_versions.mix(CALCULATE_INDEL_CADD.out.versions)
+    ch_versions = ch_versions.mix(BGZIP_INDEL_CADD.out.versions)
+    ch_versions = ch_versions.mix(ADD_CADD_SCORES_TO_VCF.out.versions)
 
     emit:
     vcf = ADD_CADD_SCORES_TO_VCF.out.vcf
@@ -179,12 +179,12 @@ workflow SNV_SCORE {
     BGZIP_TABIX_VCF(FILTER_VARIANTS_ON_SCORE.out.vcf)
 
     ch_versions = Channel.empty()
-    ch_versions.mix(GENMOD_MODELS.out.versions)
-    ch_versions.mix(GENMOD_COMPOUND.out.versions)
-    ch_versions.mix(GENMOD_SCORE.out.versions)
-    ch_versions.mix(GENMOD_SORT.out.versions)
-    ch_versions.mix(VCF_COMPLETION.out.versions)
-    ch_versions.mix(BGZIP_TABIX_VCF.out.versions)
+    ch_versions = ch_versions.mix(GENMOD_MODELS.out.versions)
+    ch_versions = ch_versions.mix(GENMOD_COMPOUND.out.versions)
+    ch_versions = ch_versions.mix(GENMOD_SCORE.out.versions)
+    ch_versions = ch_versions.mix(GENMOD_SORT.out.versions)
+    ch_versions = ch_versions.mix(VCF_COMPLETION.out.versions)
+    ch_versions = ch_versions.mix(BGZIP_TABIX_VCF.out.versions)
 
     emit:
     vcf = BGZIP_TABIX_VCF.out.gz
