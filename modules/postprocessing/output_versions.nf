@@ -4,13 +4,13 @@ process OUTPUT_VERSIONS {
     container "${params.containers.base}"
 
     input:
-    path versions
+    val versions_list
 
     output:
     path ("versions.yaml"), emit: yaml
 
     script:
-    versions_joined = versions.join(' ')
+    versions_joined = versions_list.join(' ')
     """
     cat ${versions_joined} > "versions.yaml"
     """
