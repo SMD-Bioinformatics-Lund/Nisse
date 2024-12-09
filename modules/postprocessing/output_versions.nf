@@ -11,7 +11,7 @@ process OUTPUT_VERSIONS {
     tuple val(meta), path("versions.yaml"), emit: yaml
 
     script:
-    // versions_joined = versions.join(' ')
+    versions_joined = versions.join(' ')
     """
     cat ${versions} > "versions.yaml"
     """

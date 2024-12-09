@@ -90,7 +90,8 @@ workflow {
     drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
     POSTPROCESS(SNV_SCORE.out.vcf, drop_results, ch_multiqc, ch_junction_bed, params.tomte_results, params.outdir, params.phenotype, params.tissue)
     ch_versions.view()
-    ch_joined_versions = ch_versions.join(" ")
+    ch_joined_versions = ch_versions.collect()
+    ch_joined_versions.view()
     OUTPUT_VERSIONS(ch_joined_versions)
 
     workflow.onComplete {
