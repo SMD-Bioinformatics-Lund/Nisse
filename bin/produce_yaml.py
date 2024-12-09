@@ -95,8 +95,8 @@ def main(
         ],
         'vcf_snv': vcf,
         'omics_files': [
-            f'fraser: ${fraser}',
-            f'outrider: ${outrider}',
+            f'fraser: {fraser}',
+            f'outrider: {outrider}',
         ],
         "default_gene_panels": "[]",
         "gene_panels": "[]",
