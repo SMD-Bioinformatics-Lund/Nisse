@@ -23,6 +23,10 @@ def main(hbs_path: Path, gene_counts: Path, strandedness: Optional[str]):
             (gene_id_raw, both, fw, rv) = line.rstrip().split("\t")
             gene_id = gene_id_raw.split(".")[0]
 
+            if gene_id.startswith("N_"):
+                print(f"Skipping N_ prefixed row: {line.rstrip()}")
+                continue
+
             if strandedness == "reverse":
                 value = int(rv)
             elif strandedness == "forward":
@@ -37,10 +41,11 @@ def main(hbs_path: Path, gene_counts: Path, strandedness: Optional[str]):
 
             nbr_rows += 1
 
+    # FIXME: Wrap the output here. Write to file.
     print(f"Nbr rows processed: {nbr_rows}")
     hb_perc = 100 * (counts["hb"] / counts["all"])
     print(counts)
-    print(f"Perc hb: {hb_perc}")
+    print(f"Perc hb: {round(hb_perc, 3)}%")
 
 
 def get_hb_genes(hb_map_path: Path) -> Set[str]:

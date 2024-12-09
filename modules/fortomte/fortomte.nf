@@ -122,7 +122,7 @@ process PEDDY {
 process ESTIMATE_HB_PERC {
     input:
     tuple val(meta), path(gene_counts)
-    path ch_hb_genes
+    path hb_genes
 
     output:
     path ("hb_estimate.tsv"), emit: tsv
@@ -137,8 +137,13 @@ process ESTIMATE_HB_PERC {
     // Get the sub count
     // Divide
     // Seems awkable? But maybe Python is better
+
+    // FIXME: What kind of output do we want? A JSON blob? TSV?
     """
-    echo "estimate" > hb_estimate.tsv
+    calculate_hb_metrics.py \\
+        --hb_map "${hb_genes}" \\
+        --gene_counts "${gene_counts}" \\
+        --strandedness "${meta.strandedness}"
     """
 
     stub:
