@@ -24,7 +24,7 @@ process MAKE_SCOUT_YAML {
         --phenotype "${meta.phenotype}" \
         --tissue "${meta.tissue}" \
         --bam_path "${tomte_results_dir}/alignment/${meta.sample}.cram" \
-        --splice_junctions "${tomte_results_dir}/junction/${meta.sample}_junction.bed.gz" \
+        --splice_junctions "${nisse_output_dir}/junction/${meta.sample}_junction.bed.gz" \
         --rna_bigwig "${tomte_results_dir}/ucsc/${meta.sample}.bw"
     """
 
