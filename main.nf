@@ -198,7 +198,10 @@ workflow POSTPROCESS {
     val_output_dir
 
     main:
+    ch_drop_results.view()
+    ch_scored_vcf.view()
     ch_nisse_results = ch_drop_results.join(ch_scored_vcf)
+    ch_nisse_results.view()
     MAKE_SCOUT_YAML(ch_nisse_results, val_tomte_results_dir, path_template_yaml, val_output_dir)
     PARSE_TOMTE_QC(ch_multiqc)
     BGZIP_TABIX(ch_junction_bed)
