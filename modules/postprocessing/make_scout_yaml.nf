@@ -17,8 +17,8 @@ process MAKE_SCOUT_YAML {
     """
     produce_yaml.py \
         --sample_id "${meta.sample}" \
-        --fraser "${nisse_output_dir}/${nisse_parsed_fraser}" \
-        --outrider "${nisse_output_dir}/${nisse_parsed_outrider}" \
+        --fraser "${nisse_output_dir}/drop/${nisse_parsed_fraser}" \
+        --outrider "${nisse_output_dir}/drop/${nisse_parsed_outrider}" \
         --vcf "${nisse_output_dir}/${nisse_parsed_vcf}" \
         --sex "${meta.sex}" \
         --phenotype "${meta.phenotype}" \
