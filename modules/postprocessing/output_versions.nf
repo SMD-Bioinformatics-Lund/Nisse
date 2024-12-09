@@ -10,7 +10,7 @@ process OUTPUT_VERSIONS {
     path ("versions.yaml"), emit: yaml
 
     script:
-    versions_joined = versions_list.join(' ')
+    versions_joined = versions_list[0].join(' ')
     """
     cat ${versions_joined} > "versions.yaml"
     """
