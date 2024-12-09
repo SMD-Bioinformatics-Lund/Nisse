@@ -53,7 +53,7 @@ def main(
                 stats['hgnc_id'] += 1
 
             if pass_stat_cutoff and has_hgnc_symbol and has_hgnc_id:
-                row['hgncID'] = hgnc_id
+                row['hgncId'] = hgnc_id
                 output_rows.append(row)
     
     headers = list(output_rows[0].keys())
