@@ -130,6 +130,13 @@ process ESTIMATE_HB_PERC {
     script:
     // How to best do this?
     // R script? Python script maybe?
+
+    // Remove the top summary lines
+    // Get the correct column based on strandedness (1=both, 2=fw, 3=rv)
+    // Get the full count
+    // Get the sub count
+    // Divide
+    // Seems awkable? But maybe Python is better
     """
     echo "estimate" > hb_estimate.tsv
     """
