@@ -101,13 +101,8 @@ workflow {
     ch_joined_versions = ch_versions.collect { it[1] }
     OUTPUT_VERSIONS(ch_joined_versions)
 
-    // ch_meta
-    // ch_variants
-    // ch_pedfile
-    // ch_gene_counts
-    // ch_hb_genes
-
-    FOR_TOMTE(ch_meta, ch_vcf, ch_gene_counts, params.hb_genes)
+    ch_samples = ch_meta.map { row -> row.sample }
+    FOR_TOMTE(ch_samples, ch_vcf, ch_gene_counts, params.hb_genes)
 
     workflow.onComplete {
         log.info("Completed without errors")
@@ -221,13 +216,13 @@ workflow POSTPROCESS {
 // Try things out first here before transferring into Tomte
 workflow FOR_TOMTE {
     take:
-    ch_meta
+    ch_samples
     ch_variants
     ch_gene_counts
     ch_hb_genes
 
     main:
-    ch_pedfile = CREATE_PEDIGREE_FILE(ch_meta.toList()).ped
+    ch_pedfile = CREATE_PEDIGREE_FILE(ch_samples).ped
     PEDDY(ch_variants, ch_pedfile)
     ESTIMATE_HB_PERC(ch_gene_counts, ch_hb_genes)
 }
