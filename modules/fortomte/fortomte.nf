@@ -18,12 +18,12 @@ process CREATE_PEDIGREE_FILE {
     task.ext.when == null || task.ext.when
 
     script:
-    def case_name = samples[0].case_id
+    def case_name = samples[0].case
     outfile_text = ['#family_id', 'sample_id', 'father', 'mother', 'sex', 'phenotype'].join('\\t')
     samples
         .unique { it.sample }
         .each { sample ->
-            outfile_text += "\\n" + [sample.case_id, sample.sample, sample.paternal, sample.maternal, sample.sex, sample.phenotype].join('\\t')
+            outfile_text += "\\n" + [sample.case, sample.sample, sample.paternal, sample.maternal, sample.sex, sample.phenotype].join('\\t')
         }
 
     // FIXME: Cleanup
@@ -31,7 +31,7 @@ process CREATE_PEDIGREE_FILE {
     // for(int i = 0; i<samples.size(); i++) {
     //     def sample_name =  samples[i].sample
     //     if (!samples_list.contains(sample_name)) {
-    //         outfile_text += "\\n" + [samples[i].case_id, sample_name, samples[i].paternal, samples[i].maternal, samples[i].sex, samples[i].phenotype].join('\\t')
+    //         outfile_text += "\\n" + [samples[i].case, sample_name, samples[i].paternal, samples[i].maternal, samples[i].sex, samples[i].phenotype].join('\\t')
     //         samples_list.add(sample_name)
     //     }
     // }
@@ -46,7 +46,7 @@ process CREATE_PEDIGREE_FILE {
     """
 
     stub:
-    def case_name = samples[0].case_id
+    def case_name = samples[0].case
     """
     touch ${case_name}.ped
 
