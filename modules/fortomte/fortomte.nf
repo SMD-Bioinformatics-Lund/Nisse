@@ -125,29 +125,19 @@ process ESTIMATE_HB_PERC {
     path hb_genes
 
     output:
-    path ("hb_estimate.tsv"), emit: tsv
+    path ("${meta.sample}_perc_mapping.json"), emit: tsv
 
     script:
-    // How to best do this?
-    // R script? Python script maybe?
-
-    // Remove the top summary lines
-    // Get the correct column based on strandedness (1=both, 2=fw, 3=rv)
-    // Get the full count
-    // Get the sub count
-    // Divide
-    // Seems awkable? But maybe Python is better
-
-    // FIXME: What kind of output do we want? A JSON blob? TSV?
     """
-    calculate_hb_metrics.py \\
-        --hb_map "${hb_genes}" \\
+    calculate_perc_mapping.py \\
+        --target_genes "${hb_genes}" \\
         --gene_counts "${gene_counts}" \\
-        --strandedness "${meta.strandedness}"
+        --strandedness "${meta.strandedness}" \\
+        --out_json "${meta.sample}_perc_mapping.json"
     """
 
     stub:
     """
-    touch hb_estimate.tsv
+    touch "${meta.sample}_perc_mapping.json"
     """
 }
