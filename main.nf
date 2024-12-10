@@ -63,8 +63,10 @@ workflow {
         def sample_id = meta.sample
         def junction_bed = String.format(params.path_templates.junction_bed_s_sample, sample_id)
         // def junction_bed = "${params.tomte_results}/junction/${sample_id}_junction.bed"
+        print(junction_bed)
         tuple(meta, file(junction_bed))
     }
+    ch_junction_bed.view()
 
     ch_gene_counts = ch_meta.map { meta ->
         def sample_id = meta.sample
