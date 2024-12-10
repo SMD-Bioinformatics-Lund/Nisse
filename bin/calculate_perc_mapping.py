@@ -30,7 +30,7 @@ def main(
     metrics = dict()
     metrics["nbr_genes"] = nbr_genes
     metrics["total_count"] = total_count
-    metrics["per_gene_count"] = total_count / nbr_genes
+    metrics["average_count"] = total_count / nbr_genes
     metrics["target_genes_count"] = sum(list(target_genes_counts.values()))
     metrics["target_genes_frac"] = metrics["target_genes_count"] / metrics["total_count"]
     metrics["per_target_gene_count"] = target_genes_counts
