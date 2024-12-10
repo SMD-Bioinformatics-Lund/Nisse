@@ -40,15 +40,56 @@ include { ESTIMATE_HB_PERC } from './modules/fortomte/fortomte.nf'
 
 workflow {
 
-    // To ponder: Do we want to validate input parameters?
-    // Nice with early exit, not nice having to maintain in parallel with config
     ch_versions = Channel.empty()
-
     Channel
         .fromPath(params.csv)
         .splitCsv(header: true)
         .set { ch_meta }
 
+    ch_multiqc = ch_meta.map { meta ->
+        def multiqc_summary = String.format(params.tomte_results_paths.multiqc_summary, params.tomte_results)
+        def picard_coverage = String.format(params.tomte_results_paths.picard_coverage, params.tomte_results)
+        tuple(meta, file(multiqc_summary), file(picard_coverage))
+    }
+
+    QC(ch_versions, ch_multiqc)
+    ch_versions = ch_versions.mix(QC.out.versions)
+    if (!params.qc_only) {
+        ALL(ch_versions, ch_meta)
+    }
+    ch_versions = ch_versions.mix(QC.out.versions)
+
+    ch_joined_versions = ch_versions.collect { it[1] }
+    OUTPUT_VERSIONS(ch_joined_versions)
+
+    workflow.onComplete {
+        log.info("Completed without errors")
+    }
+
+    workflow.onError {
+        log.error("Aborted with errors")
+    }
+}
+
+workflow QC {
+    take:
+    ch_versions
+    ch_multiqc
+
+    main:
+    PARSE_TOMTE_QC(ch_multiqc)
+
+    emit:
+    versions = ch_versions
+}
+
+workflow ALL {
+
+    take:
+    ch_versions
+    ch_meta
+
+    main:
     ch_vcf = ch_meta.map { meta ->
         def sample_id = meta.sample
         def variant_calls = String.format(params.tomte_results_paths.variant_calls, params.tomte_results, sample_id)
@@ -66,19 +107,11 @@ workflow {
         def gene_counts = String.format(params.tomte_results_paths.gene_counts, params.tomte_results, sample_id)
         tuple(meta, file(gene_counts))
     }
-
-    ch_multiqc = ch_meta.map { meta ->
-        def multiqc_summary = String.format(params.tomte_results_paths.multiqc_summary, params.tomte_results)
-        def picard_coverage = String.format(params.tomte_results_paths.picard_coverage, params.tomte_results)
-        tuple(meta, file(multiqc_summary), file(picard_coverage))
-    }
-
     ch_fraser_results = ch_meta.map { meta ->
         def case_id = meta.case
         def fraser_results = String.format(params.tomte_results_paths.fraser_tsv, params.tomte_results, case_id)
         tuple(meta, file(fraser_results))
     }
-
     ch_outrider_results = ch_meta.map { meta ->
         def case_id = meta.case
         def outrider_results = String.format(params.tomte_results_paths.outrider_tsv, params.tomte_results, case_id)
@@ -95,20 +128,12 @@ workflow {
     ch_versions = ch_versions.mix(SNV_SCORE.out.versions)
 
     drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
-    POSTPROCESS(SNV_SCORE.out.vcf, drop_results, ch_multiqc, ch_junction_bed, params.tomte_results, params.outdir, params.phenotype, params.tissue)
-    ch_joined_versions = ch_versions.collect { it[1] }
-    OUTPUT_VERSIONS(ch_joined_versions)
+    POSTPROCESS(SNV_SCORE.out.vcf, drop_results, ch_junction_bed, params.tomte_results, params.outdir, params.phenotype, params.tissue)
 
-    // ch_samples = ch_meta.map { row -> row.sample }
     FOR_TOMTE(ch_meta, ch_vcf, ch_gene_counts, params.hb_genes)
 
-    workflow.onComplete {
-        log.info("Completed without errors")
-    }
-
-    workflow.onError {
-        log.error("Aborted with errors")
-    }
+    emit:
+    versions = ch_versions
 }
 
 workflow PREPROCESS {
@@ -197,7 +222,6 @@ workflow POSTPROCESS {
     take:
     ch_scored_vcf
     ch_drop_results
-    ch_multiqc
     ch_junction_bed
     val_tomte_results_dir
     val_output_dir
@@ -207,7 +231,6 @@ workflow POSTPROCESS {
     main:
     ch_nisse_results = ch_drop_results.join(ch_scored_vcf)
     MAKE_SCOUT_YAML(ch_nisse_results, val_tomte_results_dir, val_output_dir, val_phenotype, val_tissue)
-    PARSE_TOMTE_QC(ch_multiqc)
     BGZIP_TABIX_BED(ch_junction_bed)
 }
 

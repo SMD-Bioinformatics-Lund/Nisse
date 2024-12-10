@@ -7,6 +7,9 @@ import numpy as np
 from ast import literal_eval
 
 
+VERSION = "1.0.0"
+
+
 def main(
     multiqc_general_stats: str, picard_rna_coverage: str, output_file: str, sample_id: Optional[str]
 ):
@@ -228,6 +231,9 @@ def parse_arguments() -> argparse.Namespace:
         help="Path to the input file containing RNA coverage data.",
     )
     parser.add_argument("--output_file", required=True)
+    parser.add_argument(
+        "--version", action="version", version=VERSION, help="Show the program's version and exit"
+    )
 
     args = parser.parse_args()
     return args

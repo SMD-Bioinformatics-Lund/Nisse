@@ -19,22 +19,12 @@ process CREATE_PEDIGREE_FILE {
 
     script:
     def case_name = samples[0].case
-    outfile_text = ['#family_id', 'sample_id', 'father', 'mother', 'sex', 'phenotype'].join('\\t')
+    outfile_text = ['#family_id', 'sample', 'father', 'mother', 'sex', 'phenotype'].join('\\t')
     samples
         .unique { it.sample }
         .each { sample ->
             outfile_text += "\\n" + [sample.case, sample.sample, "0", "0", sample.sex, "affected"].join('\\t')
         }
-
-    // FIXME: Cleanup
-    // Original code
-    // for(int i = 0; i<samples.size(); i++) {
-    //     def sample_name =  samples[i].sample
-    //     if (!samples_list.contains(sample_name)) {
-    //         outfile_text += "\\n" + [samples[i].case, sample_name, samples[i].paternal, samples[i].maternal, samples[i].sex, samples[i].phenotype].join('\\t')
-    //         samples_list.add(sample_name)
-    //     }
-    // }
     """
     echo -e "${outfile_text}" >${case_name}.ped
 
