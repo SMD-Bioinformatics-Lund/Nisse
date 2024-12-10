@@ -53,7 +53,7 @@ workflow {
 
     ch_vcf = ch_meta.map { meta ->
         def sample_id = meta.sample
-        def variant_calls = String.format(params.path_templates.variant_calls_s_sample, sample_id)
+        def variant_calls = String.format(params.tomte_results.variant_calls_s_sample, params.tomte_results, sample_id)
         // def variant_calls = "${params.tomte_results}/call_variants/${sample_id}_split_rmdup_info.vcf.gz"
         def variant_calls_tbi = "${variant_calls}.tbi"
         tuple(meta, file(variant_calls), file(variant_calls_tbi))
@@ -61,7 +61,7 @@ workflow {
 
     ch_junction_bed = ch_meta.map { meta ->
         def sample_id = meta.sample
-        def junction_bed = String.format(params.path_templates.junction_bed_s_sample, sample_id)
+        def junction_bed = String.format(params.tomte_results.junction_bed_s_sample, params.tomte_results, sample_id)
         // def junction_bed = "${params.tomte_results}/junction/${sample_id}_junction.bed"
         print(junction_bed)
         tuple(meta, file(junction_bed))
@@ -70,14 +70,14 @@ workflow {
 
     ch_gene_counts = ch_meta.map { meta ->
         def sample_id = meta.sample
-        def gene_counts = String.format(params.path_templates.gene_counts_s_sample, sample_id)
+        def gene_counts = String.format(params.tomte_results.gene_counts_s_sample, params.tomte_results, sample_id)
         // def junction_bed = "${params.tomte_results}/alignment/${sample_id}.ReadsPerGene.out.tab"
         tuple(meta, file(gene_counts))
     }
 
     ch_multiqc = ch_meta.map { meta ->
-        def multiqc_summary = "${params.path_templates.multiqc_summary}"
-        def picard_coverage = "${params.path_templates.picard_coverage}"
+        def multiqc_summary = String.format(params.tomte_results.multiqc_summary, params.tomte_results)
+        def picard_coverage = String.format(params.tomte_results.picard_coverage, params.tomte_results)
         // def multiqc_summary = "${params.tomte_results}/multiqc/multiqc_data/multiqc_general_stats.txt"
         // def picard_coverage = "${params.tomte_results}/multiqc/multiqc_data/picard_rna_coverage.txt"
         tuple(meta, file(multiqc_summary), file(picard_coverage))
@@ -86,14 +86,14 @@ workflow {
     ch_fraser_results = ch_meta.map { meta ->
         def case_id = meta.case
         // def fraser_results = "${params.tomte_results}/analyse_transcripts/drop/${case_id}_fraser_top_hits_research.tsv"
-        def fraser_results = String.format(params.path_templates.fraser_tsv_s_case, case_id)
+        def fraser_results = String.format(params.tomte_results.fraser_tsv_s_case, params.tomte_results, case_id)
         tuple(meta, file(fraser_results))
     }
 
     ch_outrider_results = ch_meta.map { meta ->
         def case_id = meta.case
         // def outrider_results = "${params.tomte_results}/analyse_transcripts/drop/${case_id}_outrider_top_hits_research.tsv"
-        def outrider_results = String.format(params.path_templates.outrider_tsv_s_case, case_id)
+        def outrider_results = String.format(params.tomte_results.outrider_tsv_s_case, params.tomte_results, case_id)
         tuple(meta, file(outrider_results))
     }
 
