@@ -23,7 +23,7 @@ process CREATE_PEDIGREE_FILE {
     samples
         .unique { it.sample }
         .each { sample ->
-            outfile_text += "\\n" + [sample.case, sample.sample, sample.paternal, sample.maternal, sample.sex, sample.phenotype].join('\\t')
+            outfile_text += "\\n" + [sample.case, sample.sample, "0", "0", sample.sex, "affected"].join('\\t')
         }
 
     // FIXME: Cleanup
