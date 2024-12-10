@@ -47,6 +47,7 @@ workflow {
     Channel
         .fromPath(params.csv)
         .splitCsv(header: true)
+        .map { row -> row + [id: row.sample] }
         .set { ch_meta }
 
     ch_vcf = ch_meta.map { meta ->
@@ -222,8 +223,7 @@ workflow FOR_TOMTE {
     ch_hb_genes
 
     main:
-    ch_peddy_meta = ch_meta.map { row -> row + [id: row.sample] }.toList()
-    ch_pedfile = CREATE_PEDIGREE_FILE(ch_peddy_meta).ped
+    ch_pedfile = CREATE_PEDIGREE_FILE(ch_meta.toList()).ped
     PEDDY(ch_variants, ch_pedfile)
     ESTIMATE_HB_PERC(ch_gene_counts, ch_hb_genes)
 }
