@@ -47,7 +47,6 @@ workflow {
     Channel
         .fromPath(params.csv)
         .splitCsv(header: true)
-        .map { row -> row + [id: row.sample] }
         .set { ch_meta }
 
     ch_vcf = ch_meta.map { meta ->
@@ -62,8 +61,6 @@ workflow {
         def junction_bed = String.format(params.tomte_results_paths.junction_bed, params.tomte_results, sample_id)
         tuple(meta, file(junction_bed))
     }
-    ch_junction_bed.view()
-
     ch_gene_counts = ch_meta.map { meta ->
         def sample_id = meta.sample
         def gene_counts = String.format(params.tomte_results_paths.gene_counts, params.tomte_results, sample_id)
