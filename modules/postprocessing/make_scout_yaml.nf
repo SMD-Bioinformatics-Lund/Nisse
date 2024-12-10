@@ -15,7 +15,6 @@ process MAKE_SCOUT_YAML {
     path "${meta.sample}_scout.yaml", emit: yaml
 
     script:
-    // FIXME: Pull these out from the process
     def sex = "${meta.sex}" == "M" ? "male" : "${meta.sex}" == "F" ? "female" : "unknown"
     """
     produce_yaml.py \

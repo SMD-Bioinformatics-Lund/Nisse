@@ -33,48 +33,88 @@ include { BGZIP_TABIX as BGZIP_TABIX_BED } from './modules/postprocessing/bgzip_
 include { BGZIP_TABIX } from './modules/postprocessing/bgzip_tabix.nf'
 include { OUTPUT_VERSIONS } from './modules/postprocessing/output_versions.nf'
 
+// For Tomte
+include { CREATE_PEDIGREE_FILE } from './modules/fortomte/fortomte.nf'
+include { PEDDY } from './modules/fortomte/fortomte.nf'
+include { ESTIMATE_HB_PERC } from './modules/fortomte/fortomte.nf'
+
 workflow {
 
-    // To ponder: Do we want to validate input parameters?
-    // Nice with early exit, not nice having to maintain in parallel with config
     ch_versions = Channel.empty()
-
     Channel
         .fromPath(params.csv)
         .splitCsv(header: true)
         .set { ch_meta }
 
+    ch_multiqc = ch_meta.map { meta ->
+        def multiqc_summary = String.format(params.tomte_results_paths.multiqc_summary, params.tomte_results)
+        def picard_coverage = String.format(params.tomte_results_paths.picard_coverage, params.tomte_results)
+        tuple(meta, file(multiqc_summary), file(picard_coverage))
+    }
+
+    QC(ch_versions, ch_multiqc)
+    ch_versions = ch_versions.mix(QC.out.versions)
+    if (!params.qc_only) {
+        ALL(ch_versions, ch_meta)
+    }
+    ch_versions = ch_versions.mix(QC.out.versions)
+
+    ch_joined_versions = ch_versions.collect { it[1] }
+    OUTPUT_VERSIONS(ch_joined_versions)
+
+    workflow.onComplete {
+        log.info("Completed without errors")
+    }
+
+    workflow.onError {
+        log.error("Aborted with errors")
+    }
+}
+
+workflow QC {
+    take:
+    ch_versions
+    ch_multiqc
+
+    main:
+    PARSE_TOMTE_QC(ch_multiqc)
+
+    emit:
+    versions = ch_versions
+}
+
+workflow ALL {
+
+    take:
+    ch_versions
+    ch_meta
+
+    main:
     ch_vcf = ch_meta.map { meta ->
         def sample_id = meta.sample
-        def variant_calls = "${params.tomte_results}/call_variants/${sample_id}_split_rmdup_info.vcf.gz"
+        def variant_calls = String.format(params.tomte_results_paths.variant_calls, params.tomte_results, sample_id)
         def variant_calls_tbi = "${variant_calls}.tbi"
         tuple(meta, file(variant_calls), file(variant_calls_tbi))
     }
 
     ch_junction_bed = ch_meta.map { meta ->
         def sample_id = meta.sample
-        def junction_bed = "${params.tomte_results}/junction/${sample_id}_junction.bed"
+        def junction_bed = String.format(params.tomte_results_paths.junction_bed, params.tomte_results, sample_id)
         tuple(meta, file(junction_bed))
     }
-
-    ch_multiqc = ch_meta.map { meta ->
-        // FIXME: Use real Tomte results when a up-to-date HG002-MultiQC run is read
-        // def multiqc_summary = "${params.tomte_results}/multiqc/multiqc_data/multiqc_general_stats.txt"
-        // def picard_coverage = "${params.tomte_results}/multiqc/multiqc_data/picard_rna_coverage.txt"
-        def multiqc_summary = "${params.multiqc_temp}"
-        def picard_coverage = "${params.picard_rna_coverage_temp}"
-        tuple(meta, file(multiqc_summary), file(picard_coverage))
+    ch_gene_counts = ch_meta.map { meta ->
+        def sample_id = meta.sample
+        def gene_counts = String.format(params.tomte_results_paths.gene_counts, params.tomte_results, sample_id)
+        tuple(meta, file(gene_counts))
     }
-
     ch_fraser_results = ch_meta.map { meta ->
         def case_id = meta.case
-        def fraser_results = "${params.tomte_results}/analyse_transcripts/drop/${case_id}_fraser_top_hits_research.tsv"
+        def fraser_results = String.format(params.tomte_results_paths.fraser_tsv, params.tomte_results, case_id)
         tuple(meta, file(fraser_results))
     }
-
     ch_outrider_results = ch_meta.map { meta ->
         def case_id = meta.case
-        def outrider_results = "${params.tomte_results}/analyse_transcripts/drop/${case_id}_outrider_top_hits_research.tsv"
+        def outrider_results = String.format(params.tomte_results_paths.outrider_tsv, params.tomte_results, case_id)
         tuple(meta, file(outrider_results))
     }
 
@@ -88,17 +128,19 @@ workflow {
     ch_versions = ch_versions.mix(SNV_SCORE.out.versions)
 
     drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
-    POSTPROCESS(SNV_SCORE.out.vcf, drop_results, ch_multiqc, ch_junction_bed, params.tomte_results, params.outdir, params.phenotype, params.tissue)
-    ch_joined_versions = ch_versions.collect { it[1] }
-    OUTPUT_VERSIONS(ch_joined_versions)
+    POSTPROCESS(SNV_SCORE.out.vcf, drop_results, ch_junction_bed, params.tomte_results, params.outdir, params.phenotype, params.tissue)
 
-    workflow.onComplete {
-        log.info("Completed without errors")
+    if (params.run_peddy) {
+        ch_pedfile = CREATE_PEDIGREE_FILE(ch_meta.toList()).ped
+        PEDDY(ch_vcf, ch_pedfile)
     }
 
-    workflow.onError {
-        log.error("Aborted with errors")
+    if (params.run_estimate_hb) {
+        ESTIMATE_HB_PERC(ch_gene_counts, params.hb_genes)
     }
+
+    emit:
+    versions = ch_versions
 }
 
 workflow PREPROCESS {
@@ -187,7 +229,6 @@ workflow POSTPROCESS {
     take:
     ch_scored_vcf
     ch_drop_results
-    ch_multiqc
     ch_junction_bed
     val_tomte_results_dir
     val_output_dir
@@ -197,6 +238,5 @@ workflow POSTPROCESS {
     main:
     ch_nisse_results = ch_drop_results.join(ch_scored_vcf)
     MAKE_SCOUT_YAML(ch_nisse_results, val_tomte_results_dir, val_output_dir, val_phenotype, val_tissue)
-    PARSE_TOMTE_QC(ch_multiqc)
     BGZIP_TABIX_BED(ch_junction_bed)
 }
