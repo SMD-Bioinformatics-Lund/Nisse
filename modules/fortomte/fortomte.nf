@@ -118,8 +118,12 @@ process PEDDY {
 }
 
 
-// Check how this was done in Rstudio
 process ESTIMATE_HB_PERC {
+
+    tag "${meta.sample}"
+    label "process_low"
+    container "${params.containers.base}"
+
     input:
     tuple val(meta), path(gene_counts)
     path hb_genes
