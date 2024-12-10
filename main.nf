@@ -130,7 +130,14 @@ workflow ALL {
     drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
     POSTPROCESS(SNV_SCORE.out.vcf, drop_results, ch_junction_bed, params.tomte_results, params.outdir, params.phenotype, params.tissue)
 
-    FOR_TOMTE(ch_meta, ch_vcf, ch_gene_counts, params.hb_genes)
+    if (params.run_peddy) {
+        ch_pedfile = CREATE_PEDIGREE_FILE(ch_meta.toList()).ped
+        PEDDY(ch_vcf, ch_pedfile)
+    }
+
+    if (params.run_estimate_hb) {
+        ESTIMATE_HB_PERC(ch_gene_counts, params.hb_genes)
+    }
 
     emit:
     versions = ch_versions
@@ -232,18 +239,4 @@ workflow POSTPROCESS {
     ch_nisse_results = ch_drop_results.join(ch_scored_vcf)
     MAKE_SCOUT_YAML(ch_nisse_results, val_tomte_results_dir, val_output_dir, val_phenotype, val_tissue)
     BGZIP_TABIX_BED(ch_junction_bed)
-}
-
-// Try things out first here before transferring into Tomte
-workflow FOR_TOMTE {
-    take:
-    ch_meta
-    ch_variants
-    ch_gene_counts
-    ch_hb_genes
-
-    main:
-    ch_pedfile = CREATE_PEDIGREE_FILE(ch_meta.toList()).ped
-    PEDDY(ch_variants, ch_pedfile)
-    ESTIMATE_HB_PERC(ch_gene_counts, ch_hb_genes)
 }
