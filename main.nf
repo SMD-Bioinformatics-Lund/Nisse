@@ -222,7 +222,9 @@ workflow FOR_TOMTE {
     ch_hb_genes
 
     main:
-    ch_pedfile = CREATE_PEDIGREE_FILE(ch_meta).ped
+    ch_meta.view()
+    ch_meta.toList().view()
+    ch_pedfile = CREATE_PEDIGREE_FILE(ch_meta.toList()).ped
     PEDDY(ch_variants, ch_pedfile)
     ESTIMATE_HB_PERC(ch_gene_counts, ch_hb_genes)
 }
