@@ -8,8 +8,8 @@ process BGZIP_TABIX {
     tuple val(meta), path(bed_or_vcf)
 
     output:
-    tuple val(meta), path("${bed_or_vcf}.vcf.gz"), path("${bed_or_vcf}.vcf.gz.tbi"), emit: vcf_tbi, optional: true
-    tuple val(meta), path("${bed_or_vcf}.bed.gz"), path("${bed_or_vcf}.bed.gz.tbi"), emit: bed_tbi, optional: true
+    tuple val(meta), path("${bed_or_vcf}.gz"), path("${bed_or_vcf}.gz.tbi"), emit: vcf_tbi, optional: true
+    tuple val(meta), path("${bed_or_vcf}.gz"), path("${bed_or_vcf}.gz.tbi"), emit: bed_tbi, optional: true
     tuple val(meta), path("*_versions.yml"), emit: versions
 
     script:
@@ -22,10 +22,8 @@ process BGZIP_TABIX {
 
     stub:
     """
-    touch "${bed_or_vcf}.vcf.gz"
-    touch "${bed_or_vcf}.vcf.gz.tbi"
-    touch "${bed_or_vcf}.bed.gz"
-    touch "${bed_or_vcf}.bed.gz.tbi"
+    touch "${bed_or_vcf}.gz"
+    touch "${bed_or_vcf}.gz.tbi"
 
     ${versions(task)}
     """
