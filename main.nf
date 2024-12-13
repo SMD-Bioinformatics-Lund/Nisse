@@ -38,39 +38,55 @@ def startupMessage() {
         print(params.outdir)
 }
 
+process DUMMY {
+    input:
+    val(meta)
+
+    output:
+    path("${meta.sample}_testout.txt"), emit: out_txt
+
+    script:
+    """
+    touch "${meta.sample}_testout.txt"
+    """
+}
+
 workflow {
 
-    startupMessage()
 
-    ch_versions = Channel.empty()
+    // startupMessage()
+
+    // ch_versions = Channel.empty()
     Channel
         .fromPath(params.csv)
         .splitCsv(header: true)
         .set { ch_meta }
 
-    ch_multiqc = ch_meta.map { meta ->
-        def multiqc_summary = String.format(params.tomte_results_paths.multiqc_summary, params.tomte_results)
-        def picard_coverage = String.format(params.tomte_results_paths.picard_coverage, params.tomte_results)
-        tuple(meta, file(multiqc_summary), file(picard_coverage))
-    }
+    DUMMY(ch_meta)
 
-    QC(ch_versions, ch_multiqc)
-    ch_versions = ch_versions.mix(QC.out.versions)
-    if (!params.qc_only) {
-        ALL(ch_versions, ch_meta)
-    }
-    ch_versions = ch_versions.mix(QC.out.versions)
+    // ch_multiqc = ch_meta.map { meta ->
+    //     def multiqc_summary = String.format(params.tomte_results_paths.multiqc_summary, params.tomte_results)
+    //     def picard_coverage = String.format(params.tomte_results_paths.picard_coverage, params.tomte_results)
+    //     tuple(meta, file(multiqc_summary), file(picard_coverage))
+    // }
 
-    ch_joined_versions = ch_versions.collect { it[1] }
-    OUTPUT_VERSIONS(ch_joined_versions)
+    // QC(ch_versions, ch_multiqc)
+    // ch_versions = ch_versions.mix(QC.out.versions)
+    // if (!params.qc_only) {
+    //     ALL(ch_versions, ch_meta)
+    // }
+    // ch_versions = ch_versions.mix(QC.out.versions)
 
-    workflow.onComplete {
-        log.info("Completed without errors")
-    }
+    // ch_joined_versions = ch_versions.collect { it[1] }
+    // OUTPUT_VERSIONS(ch_joined_versions)
 
-    workflow.onError {
-        log.error("Aborted with errors")
-    }
+    // workflow.onComplete {
+    //     log.info("Completed without errors")
+    // }
+
+    // workflow.onError {
+    //     log.error("Aborted with errors")
+    // }
 }
 
 workflow QC {
