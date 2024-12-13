@@ -50,29 +50,34 @@ def main(
     vcf: Path,
     fraser: Path,
     outrider: Path,
+    peddy_sex_check: Path,
 ):
-    all_exists = True
+    not_found = []
     if not bam_path.exists():
-        all_exists = False
         print(f"File in {bam_path} not found (bam_path)")
+        not_found.append(bam_path)
     if not rna_bigwig.exists():
-        all_exists = False
         print(f"File in {rna_bigwig} not found (rna_bigwig)")
+        not_found.append(rna_bigwig)
     if not splice_junctions.exists():
-        all_exists = False
         print(f"File in {splice_junctions} not found (splice_junctions)")
+        not_found.append(splice_junctions)
     if not vcf.exists():
-        all_exists = False
         print(f"File in {vcf} not found (vcf)")
+        not_found.append(vcf)
     if not fraser.exists():
-        all_exists = False
         print(f"File in {fraser} not found (fraser)")
+        not_found.append(fraser)
     if not outrider.exists():
-        all_exists = False
         print(f"File in {outrider} not found (outrider)")
+        not_found.append(outrider)
+    if not peddy_sex_check.exists():
+        print(f"File in {peddy_sex_check} not found (peddy sex check)")
+        not_found.append(peddy_sex_check)
 
-    if not all_exists:
-        raise ValueError(f"All required paths not present. See above warnings for further info.")
+    if len(not_found) > 0:
+        not_found_str = '\n'.join(not_found)
+        raise ValueError(f"All required paths not present. Missing:\n{not_found_str}")
 
     yaml_dict = {
         'owner': 'rnaseq',
@@ -94,6 +99,7 @@ def main(
             )
         ],
         'vcf_snv': vcf,
+        'peddy_sex': peddy_sex_check,
         'omics_files': [
             f'fraser: {fraser}',
             f'outrider: {outrider}',
@@ -141,6 +147,7 @@ def parse_arguments():
     parser.add_argument("--bam_path", required=True)
     parser.add_argument("--splice_junctions", required=True)
     parser.add_argument("--rna_bigwig", required=True)
+    parser.add_argument("--peddy_sex_check", required=True)
     args = parser.parse_args()
     return args
 
@@ -157,4 +164,5 @@ if __name__ == "__main__":
         bam_path=Path(args.bam_path),
         splice_junctions=Path(args.splice_junctions),
         rna_bigwig=Path(args.rna_bigwig),
+        peddy_sex_check=Path(args.peddy_sex_check),
     )
