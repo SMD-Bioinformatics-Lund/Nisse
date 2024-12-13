@@ -113,7 +113,8 @@ workflow ALL {
         def cram_crai = String.format(params.tomte_results_paths.cram_crai, params.tomte_results, sample_id)
         def splice_junctions = String.format(params.tomte_results_paths.splice_junctions, params.tomte_results, sample_id)
         def bigwig = String.format(params.tomte_results_paths.bigwig, params.tomte_results, sample_id)
-        tuple(meta, file(cram), file(cram_crai), file(splice_junctions), file(bigwig))
+        def peddy_sexcheck = String.format(params.tomte_results_paths.peddy, params.tomte_results, sample_id)
+        tuple(meta, file(cram), file(cram_crai), file(splice_junctions), file(bigwig), file(peddy_sexcheck))
     }
 
     PREPROCESS(ch_fraser_results, ch_outrider_results, ch_vcf, params.hgnc_map, params.stat_col, params.stat_cutoff)

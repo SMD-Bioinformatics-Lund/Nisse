@@ -5,7 +5,7 @@ process MAKE_SCOUT_YAML {
     container "${params.containers.base}"
 
     input:
-    tuple val(meta), path(nisse_parsed_fraser), path(nisse_parsed_outrider), path(nisse_parsed_vcf), path(nisse_junctions), path(nisse_junctions_tbi), path(vcf_tbi), path(cram), path(cram_crai), path(bigwig)
+    tuple val(meta), path(nisse_parsed_fraser), path(nisse_parsed_outrider), path(nisse_parsed_vcf), path(nisse_junctions), path(nisse_junctions_tbi), path(vcf_tbi), path(cram), path(cram_crai), path(bigwig), path(peddy)
     val tomte_results_dir
     val nisse_output_dir
     val phenotype
@@ -16,6 +16,7 @@ process MAKE_SCOUT_YAML {
 
     script:
     def sex = "${meta.sex}" == "M" ? "male" : "${meta.sex}" == "F" ? "female" : "unknown"
+    // FIXME: produce_yaml.py should take the Peddy sex check
     """
     produce_yaml.py \
         --sample_id "${meta.sample}" \
