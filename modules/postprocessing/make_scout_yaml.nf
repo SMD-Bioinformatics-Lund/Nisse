@@ -5,7 +5,7 @@ process MAKE_SCOUT_YAML {
     container "${params.containers.base}"
 
     input:
-    tuple val(meta), path(fraser), path(outrider), path(vcf), path(vcf_tbi), path(junctions), path(junctions_tbi), path(cram), path(cram_crai), path(bigwig), path(peddy_ped), path(peddy_sex), path(peddy_check)
+    tuple val(meta), path(fraser), path(outrider), path(vcf), path(vcf_tbi), path(junctions), path(junctions_tbi), path(cram), path(cram_crai), path(bigwig), path(peddy_ped), path(peddy_check), path(peddy_sex)
     val tomte_results_dir
     val nisse_output_dir
     val phenotype
