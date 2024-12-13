@@ -38,19 +38,6 @@ def startupMessage() {
         print("Output dir: ${params.outdir}")
 }
 
-process DUMMY {
-    input:
-    val(meta)
-
-    output:
-    path("${meta.sample}_testout.txt"), emit: out_txt
-
-    script:
-    """
-    touch "${meta.sample}_testout.txt"
-    """
-}
-
 workflow {
 
 
@@ -61,8 +48,6 @@ workflow {
         .fromPath(params.csv)
         .splitCsv(header: true)
         .set { ch_meta }
-
-    DUMMY(ch_meta)
 
     ch_multiqc = ch_meta.map { meta ->
         def multiqc_summary = String.format(params.tomte_results_paths.multiqc_summary, params.tomte_results)
@@ -134,10 +119,9 @@ workflow ALL {
         def sample_id = meta.sample
         def cram = String.format(params.tomte_results_paths.cram, params.tomte_results, sample_id)
         def cram_crai = String.format(params.tomte_results_paths.cram_crai, params.tomte_results, sample_id)
-        def splice_junctions = String.format(params.tomte_results_paths.splice_junctions, params.tomte_results, sample_id)
         def bigwig = String.format(params.tomte_results_paths.bigwig, params.tomte_results, sample_id)
         def peddy_sexcheck = String.format(params.tomte_results_paths.peddy, params.tomte_results, sample_id)
-        tuple(meta, file(cram), file(cram_crai), file(splice_junctions), file(bigwig), file(peddy_sexcheck))
+        tuple(meta, file(cram), file(cram_crai), file(bigwig), file(peddy_sexcheck))
     }
 
     PREPROCESS(ch_fraser_results, ch_outrider_results, ch_vcf, params.hgnc_map, params.stat_col, params.stat_cutoff)
