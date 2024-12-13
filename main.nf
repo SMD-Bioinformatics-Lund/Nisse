@@ -128,10 +128,11 @@ workflow ALL {
 
     ch_drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
 
-    ch_nisse_results = ch_drop_results.join(SNV_SCORE.out.vcf)
+    BGZIP_TABIX_BED(ch_junction_bed)
+
+    ch_nisse_results = ch_drop_results.join(SNV_SCORE.out.vcf).join(BGZIP_TABIX_BED.out.bed_tbi)
     ch_all_result_files = ch_nisse_results.join(ch_tomte_raw_results)
     MAKE_SCOUT_YAML(ch_all_result_files, params.tomte_results, params.outdir, params.phenotype, params.tissue)
-    BGZIP_TABIX_BED(ch_junction_bed)
 
     emit:
     versions = ch_versions

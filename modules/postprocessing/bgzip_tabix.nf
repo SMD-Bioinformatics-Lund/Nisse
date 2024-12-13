@@ -8,7 +8,7 @@ process BGZIP_TABIX {
     tuple val(meta), path(junction_bed)
 
     output:
-    tuple val(meta), path("${junction_bed}.gz"), path("${junction_bed}.gz.tbi"), emit: gz
+    tuple val(meta), path("${junction_bed}.gz"), path("${junction_bed}.gz.tbi"), emit: bed_tbi
     tuple val(meta), path("*_versions.yml"), emit: versions
 
     script:
