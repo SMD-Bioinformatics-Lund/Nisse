@@ -156,6 +156,7 @@ workflow ALL {
 
     ch_nisse_results = ch_drop_results.join(SNV_SCORE.out.vcf_tbi).join(BGZIP_TABIX_BED.out.bed_tbi)
     ch_all_result_files = ch_nisse_results.join(ch_tomte_raw_results)
+    ch_all_result_files.view()
     MAKE_SCOUT_YAML(ch_all_result_files, params.tomte_results, params.outdir, params.phenotype, params.tissue)
 
     emit:
