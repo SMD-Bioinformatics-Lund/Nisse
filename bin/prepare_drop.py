@@ -3,8 +3,6 @@
 import argparse
 from pathlib import Path
 import csv
-import sys
-from collections import defaultdict
 
 """
 Takes a single FRASER or OUTRIDER file
@@ -31,13 +29,16 @@ def main(
             (hgnc_symbol, hgnc_id) = line.split("\t")
             hgnc_symbol_id_dict[hgnc_symbol] = hgnc_id
 
-    stats = defaultdict(int)
+    stats = {"all": 0, "stat": 0, "hgnc_symbol": 0, "hgnc_id": 0}
 
     output_rows = []
     print(f"Initial number of entries, counting file: {in_path}")
+    headers = None
     with open(in_path) as in_fh:
         reader = csv.DictReader(in_fh, delimiter="\t")
         for row in reader:
+            if headers == None:
+                headers = list(row.keys()) + ["hgncId"]
             pass_stat_cutoff = float(row[stat_col]) < stat_cutoff
             has_hgnc_symbol = not row[hgnc_symbol_col].startswith("ENS")
             hgnc_symbol = row[hgnc_symbol_col]
@@ -56,8 +57,9 @@ def main(
                 row['hgncId'] = hgnc_id
                 output_rows.append(row)
     
-    headers = list(output_rows[0].keys())
-
+    if not headers:
+        raise ValueError("No headers found. Is the file empty?")
+    
     print(f"Writing {len(output_rows)} rows to {out_path}")
     with open(out_path, "w", newline='') as out_fh:
         writer = csv.DictWriter(out_fh, fieldnames=headers, delimiter="\t")
@@ -66,6 +68,7 @@ def main(
         writer.writerows(output_rows)
 
     if verbose:
+        print("Number passing each filter")
         for key, count in stats.items():
             print(f"{key}: {count}")
     
