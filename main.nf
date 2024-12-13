@@ -35,7 +35,7 @@ include { OUTPUT_VERSIONS } from './modules/postprocessing/output_versions.nf'
 
 def startupMessage() {
         print("Starting Nisse")
-        print(params.outdir)
+        print("Output dir: ${params.outdir}")
 }
 
 process DUMMY {
@@ -54,9 +54,9 @@ process DUMMY {
 workflow {
 
 
-    // startupMessage()
+    startupMessage()
 
-    // ch_versions = Channel.empty()
+    ch_versions = Channel.empty()
     Channel
         .fromPath(params.csv)
         .splitCsv(header: true)
@@ -64,29 +64,29 @@ workflow {
 
     DUMMY(ch_meta)
 
-    // ch_multiqc = ch_meta.map { meta ->
-    //     def multiqc_summary = String.format(params.tomte_results_paths.multiqc_summary, params.tomte_results)
-    //     def picard_coverage = String.format(params.tomte_results_paths.picard_coverage, params.tomte_results)
-    //     tuple(meta, file(multiqc_summary), file(picard_coverage))
-    // }
+    ch_multiqc = ch_meta.map { meta ->
+        def multiqc_summary = String.format(params.tomte_results_paths.multiqc_summary, params.tomte_results)
+        def picard_coverage = String.format(params.tomte_results_paths.picard_coverage, params.tomte_results)
+        tuple(meta, file(multiqc_summary), file(picard_coverage))
+    }
 
-    // QC(ch_versions, ch_multiqc)
-    // ch_versions = ch_versions.mix(QC.out.versions)
-    // if (!params.qc_only) {
-    //     ALL(ch_versions, ch_meta)
-    // }
-    // ch_versions = ch_versions.mix(QC.out.versions)
+    QC(ch_versions, ch_multiqc)
+    ch_versions = ch_versions.mix(QC.out.versions)
+    if (!params.qc_only) {
+        ALL(ch_versions, ch_meta)
+    }
+    ch_versions = ch_versions.mix(QC.out.versions)
 
-    // ch_joined_versions = ch_versions.collect { it[1] }
-    // OUTPUT_VERSIONS(ch_joined_versions)
+    ch_joined_versions = ch_versions.collect { it[1] }
+    OUTPUT_VERSIONS(ch_joined_versions)
 
-    // workflow.onComplete {
-    //     log.info("Completed without errors")
-    // }
+    workflow.onComplete {
+        log.info("Completed without errors")
+    }
 
-    // workflow.onError {
-    //     log.error("Aborted with errors")
-    // }
+    workflow.onError {
+        log.error("Aborted with errors")
+    }
 }
 
 workflow QC {
