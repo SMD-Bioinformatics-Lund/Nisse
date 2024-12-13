@@ -130,7 +130,7 @@ workflow ALL {
 
     BGZIP_TABIX_BED(ch_junction_bed)
 
-    ch_nisse_results = ch_drop_results.join(SNV_SCORE.out.vcf).join(BGZIP_TABIX_BED.out.bed_tbi)
+    ch_nisse_results = ch_drop_results.join(SNV_SCORE.out.vcf_tbi).join(BGZIP_TABIX_BED.out.bed_tbi)
     ch_all_result_files = ch_nisse_results.join(ch_tomte_raw_results)
     MAKE_SCOUT_YAML(ch_all_result_files, params.tomte_results, params.outdir, params.phenotype, params.tissue)
 
@@ -216,6 +216,6 @@ workflow SNV_SCORE {
     ch_versions = ch_versions.mix(BGZIP_TABIX_VCF.out.versions)
 
     emit:
-    vcf = BGZIP_TABIX_VCF.out.gz
+    vcf_tbi = BGZIP_TABIX_VCF.out.vcf_tbi
     versions = ch_versions
 }

@@ -5,24 +5,27 @@ process BGZIP_TABIX {
     container "${params.containers.bcftools}"
 
     input:
-    tuple val(meta), path(junction_bed)
+    tuple val(meta), path(bed_or_vcf)
 
     output:
-    tuple val(meta), path("${junction_bed}.gz"), path("${junction_bed}.gz.tbi"), emit: bed_tbi
+    tuple val(meta), path("${bed_or_vcf}.vcf.gz"), path("${bed_or_vcf}.vcf.gz.tbi"), emit: vcf_tbi, optional: true
+    tuple val(meta), path("${bed_or_vcf}.bed.gz"), path("${bed_or_vcf}.bed.gz.tbi"), emit: bed_tbi, optional: true
     tuple val(meta), path("*_versions.yml"), emit: versions
 
     script:
     """
-    bgzip "${junction_bed}"
-    tabix "${junction_bed}.gz"
+    bgzip "${bed_or_vcf}"
+    tabix "${bed_or_vcf}.gz"
 
     ${versions(task)}
     """
 
     stub:
     """
-    touch "${junction_bed}.bed.gz"
-    touch "${junction_bed}.bed.gz.tbi"
+    touch "${bed_or_vcf}.vcf.gz"
+    touch "${bed_or_vcf}.vcf.gz.tbi"
+    touch "${bed_or_vcf}.bed.gz"
+    touch "${bed_or_vcf}.bed.gz.tbi"
 
     ${versions(task)}
     """
