@@ -33,11 +33,6 @@ include { BGZIP_TABIX as BGZIP_TABIX_BED } from './modules/postprocessing/bgzip_
 include { BGZIP_TABIX } from './modules/postprocessing/bgzip_tabix.nf'
 include { OUTPUT_VERSIONS } from './modules/postprocessing/output_versions.nf'
 
-// For Tomte
-include { CREATE_PEDIGREE_FILE } from './modules/fortomte/fortomte.nf'
-include { PEDDY } from './modules/fortomte/fortomte.nf'
-include { ESTIMATE_HB_PERC } from './modules/fortomte/fortomte.nf'
-
 workflow {
 
     ch_versions = Channel.empty()
@@ -102,11 +97,6 @@ workflow ALL {
         def junction_bed = String.format(params.tomte_results_paths.junction_bed, params.tomte_results, sample_id)
         tuple(meta, file(junction_bed))
     }
-    ch_gene_counts = ch_meta.map { meta ->
-        def sample_id = meta.sample
-        def gene_counts = String.format(params.tomte_results_paths.gene_counts, params.tomte_results, sample_id)
-        tuple(meta, file(gene_counts))
-    }
     ch_fraser_results = ch_meta.map { meta ->
         def case_id = meta.case
         def fraser_results = String.format(params.tomte_results_paths.fraser_tsv, params.tomte_results, case_id)
@@ -116,6 +106,14 @@ workflow ALL {
         def case_id = meta.case
         def outrider_results = String.format(params.tomte_results_paths.outrider_tsv, params.tomte_results, case_id)
         tuple(meta, file(outrider_results))
+    }
+    ch_tomte_raw_results = ch_meta.map { meta ->
+        def sample_id = meta.sample
+        def cram = String.format(params.tomte_results_paths.cram, params.tomte_results, sample_id)
+        def cram_crai = String.format(params.tomte_results_paths.cram_crai, params.tomte_results, sample_id)
+        def splice_junctions = String.format(params.tomte_results_paths.splice_junctions, params.tomte_results, sample_id)
+        def bigwig = String.format(params.tomte_results_paths.bigwig, params.tomte_results, sample_id)
+        tuple(meta, file(cram), file(cram_crai), file(splice_junctions), file(bigwig))
     }
 
     PREPROCESS(ch_fraser_results, ch_outrider_results, ch_vcf, params.hgnc_map, params.stat_col, params.stat_cutoff)
@@ -127,17 +125,12 @@ workflow ALL {
     SNV_SCORE(SNV_ANNOTATE.out.vcf, CREATE_PED.out.ped, params.score_config, params.score_threshold)
     ch_versions = ch_versions.mix(SNV_SCORE.out.versions)
 
-    drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
-    POSTPROCESS(SNV_SCORE.out.vcf, drop_results, ch_junction_bed, params.tomte_results, params.outdir, params.phenotype, params.tissue)
+    ch_drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
 
-    if (params.run_peddy) {
-        ch_pedfile = CREATE_PEDIGREE_FILE(ch_meta.toList()).ped
-        PEDDY(ch_vcf, ch_pedfile)
-    }
-
-    if (params.run_estimate_hb) {
-        ESTIMATE_HB_PERC(ch_gene_counts, params.hb_genes)
-    }
+    ch_nisse_results = ch_drop_results.join(SNV_SCORE.out.vcf)
+    ch_all_result_files = ch_nisse_results.join(ch_tomte_raw_results)
+    MAKE_SCOUT_YAML(ch_all_result_files, params.tomte_results, params.outdir, params.phenotype, params.tissue)
+    BGZIP_TABIX_BED(ch_junction_bed)
 
     emit:
     versions = ch_versions
@@ -223,20 +216,4 @@ workflow SNV_SCORE {
     emit:
     vcf = BGZIP_TABIX_VCF.out.gz
     versions = ch_versions
-}
-
-workflow POSTPROCESS {
-    take:
-    ch_scored_vcf
-    ch_drop_results
-    ch_junction_bed
-    val_tomte_results_dir
-    val_output_dir
-    val_phenotype
-    val_tissue
-
-    main:
-    ch_nisse_results = ch_drop_results.join(ch_scored_vcf)
-    MAKE_SCOUT_YAML(ch_nisse_results, val_tomte_results_dir, val_output_dir, val_phenotype, val_tissue)
-    BGZIP_TABIX_BED(ch_junction_bed)
 }

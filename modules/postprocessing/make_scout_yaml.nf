@@ -5,7 +5,7 @@ process MAKE_SCOUT_YAML {
     container "${params.containers.base}"
 
     input:
-    tuple val(meta), path(nisse_parsed_fraser), path(nisse_parsed_outrider), path(nisse_parsed_vcf), path(vcf_tbi)
+    tuple val(meta), path(nisse_parsed_fraser), path(nisse_parsed_outrider), path(nisse_parsed_vcf), path(nisse_junctions), path(nisse_junctions_tbi), path(vcf_tbi), path(cram), path(cram_crai), path(bigwig)
     val tomte_results_dir
     val nisse_output_dir
     val phenotype
@@ -25,9 +25,9 @@ process MAKE_SCOUT_YAML {
         --sex "${sex}" \
         --phenotype "${phenotype}" \
         --tissue "${tissue}" \
-        --bam_path "${tomte_results_dir}/alignment/${meta.sample}.cram" \
-        --splice_junctions "${nisse_output_dir}/junction/${meta.sample}_junction.bed.gz" \
-        --rna_bigwig "${tomte_results_dir}/ucsc/${meta.sample}.bw" > ${meta.sample}_scout.yaml
+        --bam_path "${tomte_results_dir}/alignment/${cram}" \
+        --splice_junctions "${nisse_output_dir}/junction/${nisse_junctions}" \
+        --rna_bigwig "${tomte_results_dir}/ucsc/${bigwig}" > ${meta.sample}_scout.yaml
     """
 
     stub:
