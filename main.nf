@@ -35,6 +35,11 @@ include { OUTPUT_VERSIONS } from './modules/postprocessing/output_versions.nf'
 
 workflow {
 
+    workflow.onStart {
+        print("Starting Nisse")
+        print(params.outdir)
+    }
+
     ch_versions = Channel.empty()
     Channel
         .fromPath(params.csv)
@@ -118,6 +123,7 @@ workflow ALL {
     }
 
     PREPROCESS(ch_fraser_results, ch_outrider_results, ch_vcf, params.hgnc_map, params.stat_col, params.stat_cutoff)
+    // FIXME: Can this be read from Tomte results?
     CREATE_PED(ch_meta)
 
     SNV_ANNOTATE(PREPROCESS.out.vcf, params.vep)
