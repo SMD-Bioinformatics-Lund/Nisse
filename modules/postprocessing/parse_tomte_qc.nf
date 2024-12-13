@@ -17,10 +17,20 @@ process PARSE_TOMTE_QC {
         --sample_id "${meta.sample}" \\
         --picard_rna_coverage "${picard_rna_coverage}" \\
         --output_file "${meta.sample}_out.json"
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        parse_tomte_qc: \$(parse_tomte_qc.py --version)
+    END_VERSIONS
     """
 
     stub:
     """
-    touch "${meta.sample}_out.txt"
+    touch "${meta.sample}_out.json"
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        parse_tomte_qc: \$(parse_tomte_qc.py --version)
+    END_VERSIONS
     """
 }

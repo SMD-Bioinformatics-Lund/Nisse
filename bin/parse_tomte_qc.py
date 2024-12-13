@@ -7,6 +7,9 @@ import numpy as np
 from ast import literal_eval
 
 
+VERSION = "1.0.0"
+
+
 def main(
     multiqc_general_stats: str, picard_rna_coverage: str, output_file: str, sample_id: Optional[str]
 ):
@@ -63,13 +66,12 @@ def write_results(data: Dict[str, Any], output_path: str, sample_id: Optional[st
     """
     with open(output_path, "w") as output_file:
         if sample_id is not None:
-            print(f"Extracting only sample: {sample_id}")
-            print(f"FIXME: Temporary ugly solution to circumvent using wrong QC data, remove ASAP (241205 / Jakob)")
-            sample_id = list(data.keys())[0]
             sample_only_data = data.get(sample_id)
             if sample_only_data is None:
                 all_valid_ids = list(data.keys())
-                raise ValueError(f"Tried getting sample_id {sample_id}. Valid IDs are: {', '.join(all_valid_ids)}")
+                raise ValueError(
+                    f"Tried getting sample_id {sample_id}. Valid IDs are: {', '.join(all_valid_ids)}"
+                )
             output_file.write(json.dumps(sample_only_data))
         else:
             for sample_name, values in data.items():
@@ -137,7 +139,9 @@ def make_combined_dict(
         value = shared_dict.get(old_key)
         if value is None:
             valid_keys = list(shared_dict.keys())
-            raise ValueError(f"Tried getting key: {old_key}, valid keys are: {', '.join(valid_keys)})")
+            raise ValueError(
+                f"Tried getting key: {old_key}, valid keys are: {', '.join(valid_keys)})"
+            )
         shared_out_dict[new_key] = value
 
     fw_out_dict = {}
@@ -145,7 +149,9 @@ def make_combined_dict(
         value = fw_dict.get(old_key)
         if value is None:
             valid_keys = list(fw_dict.keys())
-            raise ValueError(f"Tried getting key: {old_key}, valid keys are: {', '.join(valid_keys)})")
+            raise ValueError(
+                f"Tried getting key: {old_key}, valid keys are: {', '.join(valid_keys)})"
+            )
         fw_out_dict[f"fw_{new_key}"] = value
 
     rv_out_dict = {}
@@ -153,7 +159,9 @@ def make_combined_dict(
         value = rv_dict[old_key]
         if value is None:
             valid_keys = list(rv_dict.keys())
-            raise ValueError(f"Tried getting key: {old_key}, valid keys are: {', '.join(valid_keys)})")
+            raise ValueError(
+                f"Tried getting key: {old_key}, valid keys are: {', '.join(valid_keys)})"
+            )
         rv_out_dict[f"rv_{new_key}"] = value
 
     shared_out_dict.update(fw_out_dict)
@@ -223,6 +231,9 @@ def parse_arguments() -> argparse.Namespace:
         help="Path to the input file containing RNA coverage data.",
     )
     parser.add_argument("--output_file", required=True)
+    parser.add_argument(
+        "--version", action="version", version=VERSION, help="Show the program's version and exit"
+    )
 
     args = parser.parse_args()
     return args
