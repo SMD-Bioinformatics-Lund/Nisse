@@ -218,7 +218,6 @@ workflow SNV_SCORE {
     VCF_COMPLETION(GENMOD_SORT.out.vcf)
     FILTER_VARIANTS_ON_SCORE(VCF_COMPLETION.out.vcf, val_score_threshold)
     BGZIP_TABIX_VCF(FILTER_VARIANTS_ON_SCORE.out.vcf)
-    BGZIP_TABIX_VCF.out.vcf_tbi.view()
 
     ch_versions = Channel.empty()
     ch_versions = ch_versions.mix(GENMOD_MODELS.out.versions)
