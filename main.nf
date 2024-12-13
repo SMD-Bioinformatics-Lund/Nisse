@@ -33,12 +33,14 @@ include { BGZIP_TABIX as BGZIP_TABIX_BED } from './modules/postprocessing/bgzip_
 include { BGZIP_TABIX } from './modules/postprocessing/bgzip_tabix.nf'
 include { OUTPUT_VERSIONS } from './modules/postprocessing/output_versions.nf'
 
-workflow {
-
-    workflow.onStart {
+def startupMessage() {
         print("Starting Nisse")
         print(params.outdir)
-    }
+}
+
+workflow {
+
+    startupMessage()
 
     ch_versions = Channel.empty()
     Channel
