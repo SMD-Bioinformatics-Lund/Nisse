@@ -23,8 +23,8 @@ process VCF_COMPLETION {
 
 	stub:
 		"""
-		touch "${meta.sample}.scored.vcf.gz"
-		touch "${meta.sample}.scored.vcf.gz.tbi"
+		touch "${meta.sample}_scored.vcf.gz"
+		touch "${meta.sample}_scored.vcf.gz.tbi"
 
 		${vcf_completion_version(task)}
 		"""
