@@ -340,13 +340,13 @@ def process_hb_estimate_data(
     """
     Process HB data for a sample.
     """
-    data = {}
-    hb_sample_id = hb_estimate.split("_perc_mapping.json")[0]
+    hb_json_per_sample = {}
+    hb_sample_id = hb_estimate.replace("_perc_mapping.json","")
     with open(hb_estimate) as file:
         for line in file:
             json_data = line.strip()
-            data[hb_sample_id] = json.loads(json_data)
-    return data
+            hb_json_per_sample[hb_sample_id] = json.loads(json_data)
+    return hb_json_per_sample
 
 
 def parse_arguments() -> argparse.Namespace:
