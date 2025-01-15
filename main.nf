@@ -59,7 +59,8 @@ workflow {
     ch_multiqc = ch_meta.map { meta ->
         def multiqc_summary = String.format(params.tomte_results_paths.multiqc_summary, params.tomte_results)
         def picard_coverage = String.format(params.tomte_results_paths.picard_coverage, params.tomte_results)
-        tuple(meta, file(multiqc_summary), file(picard_coverage))
+        def multiqc_star = String.format(params.tomte_results_paths.multiqc_star, params.tomte_results)
+        tuple(meta, file(multiqc_summary), file(picard_coverage), file(multiqc_star))
     }
 
 
