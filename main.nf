@@ -49,13 +49,22 @@ workflow {
         .splitCsv(header: true)
         .set { ch_meta }
 
+    // Creating a channel for Hb percentage form Tomte results
+    ch_hb_estimates = ch_meta.map { meta ->
+        def sample_id = meta.sample
+        def hb_estimate_json = String.format(params.tomte_results_paths.hb_estimate, params.tomte_results, sample_id)
+        tuple(meta, file(hb_estimate_json))
+    }
+
     ch_multiqc = ch_meta.map { meta ->
         def multiqc_summary = String.format(params.tomte_results_paths.multiqc_summary, params.tomte_results)
         def picard_coverage = String.format(params.tomte_results_paths.picard_coverage, params.tomte_results)
         tuple(meta, file(multiqc_summary), file(picard_coverage))
     }
 
-    QC(ch_versions, ch_multiqc)
+
+    QC(ch_versions, ch_multiqc.join(ch_hb_estimates))
+
     ch_versions = ch_versions.mix(QC.out.versions)
     if (!params.qc_only) {
         ALL(ch_versions, ch_meta)
@@ -105,11 +114,13 @@ workflow ALL {
         def junction_bed = String.format(params.tomte_results_paths.junction_bed, params.tomte_results, sample_id)
         tuple(meta, file(junction_bed))
     }
+
     ch_fraser_results = ch_meta.map { meta ->
         def case_id = meta.case
         def fraser_results = String.format(params.tomte_results_paths.fraser_tsv, params.tomte_results, case_id)
         tuple(meta, file(fraser_results))
     }
+
     ch_outrider_results = ch_meta.map { meta ->
         def case_id = meta.case
         def outrider_results = String.format(params.tomte_results_paths.outrider_tsv, params.tomte_results, case_id)

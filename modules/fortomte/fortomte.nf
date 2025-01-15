@@ -118,7 +118,7 @@ process ESTIMATE_HB_PERC {
     path hb_genes
 
     output:
-    path ("${meta.sample}_perc_mapping.json"), emit: tsv
+    tuple val(meta), path("${meta.sample}_perc_mapping.json"), emit: tsv
 
     script:
     """
