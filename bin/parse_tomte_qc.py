@@ -50,14 +50,15 @@ def main(
         sample, combined_dict = make_combined_dict(header, batch[0], batch[1], batch[2])
         results[sample] = combined_dict
 
-        # Add HB estimate data
-        hb_data = process_hb_estimate_data(merged_hb_estimate)
+        if merged_hb_estimate:
+            # Add HB estimate data
+            hb_data = process_hb_estimate_data(merged_hb_estimate)
 
-        for sample, hb_values in hb_data.items():
-            if sample in results:
-                results[sample].update(hb_values)
-            else:
-                continue
+            for sample, hb_values in hb_data.items():
+                if sample in results:
+                    results[sample].update(hb_values)
+                else:
+                    continue
 
     # Calculate slope for Rna gene body coverage
     if picard_rna_coverage:
@@ -337,15 +338,8 @@ def process_hb_estimate_data(
     hb_estimate: str,
 ) -> Dict[str, Dict[str, Union[int, float]]]:
     """
-    Process merged HB estimate data.
+    Process HB data for a sample.
     """
-    # {"nbr_genes": 63086, "total_count": 14404757, "average_count": 228.335240782424, "target_genes_count": 1932, "target_genes_frac": 0.00013412235971769603, "per_target_gene_count": {"ENSG00000244734": 1679, "ENSG00000223609": 1, "ENSG00000213934": 0, "ENSG00000196565": 0, "ENSG00000213931": 0, "ENSG00000130656": 2, "ENSG00000188536": 189, "ENSG00000206172": 61}}
-    # data = {}
-    # with open(hb_estimate) as file:
-    #     for line in file:
-    #         sample_id, json_data = line.strip().split("\t", 1)
-    #         data[sample_id] = json.loads(json_data)
-    # return data
     data = {}
     hb_sample_id = hb_estimate.split("_perc_mapping.json")[0]
     with open(hb_estimate) as file:
@@ -373,7 +367,6 @@ def parse_arguments() -> argparse.Namespace:
     )
     parser.add_argument(
         "--hb_estimate",
-        required=True,
         help="Path to the input file containing merged HB estimate data.",
     )
     parser.add_argument("--output_file", required=True)

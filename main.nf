@@ -25,7 +25,6 @@ include { GENMOD_SORT } from './modules/genmod/genmod_sort.nf'
 
 // Postprocessing
 include { FILTER_VARIANTS_ON_SCORE } from './modules/postprocessing/filter_variants_on_score.nf'
-include { ESTIMATE_HB_PERC } from './modules/fortomte/fortomte.nf'
 include { PARSE_TOMTE_QC } from './modules/postprocessing/parse_tomte_qc.nf'
 include { MAKE_SCOUT_YAML } from './modules/postprocessing/make_scout_yaml.nf'
 include { BGZIP_TABIX as BGZIP_TABIX_VCF } from './modules/postprocessing/bgzip_tabix.nf'
@@ -50,16 +49,12 @@ workflow {
         .splitCsv(header: true)
         .set { ch_meta }
 
-    // Estimating HB percentage form Tomte results
-    ch_hb_reads = ch_meta.map { meta ->
+    // Creating a channel for Hb percentage form Tomte results
+    ch_hb_estimates = ch_meta.map { meta ->
         def sample_id = meta.sample
-        def hb_reads = String.format(params.tomte_results_paths.reads_per_gene, params.tomte_results, sample_id)
-        tuple(meta, file(hb_reads))
+        def hb_estimate_json = String.format(params.tomte_results_paths.hb_estimate, params.tomte_results, sample_id)
+        tuple(meta, file(hb_estimate_json))
     }
-
-    ch_hb_genes = Channel.fromPath(params.hb_genes)
-
-    ESTIMATE_HB_PERC(ch_hb_reads, params.hb_genes).set { ch_hb_estimates }
 
     ch_multiqc = ch_meta.map { meta ->
         def multiqc_summary = String.format(params.tomte_results_paths.multiqc_summary, params.tomte_results)
@@ -246,18 +241,4 @@ workflow SNV_SCORE {
     emit:
     vcf_tbi = BGZIP_TABIX_VCF.out.vcf_tbi
     versions = ch_versions
-}
-
-// TODO: Can Remove, not required
-workflow ESTIMATE_HB_PERCENTAGE {
-    take:
-    ch_hb_reads
-    ch_hb_genes
-
-    main:
-    ESTIMATE_HB_PERC(ch_hb_reads, ch_hb_genes)
-
-    emit:
-    hg_estimate_json = ESTIMATE_HB_PERC.out.tsv
-
 }
