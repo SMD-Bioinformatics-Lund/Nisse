@@ -1,7 +1,9 @@
 .nextflow.log*
+tomte/
 .nfconfig
 work/
 data/
 .nextflow/
 main.run
 slurm_logs/
+.vscode/

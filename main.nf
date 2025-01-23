@@ -33,6 +33,9 @@ include { BGZIP_TABIX as BGZIP_TABIX_BED } from './modules/postprocessing/bgzip_
 include { BGZIP_TABIX } from './modules/postprocessing/bgzip_tabix.nf'
 include { OUTPUT_VERSIONS } from './modules/postprocessing/output_versions.nf'
 
+include { PIPELINE_INITIALISATION } from './tomte/subworkflows/local/utils_nfcore_tomte_pipeline'
+include { TOMTE } from './tomte/workflows/tomte'
+
 workflow {
 
     // To ponder: Do we want to validate input parameters?
@@ -77,6 +80,16 @@ workflow {
         def outrider_results = "${params.tomte_results}/analyse_transcripts/drop/${case_id}_outrider_top_hits_research.tsv"
         tuple(meta, file(outrider_results))
     }
+
+    PIPELINE_INITIALISATION(
+        params.tomte.version,
+        params.tomte.validate_params,
+        params.tomte.monochrome_logs,
+        args,
+        params.outdir,
+        params.input
+    )
+    // TOMTE()
 
     PREPROCESS(ch_fraser_results, ch_outrider_results, ch_vcf, params.hgnc_map, params.stat_col, params.stat_cutoff)
     CREATE_PED(ch_meta)
