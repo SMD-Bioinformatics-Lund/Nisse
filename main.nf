@@ -81,15 +81,15 @@ workflow {
         tuple(meta, file(outrider_results))
     }
 
-    // PIPELINE_INITIALISATION(
-    //     params.tomte.version,
-    //     params.tomte.validate_params,
-    //     params.tomte.monochrome_logs,
-    //     args,
-    //     params.outdir,
-    //     params.input
-    // )
-    TOMTE(ch_meta)
+    PIPELINE_INITIALISATION(
+        params.tomte.version,
+        params.tomte.validate_params,
+        params.tomte.monochrome_logs,
+        args,
+        params.outdir,
+        params.input
+    )
+    TOMTE(PIPELINE_INITIALISATION.out.samplesheet)
 
     PREPROCESS(ch_fraser_results, ch_outrider_results, ch_vcf, params.hgnc_map, params.stat_col, params.stat_cutoff)
     CREATE_PED(ch_meta)
