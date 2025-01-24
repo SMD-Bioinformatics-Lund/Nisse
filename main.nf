@@ -43,7 +43,7 @@ workflow {
     ch_versions = Channel.empty()
 
     Channel
-        .fromPath(params.csv)
+        .fromPath(params.input)
         .splitCsv(header: true)
         .set { ch_meta }
 
