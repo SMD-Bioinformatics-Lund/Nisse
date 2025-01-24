@@ -21,8 +21,8 @@ process BGZIP_TABIX {
 
     stub:
     """
-    touch "${junction_bed}.bed.gz"
-    touch "${junction_bed}.bed.gz.tbi"
+    touch "${junction_bed}.gz"
+    touch "${junction_bed}.gz.tbi"
 
     ${versions(task)}
     """
