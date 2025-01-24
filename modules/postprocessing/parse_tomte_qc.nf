@@ -21,6 +21,6 @@ process PARSE_TOMTE_QC {
 
     stub:
     """
-    touch "${meta.sample}_out.txt"
+    touch "${meta.sample}_out.json"
     """
 }
