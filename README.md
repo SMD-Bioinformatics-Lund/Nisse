@@ -34,7 +34,7 @@ main_nf="/base/nisse/main.nf"
 nextflow run "${main_nf}" \
     -work-dir "${work}" \
     --tomte_results "${tomte_results}" \
-    --csv "${csv}" \
+    --input "${csv}" \
     --outdir ${outdir} | tee "${outdir}/run.log"
 ```
 
@@ -51,15 +51,3 @@ Steps to prepare:
 tail -n +2 hgnc_complete_set.txt | head | cut -f1,2 | sed "s/HGNC://" > hgnc_id_symbol_map.tsv
 ```
 
-### Published files
-
-The what files are published is controlled from the config in the following way.
-Thus the process is decoupled from decisions on what files to include in the results.
-
-```
-process {
-    withName: 'CREATE_PED' {
-        publishDir = [ path: { "${params.outdir}/ped" } ]
-    }
-}
-```
