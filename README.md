@@ -1,5 +1,22 @@
 Home for CMD [Tomte](https://github.com/genomic-medicine-sweden/tomte) post processing pipeline.
 
+### Running Nisse (new)
+
+Run Tomte as part of Nisse. Requires that you have:
+
+* The Tomte repository cloned into the Nisse as a subfolder named "tomte"
+
+Execute while providing the Tomte configs:
+
+```
+nextflow run main.nf \
+    --input ... \
+    --outdir ... \
+    -c nextflow.config \
+    -c /fs1/jakob/src/config-files/nextflow/cmd_tomte.config \
+    -c tomte/nextflow.config
+```
+
 ### Running Nisse
 
 Takes the CSV-samplesheet used to run Tomte and and path to the Tomte results folder as input.
