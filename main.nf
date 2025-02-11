@@ -80,7 +80,7 @@ workflow {
 
     ch_versions = ch_versions.mix(NISSE_QC.out.versions)
     if (!params.qc_only) {
-        NISSE(ch_versions, ch_meta)
+        NISSE(ch_versions, ch_meta, TOMTE.out)
     }
     ch_versions = ch_versions.mix(NISSE_QC.out.versions)
 
@@ -112,7 +112,7 @@ workflow NISSE {
     take:
     ch_versions
     ch_meta
-    ch_tomte
+    ch_tomte_out
 
     main:
 
@@ -154,16 +154,16 @@ workflow NISSE {
         tuple(meta, file(cram), file(cram_crai), file(bigwig), file(peddy_ped), file(peddy_check), file(peddy_sex))
     }
 
-    ch_drop_ae_per_sample = ch_meta.combine(ch_tomte.out.drop_as_out_research)
-    ch_drop_as_per_sample = ch_meta.combine(ch_tomte.out.drop_ae_out_research)
+    ch_drop_ae_per_sample = ch_meta.combine(ch_tomte_out.drop_as_out_research)
+    ch_drop_as_per_sample = ch_meta.combine(ch_tomte_out.drop_ae_out_research)
 
-    PREPROCESS(ch_drop_ae_per_sample, ch_drop_as_per_sample, ch_tomte.out.vcf_tbi, params.hgnc_map, params.stat_col, params.stat_cutoff)
+    PREPROCESS(ch_drop_ae_per_sample, ch_drop_as_per_sample, ch_tomte_out.vcf_tbi, params.hgnc_map, params.stat_col, params.stat_cutoff)
     // PREPROCESS(ch_fraser_results, ch_outrider_results, ch_vcf, params.hgnc_map, params.stat_col, params.stat_cutoff)
 
     SNV_ANNOTATE(PREPROCESS.out.vcf, params.vep)
     ch_versions = ch_versions.mix(SNV_ANNOTATE.out.versions)
 
-    SNV_SCORE(SNV_ANNOTATE.out.vcf, ch_tomte.out.ped, params.score_config, params.score_threshold)
+    SNV_SCORE(SNV_ANNOTATE.out.vcf, ch_tomte_out.ped, params.score_config, params.score_threshold)
     ch_versions = ch_versions.mix(SNV_SCORE.out.versions)
 
     ch_drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
