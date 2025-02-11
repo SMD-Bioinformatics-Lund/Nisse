@@ -9,7 +9,6 @@ include { PREPARE_VCF } from './modules/prepare_vcf.nf'
 include { ADD_CADD_SCORES_TO_VCF } from './modules/annotate/add_cadd_scores_to_vcf.nf'
 include { ANNOTATE_VEP } from './modules/annotate/annotate_vep.nf'
 include { CALCULATE_INDEL_CADD } from './modules/annotate/calculate_indel_cadd.nf'
-include { CREATE_PED } from './modules/annotate/create_ped.nf'
 include { EXTRACT_INDELS_FOR_CADD } from './modules/annotate/extract_indels_for_cadd.nf'
 include { INDEL_VEP } from './modules/annotate/indel_vep.nf'
 include { MARK_SPLICE } from './modules/annotate/mark_splice.nf'
@@ -144,7 +143,7 @@ workflow ALL {
     SNV_ANNOTATE(PREPROCESS.out.vcf, params.vep)
     ch_versions = ch_versions.mix(SNV_ANNOTATE.out.versions)
 
-    SNV_SCORE(SNV_ANNOTATE.out.vcf, CREATE_PED.out.ped, params.score_config, params.score_threshold)
+    SNV_SCORE(SNV_ANNOTATE.out.vcf, TOMTE.out.ped, params.score_config, params.score_threshold)
     ch_versions = ch_versions.mix(SNV_SCORE.out.versions)
 
     ch_drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
