@@ -43,11 +43,7 @@ workflow {
     Channel
         .fromPath(params.input)
         .splitCsv(header: true)
-        .set { ch_meta }
-
-    // FIXME: These should come directly from Tomte
-
-    ch_tomte = ch_meta.map { meta ->
+        .map { meta ->
         def fastq_fw = meta.fastq_1
         def fastq_rv = meta.fastq_2
 
@@ -55,8 +51,9 @@ workflow {
 
         tuple(meta, [fastq_fw, fastq_rv])
     }
+    .set { ch_meta }
 
-    TOMTE(ch_tomte)
+    TOMTE(ch_meta)
 
 
     // Creating a channel for Hb percentage from Tomte results
@@ -72,12 +69,11 @@ workflow {
     //     tuple(meta, file(multiqc_summary), file(picard_coverage))
     // }
 
-    ch_multiqc = ch_meta.combine(TOMTE.out.MULTIQC).map { meta, multiqc_folder ->
+    ch_multiqc = ch_meta.combine(TOMTE.out.multiqc_data).map { meta, multiqc_folder ->
         def multiqc_summary = file("${multiqc_folder}/multiqc_general_stats.txt")
         def picard_coverage = file("${multiqc_folder}/picard_rna_coverage.txt")
         tuple(meta, multiqc_summary, picard_coverage)
     }
-
 
     NISSE_QC(ch_versions, ch_multiqc.join(TOMTE.out.hb_estimates))
     // NISSE_QC(ch_versions, ch_multiqc.join(ch_hb_estimates))
