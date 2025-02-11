@@ -112,6 +112,7 @@ workflow NISSE {
     take:
     ch_versions
     ch_meta
+    ch_tomte
 
     main:
 
@@ -153,16 +154,16 @@ workflow NISSE {
         tuple(meta, file(cram), file(cram_crai), file(bigwig), file(peddy_ped), file(peddy_check), file(peddy_sex))
     }
 
-    ch_drop_ae_per_sample = ch_meta.combine(TOMTE.out.drop_as_out_research)
-    ch_drop_as_per_sample = ch_meta.combine(TOMTE.out.drop_ae_out_research)
+    ch_drop_ae_per_sample = ch_meta.combine(ch_tomte.out.drop_as_out_research)
+    ch_drop_as_per_sample = ch_meta.combine(ch_tomte.out.drop_ae_out_research)
 
-    PREPROCESS(ch_drop_ae_per_sample, ch_drop_as_per_sample, TOMTE.out.vcf_tbi, params.hgnc_map, params.stat_col, params.stat_cutoff)
+    PREPROCESS(ch_drop_ae_per_sample, ch_drop_as_per_sample, ch_tomte.out.vcf_tbi, params.hgnc_map, params.stat_col, params.stat_cutoff)
     // PREPROCESS(ch_fraser_results, ch_outrider_results, ch_vcf, params.hgnc_map, params.stat_col, params.stat_cutoff)
 
     SNV_ANNOTATE(PREPROCESS.out.vcf, params.vep)
     ch_versions = ch_versions.mix(SNV_ANNOTATE.out.versions)
 
-    SNV_SCORE(SNV_ANNOTATE.out.vcf, TOMTE.out.ped, params.score_config, params.score_threshold)
+    SNV_SCORE(SNV_ANNOTATE.out.vcf, ch_tomte.out.ped, params.score_config, params.score_threshold)
     ch_versions = ch_versions.mix(SNV_SCORE.out.versions)
 
     ch_drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
@@ -172,7 +173,7 @@ workflow NISSE {
 
     ch_all_result_files = ch_drop_results
         .join(SNV_SCORE.out.vcf_tbi)
-        .join(TOMTE.out.junction_bed)
+        .join(ch_tomte.out.junction_bed)
         .join(ch_tomte_raw_results)
     MAKE_SCOUT_YAML(ch_all_result_files, params.tomte_results, params.outdir, params.phenotype, params.tissue)
 
