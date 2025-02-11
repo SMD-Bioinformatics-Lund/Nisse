@@ -160,12 +160,12 @@ workflow NISSE {
 
     ch_drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
 
-    BGZIP_TABIX_BED(TOMTE.out.junction_bed)
+    // BGZIP_TABIX_BED(TOMTE.out.junction_bed)
     // BGZIP_TABIX_BED(ch_junction_bed)
 
     ch_all_result_files = ch_drop_results
         .join(SNV_SCORE.out.vcf_tbi)
-        .join(BGZIP_TABIX_BED.out.bed_tbi)
+        .join(TOMTE.out.junction_bed)
         .join(ch_tomte_raw_results)
     MAKE_SCOUT_YAML(ch_all_result_files, params.tomte_results, params.outdir, params.phenotype, params.tissue)
 
