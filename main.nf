@@ -98,7 +98,13 @@ workflow ALL {
 
     main:
 
-    TOMTE(ch_meta)
+    ch_tomte = ch_meta.map { meta ->
+        def fastq_fw = meta.fastq_1
+        def fastq_rv = meta.fastq_2
+        tuple(meta, [fastq_fw, fastq_rv])
+    }
+
+    TOMTE(ch_tomte)
 
     // ch_vcf = ch_meta.map { meta ->
     //     def sample_id = meta.sample
