@@ -44,16 +44,21 @@ workflow {
         .fromPath(params.input)
         .splitCsv(header: true)
         .map { meta ->
-        def fastq_fw = meta.fastq_1
-        def fastq_rv = meta.fastq_2
+            // Needed for Tomte's internal workings
+            // FIXME: We need to calculate the number of fq-pairs here when running many samples
+            meta = meta + [ fq_pairs: 1, single_end: false, is_fastq: true ]
+            meta
+        }
+        .tap { ch_meta }
+        .map { meta ->
+            // Also needed for Tomte's internal workings
+            def fastq_fw = meta.fastq_1
+            def fastq_rv = meta.fastq_2
+            tuple(meta, [fastq_fw, fastq_rv])
+        }
+        .set { ch_tomte }
 
-        meta = meta + [ fq_pairs: 1, single_end: false, is_fastq: true ]
-
-        tuple(meta, [fastq_fw, fastq_rv])
-    }
-    .set { ch_meta }
-
-    TOMTE(ch_meta)
+    TOMTE(ch_tomte)
 
 
     // Creating a channel for Hb percentage from Tomte results
