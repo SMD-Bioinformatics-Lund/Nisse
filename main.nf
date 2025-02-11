@@ -101,7 +101,10 @@ workflow ALL {
     ch_tomte = ch_meta.map { meta ->
         def fastq_fw = meta.fastq_1
         def fastq_rv = meta.fastq_2
-        tuple(meta, [fastq_fw, fastq_rv])
+
+        meta = meta + [ fq_pairs: 1, single_end: false, is_fastq: true ]
+
+        tuple(meta, [meta.id, [fastq_fw, fastq_rv]])
     }
 
     TOMTE(ch_tomte)
