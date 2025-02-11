@@ -33,10 +33,7 @@ include { BGZIP_TABIX as BGZIP_TABIX_BED } from './modules/postprocessing/bgzip_
 include { BGZIP_TABIX } from './modules/postprocessing/bgzip_tabix.nf'
 include { OUTPUT_VERSIONS } from './modules/postprocessing/output_versions.nf'
 
-def startupMessage() {
-        print("Starting Nisse")
-        print("Output dir: ${params.outdir}")
-}
+include { TOMTE } from './tomte/workflows/tomte.nf'
 
 workflow {
 
@@ -96,36 +93,40 @@ workflow QC {
 }
 
 workflow ALL {
-
     take:
     ch_versions
     ch_meta
 
     main:
-    ch_vcf = ch_meta.map { meta ->
-        def sample_id = meta.sample
-        def variant_calls = String.format(params.tomte_results_paths.variant_calls, params.tomte_results, sample_id)
-        def variant_calls_tbi = "${variant_calls}.tbi"
-        tuple(meta, file(variant_calls), file(variant_calls_tbi))
-    }
 
-    ch_junction_bed = ch_meta.map { meta ->
-        def sample_id = meta.sample
-        def junction_bed = String.format(params.tomte_results_paths.junction_bed, params.tomte_results, sample_id)
-        tuple(meta, file(junction_bed))
-    }
+    TOMTE(ch_meta)
 
-    ch_fraser_results = ch_meta.map { meta ->
-        def case_id = meta.case
-        def fraser_results = String.format(params.tomte_results_paths.fraser_tsv, params.tomte_results, case_id)
-        tuple(meta, file(fraser_results))
-    }
+    // ch_vcf = ch_meta.map { meta ->
+    //     def sample_id = meta.sample
+    //     def variant_calls = String.format(params.tomte_results_paths.variant_calls, params.tomte_results, sample_id)
+    //     def variant_calls_tbi = "${variant_calls}.tbi"
+    //     tuple(meta, file(variant_calls), file(variant_calls_tbi))
+    // }
 
-    ch_outrider_results = ch_meta.map { meta ->
-        def case_id = meta.case
-        def outrider_results = String.format(params.tomte_results_paths.outrider_tsv, params.tomte_results, case_id)
-        tuple(meta, file(outrider_results))
-    }
+    // ch_junction_bed = ch_meta.map { meta ->
+    //     def sample_id = meta.sample
+    //     def junction_bed = String.format(params.tomte_results_paths.junction_bed, params.tomte_results, sample_id)
+    //     tuple(meta, file(junction_bed))
+    // }
+
+    // ch_fraser_results = ch_meta.map { meta ->
+    //     def case_id = meta.case
+    //     def fraser_results = String.format(params.tomte_results_paths.fraser_tsv, params.tomte_results, case_id)
+    //     tuple(meta, file(fraser_results))
+    // }
+
+    // ch_outrider_results = ch_meta.map { meta ->
+    //     def case_id = meta.case
+    //     def outrider_results = String.format(params.tomte_results_paths.outrider_tsv, params.tomte_results, case_id)
+    //     tuple(meta, file(outrider_results))
+    // }
+
+    // NOTE: These are not accessed directly - the paths are used in the Scout yaml
     ch_tomte_raw_results = ch_meta.map { meta ->
         def sample_id = meta.sample
         def cram = String.format(params.tomte_results_paths.cram, params.tomte_results, sample_id)
@@ -137,9 +138,8 @@ workflow ALL {
         tuple(meta, file(cram), file(cram_crai), file(bigwig), file(peddy_ped), file(peddy_check), file(peddy_sex))
     }
 
-    PREPROCESS(ch_fraser_results, ch_outrider_results, ch_vcf, params.hgnc_map, params.stat_col, params.stat_cutoff)
-    // FIXME: Can this be read from Tomte results?
-    CREATE_PED(ch_meta)
+    PREPROCESS(TOMTE.out.fraser_results, TOMTE.out.outrider_results, TOMTE.out.vcf_tbi, params.hgnc_map, params.stat_col, params.stat_cutoff)
+    // PREPROCESS(ch_fraser_results, ch_outrider_results, ch_vcf, params.hgnc_map, params.stat_col, params.stat_cutoff)
 
     SNV_ANNOTATE(PREPROCESS.out.vcf, params.vep)
     ch_versions = ch_versions.mix(SNV_ANNOTATE.out.versions)
@@ -149,7 +149,8 @@ workflow ALL {
 
     ch_drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
 
-    BGZIP_TABIX_BED(ch_junction_bed)
+    BGZIP_TABIX_BED(TOMTE.out.junction_bed)
+    // BGZIP_TABIX_BED(ch_junction_bed)
 
     ch_all_result_files = ch_drop_results
         .join(SNV_SCORE.out.vcf_tbi)
@@ -241,4 +242,9 @@ workflow SNV_SCORE {
     emit:
     vcf_tbi = BGZIP_TABIX_VCF.out.vcf_tbi
     versions = ch_versions
+}
+
+def startupMessage() {
+    print("Starting Nisse")
+    print("Output dir: ${params.outdir}")
 }
