@@ -146,7 +146,7 @@ workflow NISSE {
         tuple(meta, file(cram), file(cram_crai), file(bigwig), file(peddy_ped), file(peddy_check), file(peddy_sex))
     }
 
-    PREPROCESS(TOMTE.out.fraser_results, TOMTE.out.outrider_results, TOMTE.out.vcf_tbi, params.hgnc_map, params.stat_col, params.stat_cutoff)
+    PREPROCESS(TOMTE.out.drop_as_out_clinical, TOMTE.out.drop_ae_out_clinical, TOMTE.out.vcf_tbi, params.hgnc_map, params.stat_col, params.stat_cutoff)
     // PREPROCESS(ch_fraser_results, ch_outrider_results, ch_vcf, params.hgnc_map, params.stat_col, params.stat_cutoff)
 
     SNV_ANNOTATE(PREPROCESS.out.vcf, params.vep)
