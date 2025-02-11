@@ -45,21 +45,42 @@ workflow {
         .splitCsv(header: true)
         .set { ch_meta }
 
-    // Creating a channel for Hb percentage form Tomte results
-    ch_hb_estimates = ch_meta.map { meta ->
-        def sample_id = meta.sample
-        def hb_estimate_json = String.format(params.tomte_results_paths.hb_estimate, params.tomte_results, sample_id)
-        tuple(meta, file(hb_estimate_json))
+    // FIXME: These should come directly from Tomte
+
+    ch_tomte = ch_meta.map { meta ->
+        def fastq_fw = meta.fastq_1
+        def fastq_rv = meta.fastq_2
+
+        meta = meta + [ fq_pairs: 1, single_end: false, is_fastq: true ]
+
+        tuple(meta, [fastq_fw, fastq_rv])
     }
 
-    ch_multiqc = ch_meta.map { meta ->
-        def multiqc_summary = String.format(params.tomte_results_paths.multiqc_summary, params.tomte_results)
-        def picard_coverage = String.format(params.tomte_results_paths.picard_coverage, params.tomte_results)
-        tuple(meta, file(multiqc_summary), file(picard_coverage))
+    TOMTE(ch_tomte)
+
+
+    // Creating a channel for Hb percentage from Tomte results
+    // ch_hb_estimates = ch_meta.map { meta ->
+    //     def sample_id = meta.sample
+    //     def hb_estimate_json = String.format(params.tomte_results_paths.hb_estimate, params.tomte_results, sample_id)
+    //     tuple(meta, file(hb_estimate_json))
+    // }
+
+    // ch_multiqc = ch_meta.map { meta ->
+    //     def multiqc_summary = String.format(params.tomte_results_paths.multiqc_summary, params.tomte_results)
+    //     def picard_coverage = String.format(params.tomte_results_paths.picard_coverage, params.tomte_results)
+    //     tuple(meta, file(multiqc_summary), file(picard_coverage))
+    // }
+
+    ch_multiqc = ch_meta.combine(TOMTE.out.MULTIQC).map { meta, multiqc_folder ->
+        def multiqc_summary = file("${multiqc_folder}/multiqc_general_stats.txt")
+        def picard_coverage = file("${multiqc_folder}/picard_rna_coverage.txt")
+        tuple(meta, multiqc_summary, picard_coverage)
     }
 
 
-    NISSE_QC(ch_versions, ch_multiqc.join(ch_hb_estimates))
+    NISSE_QC(ch_versions, ch_multiqc.join(TOMTE.out.hb_estimates))
+    // NISSE_QC(ch_versions, ch_multiqc.join(ch_hb_estimates))
 
     ch_versions = ch_versions.mix(NISSE_QC.out.versions)
     if (!params.qc_only) {
@@ -98,16 +119,6 @@ workflow NISSE {
 
     main:
 
-    ch_tomte = ch_meta.map { meta ->
-        def fastq_fw = meta.fastq_1
-        def fastq_rv = meta.fastq_2
-
-        meta = meta + [ fq_pairs: 1, single_end: false, is_fastq: true ]
-
-        tuple(meta, [fastq_fw, fastq_rv])
-    }
-
-    TOMTE(ch_tomte)
 
     // ch_vcf = ch_meta.map { meta ->
     //     def sample_id = meta.sample
