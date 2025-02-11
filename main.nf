@@ -59,13 +59,13 @@ workflow {
     }
 
 
-    QC(ch_versions, ch_multiqc.join(ch_hb_estimates))
+    NISSE_QC(ch_versions, ch_multiqc.join(ch_hb_estimates))
 
-    ch_versions = ch_versions.mix(QC.out.versions)
+    ch_versions = ch_versions.mix(NISSE_QC.out.versions)
     if (!params.qc_only) {
-        ALL(ch_versions, ch_meta)
+        NISSE(ch_versions, ch_meta)
     }
-    ch_versions = ch_versions.mix(QC.out.versions)
+    ch_versions = ch_versions.mix(NISSE_QC.out.versions)
 
     ch_joined_versions = ch_versions.collect { it[1] }
     OUTPUT_VERSIONS(ch_joined_versions)
@@ -79,7 +79,7 @@ workflow {
     }
 }
 
-workflow QC {
+workflow NISSE_QC {
     take:
     ch_versions
     ch_multiqc
@@ -91,7 +91,7 @@ workflow QC {
     versions = ch_versions
 }
 
-workflow ALL {
+workflow NISSE {
     take:
     ch_versions
     ch_meta
