@@ -6,7 +6,7 @@ process GENMOD_SCORE {
 
     input:
         tuple val(meta), path(vcf)
-        tuple val(meta2), path(ped)
+        path(ped)
         path(score_config)
 
     output:

@@ -6,7 +6,7 @@ process GENMOD_MODELS {
 
     input:
     tuple val(meta), path(vcf)
-    tuple val(meta2), path(family)
+    path(family)
 
     output:
     tuple val(meta), path("${meta.sample}_models.vcf"), emit: vcf
