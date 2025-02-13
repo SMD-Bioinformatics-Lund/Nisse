@@ -31,7 +31,8 @@ include { BGZIP_TABIX as BGZIP_TABIX_BED } from './modules/postprocessing/bgzip_
 include { OUTPUT_VERSIONS } from './modules/postprocessing/output_versions.nf'
 
 include { TOMTE } from './tomte/workflows/tomte.nf'
-include { PERC_HETEROZYGOTES } from './modules/id_snps.nf'
+include { IDSNP_CALL } from './modules/defined_calls.nf'
+include { PERC_HETEROZYGOTES } from './modules/defined_calls.nf'
 
 workflow {
 
@@ -76,6 +77,7 @@ workflow {
         ch_vcf_tbi = TOMTE.out.vcf_tbi
         ch_drop_ae_out_research = TOMTE.out.drop_ae_out_research
         ch_drop_as_out_research = TOMTE.out.drop_as_out_research
+        ch_bam_bai = TOMTE.out.bam_bai
 
     } else {
         // Creating a channel for Hb percentage from Tomte results
@@ -98,6 +100,13 @@ workflow {
             def variant_calls = String.format(params.tomte_results_paths.variant_calls, params.tomte_results, sample_id)
             def variant_calls_tbi = "${variant_calls}.tbi"
             tuple(meta, file(variant_calls), file(variant_calls_tbi))
+        }
+
+        ch_bam_bai = ch_meta.map { meta ->
+            def sample_id = meta.sample
+            def bam = String.format(params.tomte_results_paths.bam, params.tomte_results, sample_id)
+            def bai = String.format(params.tomte_results_paths.bam, params.tomte_results, sample_id)
+            tuple(meta, file(bam), file(bai))
         }
 
         if (!params.qc_only) {
@@ -127,7 +136,7 @@ workflow {
         }
     }
 
-    NISSE_QC(ch_versions, ch_qc)
+    NISSE_QC(ch_versions, ch_qc, ch_bam_bai, params.idsnps, params.het_calls)
 
     ch_versions = ch_versions.mix(NISSE_QC.out.versions)
     if (!params.qc_only) {
@@ -165,7 +174,7 @@ workflow NISSE_QC {
     main:
     PARSE_TOMTE_QC(ch_multiqc)
     PERC_HETEROZYGOTES()
-    IDSNP_CALL(ch_bam, )
+    IDSNP_CALL(ch_bam, val_idsnp_params)
 
     emit:
     versions = ch_versions
