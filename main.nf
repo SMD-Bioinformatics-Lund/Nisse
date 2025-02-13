@@ -52,6 +52,7 @@ workflow {
         .set { ch_meta }
 
     ch_fasta_fai = Channel.of( tuple(file(params.genome), file(params.genome_fai)) )
+    ch_fasta_fai.view { it -> "Viewing genome ${it}" }
 
     // Either execute Tomte as part of Nisse, or start with its results folder
     if (params.run_tomte) {
