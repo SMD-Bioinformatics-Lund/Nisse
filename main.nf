@@ -185,6 +185,10 @@ workflow NISSE_QC {
     main:
     PARSE_TOMTE_QC(ch_multiqc)
     PERC_HETEROZYGOTES(ch_bam_bai, ch_fasta, val_hetcalls_params)
+    ch_versions.view()
+    ch_multiqc.view()
+    ch_bam_bai.view()
+    ch_fasta.view()
     IDSNP_CALL(ch_bam_bai, ch_fasta, val_idsnp_params)
 
     emit:
