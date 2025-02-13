@@ -1,5 +1,13 @@
-.nextflow.log*
+# Tomte
+bin_tomte
+assets
+bin
 tomte/
+cmd_tomte.config
+nextflow_schema.json
+
+# Other
+.nextflow.log*
 .vscode/
 .nfconfig
 work/
