@@ -12,20 +12,14 @@ process IDSNP_CALL {
     label 'process_single'
     tag "${meta.id}"
 
-    // Let's start with all beds
     input:
         tuple val(meta), path(bam), path(bai)
+        tuple path(genome), path(genome_fai)
         val idsnp_params
-        path(genome)
-        // path idsnp_bed
-        // path idSnp_bed_gz
-        // path idSnp_std_bed_gz
-        // path header
-        // path genome
 
     output:
-        tuple val(meta), path("*final.vcf"), path("*genotypes.json"),       emit:   sample_id_genotypes
-        path "versions.yml",                                                            emit:   versions
+        tuple val(meta), path("*final.vcf"), path("*genotypes.json"), emit:   sample_id_genotypes
+        path "versions.yml",                                          emit:   versions
 
     script:
         def prefix  = "${meta.sample}"
@@ -54,7 +48,9 @@ process IDSNP_CALL {
             -a "${idsnp_params.idSnp_std_bed_gz}" \\
             -c "CHROM,FROM,TO,ID" \\
             -h "${idsnp_params.header}" \\
-            -o "${meta.sample}.final.vcf" "${prefix}.raw.vcf"
+            -o "${prefix}.final.vcf" "${prefix}.raw.vcf"
+        
+        genotype2json.py "${prefix}.genotypes" "${prefix}.genotypes.json"
         """
 
     stub:
@@ -75,13 +71,14 @@ process PERC_HETEROZYGOTES {
     input:
         // What is the targets_bed vs targets_tsv?
         tuple val(meta), path(bam), path(bai)
+        tuple path(genome), path(genome_fai)
         tuple path(targets_bed), path(targets_tsv)
-        path genome
     
     output:
-        tuple val(meta)
+        tuple val(meta), path("*_heterozygosity_calls.vcf"), emit: calls
 
     script:
+    def prefix = "${meta.sample}"
     """
     bcftools mpileup \\
         -Ou \\
@@ -93,12 +90,13 @@ process PERC_HETEROZYGOTES {
         -C alleles \\
         -T targets-file.tsv.gz \\
         -m -Ov - \\
-        > "${meta.sample}_heterozygosity_calls.vcf"
+        > "${prefix}_heterozygosity_calls.vcf"
     """
 
     stub:
+    def prefix = "${meta.sample}"
     """
-    touch "${meta.sample}_heterozygosity_calls.vcf"
+    touch "${prefix}_heterozygosity_calls.vcf"
     """
 }
 
