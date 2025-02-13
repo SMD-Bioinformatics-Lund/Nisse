@@ -15,7 +15,7 @@ process IDSNP_CALL {
 
     input:
         tuple val(meta), path(bam), path(bai)
-        path(genome)
+        tuple path(genome), path(genome_fai)
         val idsnp_params
 
     output:
@@ -72,7 +72,7 @@ process PERC_HETEROZYGOTES {
     input:
         // What is the targets_bed vs targets_tsv?
         tuple val(meta), path(bam), path(bai)
-        path(genome)
+        tuple path(genome), path(genome_fai)
         tuple path(targets_bed), path(targets_tsv)
     
     output:
