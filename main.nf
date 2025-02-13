@@ -51,8 +51,7 @@ workflow {
         }
         .set { ch_meta }
 
-    ch_fasta_fai = Channel.of( tuple(file(params.genome), file(params.genome_fai)) )
-    ch_fasta_fai.view { it -> "Viewing genome ${it}" }
+    ch_fasta = Channel.fromPath(params.genome)
 
     // Either execute Tomte as part of Nisse, or start with its results folder
     if (params.run_tomte) {
@@ -143,7 +142,7 @@ workflow {
         ch_versions,
         ch_qc,
         ch_bam_bai,
-        ch_fasta_fai,
+        ch_fasta,
         params.idsnps,
         params.het_calls
 )
@@ -179,14 +178,14 @@ workflow NISSE_QC {
     ch_versions
     ch_multiqc
     ch_bam_bai
-    ch_fasta_fai
+    ch_fasta
     val_idsnp_params
     val_hetcalls_params
 
     main:
     PARSE_TOMTE_QC(ch_multiqc)
-    PERC_HETEROZYGOTES(ch_bam_bai, ch_fasta_fai, val_hetcalls_params)
-    IDSNP_CALL(ch_bam_bai, ch_fasta_fai, val_idsnp_params)
+    PERC_HETEROZYGOTES(ch_bam_bai, ch_fasta, val_hetcalls_params)
+    IDSNP_CALL(ch_bam_bai, ch_fasta, val_idsnp_params)
 
     emit:
     versions = ch_versions
