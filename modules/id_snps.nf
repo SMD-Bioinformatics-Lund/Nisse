@@ -1,11 +1,3 @@
-// NEXT: What are the input / outputs?
-// Start drafting the processes
-
-// /fs1/paul/idsnp/README
-// /fs1/jakob/src/util/data_utils/idsnp/idsnp.sh
-// bcftools only? And some script?
-// Check the somatic pipeline as well
-
 def bcftools_version(task) {
 	"""
 	cat <<-END_VERSIONS > ${task.process}_versions.yml
@@ -15,87 +7,65 @@ def bcftools_version(task) {
 	"""
 }
 
-process ALLELE_CALL {
+// FIXME: publishDir
+process IDSNP_CALL {
     label 'process_single'
     tag "${meta.id}"
 
+    // Let's start with all beds
     input:
-        tuple val(group), val(meta), file(bam), file(bai)
+        tuple val(meta), path(bam), path(bai)
+        val idsnp_params
+        // path idsnp_bed
+        // path idSnp_bed_gz
+        // path idSnp_std_bed_gz
+        // path header
+        // path genome
 
     output:
-        tuple val(group), val(meta), file("*final.vcf"), file("*genotypes.json"),       emit:   sample_id_genotypes
+        tuple val(meta), path("*final.vcf"), path("*genotypes.json"),       emit:   sample_id_genotypes
         path "versions.yml",                                                            emit:   versions
 
-    when:
-        task.ext.when == null || task.ext.when
-
     script:
-        def prefix  = task.ext.prefix ?: "${meta.id}"
-        def args    = task.ext.args  ?: ""
-        def args2   = task.ext.args2 ?: ""
-        def args3   = task.ext.args3 ?: ""
+        def prefix  = "${meta.sample}"
+        // Document flags
+        // -d 1000
+        // -q 10
+        // FIXME: Check the params.bed arguments
+        // FIXME: Is there also a variant argument needed?
         """
-        bcftools mpileup $args $bam | bcftools call $args2   > ${prefix}.raw.vcf
-        bcftools annotate $args3 -o ${prefix}.final.vcf ${prefix}.raw.vcf
-        bcftools query -f '%ID\\t[%GT]\\n' ${prefix}.final.vcf > ${prefix}.genotypes
-        genotype2json.py ${prefix}.genotypes ${prefix}.genotypes.json
-
-        cat <<-END_VERSIONS > versions.yml
-        "${task.process}":
-            bcftools: \$(echo \$(bcftools --version 2>&1) | sed 's/bcftools //; s/ .*//')
-        END_VERSIONS
+        bcftools mpileup \\
+            -Ou \\
+            -R "${idsnp_params.idsnp_bed}" \\
+            -f "${idsnp_params.genome}" \\
+            -d 1000 \\
+            -q 10 \\
+            "${bam}" | \\
+        bcftools call \\
+            -A \\
+            -C alleles \\
+            -T "${idsnp_params.idSnp_bed_gz}" \\
+            -m \\
+            -Ov \\
+            > "${prefix}.raw.vcf"
+        
+        bcftools annotate \\
+            -a "${idsnp_params.idSnp_std_bed_gz}" \\
+            -c "CHROM,FROM,TO,ID" \\
+            -h "${idsnp_params.header}" \\
+            -o "${meta.sample}.final.vcf" "${prefix}.raw.vcf"
         """
 
     stub:
-        def prefix = task.ext.prefix ?: "${meta.id}"
+        def prefix = "${meta.sample}"
         """
         touch ${prefix}.final.vcf
         touch ${prefix}.genotypes.json
 
-        cat <<-END_VERSIONS > versions.yml
-        "${task.process}":
-            bcftools: \$(echo \$(bcftools --version 2>&1) | sed 's/bcftools //; s/ .*//')
-        END_VERSIONS
+        ${bcftools_version(task)}
         """
 }
 
-process IDSNPS {
-    tag "${meta.sample}"
-    label "process_low"
-    container "${params.containers.bcftools}"
-
-    input:
-        tuple val(meta), path(bam), path(bai), path(fasta), path(id_bed), path(id_tsv)
-    
-    output:
-        val(meta), path("${meta.sample}_idsnps.vcf")
-    
-    script:
-    """
-    bcftools mpileup -Ou -R "${id_bed}" -f "${fasta}" "${bam}" | \\
-        bcftools call -A -C alleles -T "${id_tsv}" -m -Ov - > "${meta.sample}_idsnps.vcf"
-
-    ${bcftools_version(task)}
-    """
-
-    stub:
-    """
-    touch "${meta.sample}_idsnps.vcf"
-
-    ${bcftools_version(task)}
-    """
-}
-
-
-
-// BCFTOOLS here as Paul did it?
-// Notes from Paul:
-
-// its all in the `/fs2/paul/rnaseq_scanb_genotyping` . The README is describing how to get calls from a target-file using bcftools. The files used are the following:  
-// `genome-fa` -> `/fs1/resources/ref/hg38/fasta/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna`  
-// `target.bed` -> `/fs2/paul/rnaseq_scanb_genotyping/genotyping-213-snp_feb2018_50nt-flanks.bed`  
-// `targets-file.tsv.gz`  -> `/fs2/paul/rnaseq_scanb_genotyping/genotyping-213-snp_feb2018.chr.tsv.gz`  
-// In the bam-folder I have collected bam-files run on tomte without downsampling.
 process PERC_HETEROZYGOTES {
     tag "${meta.sample}"
     label "process_low"
@@ -115,7 +85,7 @@ process PERC_HETEROZYGOTES {
         -R "${targets_bed}" \\
         -f genome.fa \\
         input.bam | \\
-        bcftools call \\
+    bcftools call \\
         -A \\
         -C alleles \\
         -T targets-file.tsv.gz \\

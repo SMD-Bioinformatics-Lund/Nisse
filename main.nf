@@ -31,6 +31,7 @@ include { BGZIP_TABIX as BGZIP_TABIX_BED } from './modules/postprocessing/bgzip_
 include { OUTPUT_VERSIONS } from './modules/postprocessing/output_versions.nf'
 
 include { TOMTE } from './tomte/workflows/tomte.nf'
+include { PERC_HETEROZYGOTES } from './modules/id_snps.nf'
 
 workflow {
 
@@ -158,9 +159,13 @@ workflow NISSE_QC {
     take:
     ch_versions
     ch_multiqc
+    ch_bam
+    val_idsnp_params
 
     main:
     PARSE_TOMTE_QC(ch_multiqc)
+    PERC_HETEROZYGOTES()
+    IDSNP_CALL(ch_bam, )
 
     emit:
     versions = ch_versions
