@@ -62,11 +62,13 @@ workflow {
 
         TOMTE(ch_tomte)
 
-        ch_qc = ch_meta.combine(TOMTE.out.multiqc_data).map { meta, multiqc_folder ->
+        ch_multiqc = ch_meta.combine(TOMTE.out.multiqc_data).map { meta, multiqc_folder ->
             def multiqc_summary = file("${multiqc_folder}/multiqc_general_stats.txt")
             def picard_coverage = file("${multiqc_folder}/picard_rna_coverage.txt")
             tuple(meta, multiqc_summary, picard_coverage)
         }
+
+        ch_qc = ch_multiqc.join(TOMTE.out.hb_estimates)
 
         ch_junction_bed_tbi = TOMTE.out.junction_bed
         ch_ped = TOMTE.out.ped
@@ -124,7 +126,7 @@ workflow {
         }
     }
 
-    NISSE_QC(ch_versions, ch_multiqc.join(ch_qc))
+    NISSE_QC(ch_versions, ch_qc)
 
     ch_versions = ch_versions.mix(NISSE_QC.out.versions)
     if (!params.qc_only) {
