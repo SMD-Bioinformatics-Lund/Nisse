@@ -33,7 +33,7 @@ process IDSNP_CALL {
         bcftools mpileup \\
             -Ou \\
             -R "${idsnp_params.idsnp_bed}" \\
-            -f "${idsnp_params.genome}" \\
+            -f "${genome}" \\
             -d 1000 \\
             -q 10 \\
             "${bam}" | \\
@@ -84,7 +84,7 @@ process PERC_HETEROZYGOTES {
     bcftools mpileup \\
         -Ou \\
         -R "${targets_bed}" \\
-        -f genome.fa \\
+        -f "${genome}" \\
         input.bam | \\
     bcftools call \\
         -A \\
