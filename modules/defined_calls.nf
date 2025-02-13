@@ -11,6 +11,7 @@ def bcftools_version(task) {
 process IDSNP_CALL {
     label 'process_single'
     tag "${meta.id}"
+    container "${params.containers.bcftools}"
 
     input:
         tuple val(meta), path(bam), path(bai)
