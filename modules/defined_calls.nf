@@ -73,7 +73,8 @@ process PERC_HETEROZYGOTES {
         // What is the targets_bed vs targets_tsv?
         tuple val(meta), path(bam), path(bai)
         tuple path(genome), path(genome_fai)
-        tuple path(targets_bed), path(targets_tsv)
+        val hetcall_params
+        // tuple path(targets_bed), path(targets_tsv)
     
     output:
         tuple val(meta), path("*_heterozygosity_calls.vcf"), emit: calls
@@ -83,13 +84,13 @@ process PERC_HETEROZYGOTES {
     """
     bcftools mpileup \\
         -Ou \\
-        -R "${targets_bed}" \\
+        -R "${hetcall_params.targets_bed}" \\
         -f "${genome}" \\
         input.bam | \\
     bcftools call \\
         -A \\
         -C alleles \\
-        -T targets-file.tsv.gz \\
+        -T "${hetcall_params.targets_file_tsv_gz}" \\
         -m -Ov - \\
         > "${prefix}_heterozygosity_calls.vcf"
     """

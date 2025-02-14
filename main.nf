@@ -36,7 +36,6 @@ include { PERC_HETEROZYGOTES } from './modules/defined_calls.nf'
 
 workflow {
 
-
     startupMessage()
 
     ch_versions = Channel.empty()
