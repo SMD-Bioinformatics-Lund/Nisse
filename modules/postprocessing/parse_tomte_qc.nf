@@ -9,6 +9,7 @@ process PARSE_TOMTE_QC {
 
     output:
     path("${meta.sample}_out.json"), emit: json
+    path "versions.yml", emit: versions
 
     script:
     """

@@ -33,6 +33,7 @@ include { OUTPUT_VERSIONS } from './modules/postprocessing/output_versions.nf'
 include { TOMTE } from './tomte/workflows/tomte.nf'
 include { IDSNP_CALL } from './modules/defined_calls.nf'
 include { PERC_HETEROZYGOTES } from './modules/defined_calls.nf'
+include { IDSNP_VCF_TO_JSON } from './modules/defined_calls.nf'
 
 workflow {
 
@@ -185,6 +186,12 @@ workflow NISSE_QC {
     PARSE_TOMTE_QC(ch_multiqc)
     PERC_HETEROZYGOTES(ch_bam_bai, ch_fasta_fai, val_hetcalls_params)
     IDSNP_CALL(ch_bam_bai, ch_fasta_fai, val_idsnp_params)
+    IDSNP_VCF_TO_JSON(IDSNP_CALL.out.vcf)
+
+    ch_versions = ch_versions.mix(PARSE_TOMTE_QC.out.versions)
+    ch_versions = ch_versions.mix(PERC_HETEROZYGOTES.out.versions)
+    ch_versions = ch_versions.mix(IDSNP_CALL.out.versions)
+    ch_versions = ch_versions.mix(IDSNP_VCF_TO_JSON.out.versions)
 
     emit:
     versions = ch_versions

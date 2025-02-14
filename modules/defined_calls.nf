@@ -19,8 +19,8 @@ process IDSNP_CALL {
         val idsnp_params
 
     output:
-        tuple val(meta), path("*final.vcf"), path("*genotypes.json"), emit:   sample_id_genotypes
-        path "versions.yml",                                          emit:   versions
+        tuple val(meta), path("*final.vcf"), emit: vcf
+        path "versions.yml", emit: versions
 
     script:
         def prefix  = "${meta.sample}"
@@ -50,8 +50,6 @@ process IDSNP_CALL {
             -c "CHROM,FROM,TO,ID" \\
             -h "${idsnp_params.header}" \\
             -o "${prefix}.final.vcf" "${prefix}.raw.vcf"
-        
-        genotype_to_json.py "${prefix}.genotypes" "${prefix}.genotypes.json"
         """
 
     stub:
@@ -63,6 +61,44 @@ process IDSNP_CALL {
         ${bcftools_version(task)}
         """
 }
+
+process IDSNP_VCF_TO_JSON {
+    label 'process_single'
+    tag "${meta.id}"
+    container "${params.containers.python}"
+
+    input:
+        tuple val(meta), path(vcf), path(vcf_tbi)
+    
+    output:
+        tuple val(meta), path("*.json"), emit: json
+        path "versions.yml", emit: versions
+    
+    script:
+    def prefix = "${meta.sample}"
+    """
+    genotype_to_json.py "${prefix}.genotypes" "${prefix}.genotypes.json"
+
+    ${python_version(task)}
+    """
+
+    stub:
+    def prefix = "${meta.sample}"
+    """
+    touch "${prefix}.genotypes.json"
+
+    ${python_version(task)}
+    """
+}
+def python_version(task) {
+	"""
+	cat <<-END_VERSIONS > ${task.process}_versions.yml
+	${task.process}:
+	    python: \$(echo \$(python --version | cut -f2 -d" "))
+	END_VERSIONS
+	"""
+}
+
 
 process PERC_HETEROZYGOTES {
     tag "${meta.sample}"
@@ -78,6 +114,7 @@ process PERC_HETEROZYGOTES {
     
     output:
         tuple val(meta), path("*_heterozygosity_calls.vcf"), emit: calls
+        path "versions.yml", emit: versions
 
     script:
     def prefix = "${meta.sample}"
