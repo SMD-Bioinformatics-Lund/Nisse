@@ -51,7 +51,7 @@ process IDSNP_CALL {
             -h "${idsnp_params.header}" \\
             -o "${prefix}.final.vcf" "${prefix}.raw.vcf"
         
-        genotype2json.py "${prefix}.genotypes" "${prefix}.genotypes.json"
+        genotype_to_json.py "${prefix}.genotypes" "${prefix}.genotypes.json"
         """
 
     stub:
