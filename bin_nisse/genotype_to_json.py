@@ -8,11 +8,14 @@ def parse_genotype_file(genotype_file_path):
     genotype_dict = {}
     with open(genotype_file_path, 'r') as genotype_file:
         for line in genotype_file:
+            if line.startswith("#"):
+                continue
             parts = line.split()
-            if len(parts) == 2:
-                genotype_dict[parts[0]] = parts[1]
-            else:
-                genotype_dict[parts[0]] = None  
+            # chrom = parts[0]
+            var_id = parts[2]
+            sample_genotype = parts[9]
+            genotype = sample_genotype.split(":")[0]
+            genotype_dict[var_id] = genotype
     return genotype_dict
 
 
@@ -25,7 +28,6 @@ def main():
 
     genotype_data = parse_genotype_file(args.genotype_file)
     
-
     with open(args.output_file, 'w') as output_file:
         json.dump(genotype_data, output_file, indent=4)
     
