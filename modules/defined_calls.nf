@@ -70,7 +70,7 @@ process IDSNP_VCF_TO_JSON {
     container "${params.containers.python}"
 
     input:
-        tuple val(meta), path(vcf), path(vcf_tbi)
+        tuple val(meta), path(vcf)
     
     output:
         tuple val(meta), path("*.json"), emit: json
