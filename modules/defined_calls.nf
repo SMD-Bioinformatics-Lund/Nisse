@@ -50,6 +50,8 @@ process IDSNP_CALL {
             -c "CHROM,FROM,TO,ID" \\
             -h "${idsnp_params.header}" \\
             -o "${prefix}.final.vcf" "${prefix}.raw.vcf"
+
+        ${bcftools_version(task)}
         """
 
     stub:
