@@ -86,7 +86,7 @@ process PERC_HETEROZYGOTES {
         -Ou \\
         -R "${hetcall_params.targets_bed}" \\
         -f "${genome}" \\
-        input.bam | \\
+        "${bam}" | \\
     bcftools call \\
         -A \\
         -C alleles \\
