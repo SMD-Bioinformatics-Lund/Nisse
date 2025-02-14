@@ -14,7 +14,6 @@ process PARSE_TOMTE_QC {
 
     script:
     """
-
     parse_tomte_qc.py \\
         --multiqc_general_stats "${multiqc_general_stats}" \\
         --sample_id "${meta.sample}" \\

@@ -40,13 +40,13 @@ process IDSNP_CALL {
         bcftools call \\
             -A \\
             -C alleles \\
-            -T "${idsnp_params.idSnp_bed_gz}" \\
+            -T "${idsnp_params.idsnp_tsv}" \\
             -m \\
             -Ov \\
             > "${prefix}.raw.vcf"
         
         bcftools annotate \\
-            -a "${idsnp_params.idSnp_std_bed_gz}" \\
+            -a "${idsnp_params.variant_rsids_bed}" \\
             -c "CHROM,FROM,TO,ID" \\
             -h "${idsnp_params.header}" \\
             -o "${prefix}.final.vcf" "${prefix}.raw.vcf"
@@ -124,9 +124,15 @@ process PERC_HETEROZYGOTES {
     bcftools call \\
         -A \\
         -C alleles \\
-        -T "${hetcall_params.targets_file_tsv_gz}" \\
+        -T "${hetcall_params.targets_tsv}" \\
         -m -Ov - \\
-        > "${prefix}_heterozygosity_calls.vcf"
+        > "${prefix}.raw.vcf"
+    
+    bcftools annotate \\
+        -a "${hetcall_params.variant_rsids_bed}" \\
+        -c "CHROM,FROM,TO,ID" \\
+        -h "${hetcall_params.header}" \\
+        -o "${prefix}_heterozygosity_calls.vcf" "${prefix}.raw.vcf"
     """
 
     stub:
