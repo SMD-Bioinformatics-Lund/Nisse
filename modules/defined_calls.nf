@@ -135,12 +135,16 @@ process PERC_HETEROZYGOTES {
         -c "CHROM,FROM,TO,ID" \\
         -h "${hetcall_params.header}" \\
         -o "${prefix}_heterozygosity_calls.vcf" "${prefix}.raw.vcf"
+    
+    ${bcftools_version(task)}
     """
 
     stub:
     def prefix = "${meta.sample}"
     """
     touch "${prefix}_heterozygosity_calls.vcf"
+
+    ${bcftools_version(task)}
     """
 }
 
