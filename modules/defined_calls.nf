@@ -79,7 +79,7 @@ process IDSNP_VCF_TO_JSON {
     script:
     def prefix = "${meta.sample}"
     """
-    genotype_to_json.py "${prefix}.genotypes" "${prefix}.genotypes.json"
+    genotype_to_json.py "${vcf}" "${prefix}.genotypes.json"
 
     ${python_version(task)}
     """
