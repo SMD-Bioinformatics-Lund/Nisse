@@ -6,6 +6,9 @@ tomte/
 cmd_tomte.config
 nextflow_schema.json
 
+cmd_nisse.config
+config-files
+
 # Other
 .nextflow.log*
 .vscode/
