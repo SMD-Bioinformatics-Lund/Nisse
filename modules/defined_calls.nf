@@ -99,21 +99,18 @@ def python_version(task) {
 	"""
 }
 
-
 process PERC_HETEROZYGOTES {
     tag "${meta.sample}"
     label "process_low"
     container "${params.containers.bcftools}"
 
     input:
-        // What is the targets_bed vs targets_tsv?
         tuple val(meta), path(bam), path(bai)
         tuple path(genome), path(genome_fai)
         val hetcall_params
-        // tuple path(targets_bed), path(targets_tsv)
     
     output:
-        tuple val(meta), path("*_heterozygosity_calls.vcf"), emit: calls
+        tuple val(meta), path("*_heterozygosity_calls.vcf"), emit: vcf
         path "versions.yml", emit: versions
 
     script:

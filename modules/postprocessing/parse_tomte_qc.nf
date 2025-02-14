@@ -6,6 +6,7 @@ process PARSE_TOMTE_QC {
 
     input:
     tuple val(meta), path(multiqc_general_stats), path(picard_rna_coverage), path(hb_estimates)
+    tuple val(meta2), path(hetcalls_vcf)
 
     output:
     path("${meta.sample}_out.json"), emit: json
@@ -19,6 +20,7 @@ process PARSE_TOMTE_QC {
         --sample_id "${meta.sample}" \\
         --picard_rna_coverage "${picard_rna_coverage}" \\
         --hb_estimate "${hb_estimates}" \\
+        --hetcalls_vcf "${hetcalls_vcf}" \\
         --output_file "${meta.sample}_out.json"
 
     cat <<-END_VERSIONS > versions.yml

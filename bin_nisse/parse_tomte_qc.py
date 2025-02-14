@@ -9,7 +9,7 @@ from pathlib import Path
 from collections import defaultdict
 from typing import Any, Dict, List, Set, Tuple, Union, Optional
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 
 
 def main(
@@ -369,6 +369,10 @@ def parse_arguments() -> argparse.Namespace:
         "--hb_estimate",
         help="Path to the input file containing merged HB estimate data.",
     )
+    parser.add_argument(
+        "--hetcalls_vcf",
+        help="VCF containing heterozygosity calls for selected SNPs"
+    )
     parser.add_argument("--output_file", required=True)
     parser.add_argument(
         "--version",
@@ -383,6 +387,9 @@ def parse_arguments() -> argparse.Namespace:
 
 if __name__ == "__main__":
     args = parse_arguments()
+
+    print(f"--hetcalls_vcf: {args.hetcalls_vcf} (currently not used)")
+
     main(
         args.multiqc_general_stats,
         args.picard_rna_coverage,
