@@ -12,53 +12,36 @@ from typing import Any, Dict, List, Set, Tuple, Union, Optional
 VERSION = "1.1.0"
 
 
+class SampleQCResults:
+    def __init__(self, sample):
+        self.sample = sample
+        self.qc_results: Dict[str, Dict[str, str]] = {}
+    
+    def add_qc_result(self, result_key, results: Dict[str, str]):
+        if result_key in self.qc_results:
+            raise ValueError(f"{result_key} already added for sample {self.sample}")
+        self.qc_results[result_key] = results
+
 def main(
     multiqc_general_stats: str,
-    picard_rna_coverage: str,
-    multiqc_star: str,
-    merged_hb_estimate: str,
+    picard_rna_coverage: Optional[str],
+    multiqc_star: Optional[str],
+    merged_hb_estimate: Optional[str],
+    hetcalls_vcf: Optional[str],
     output_file: str,
     sample_id: Optional[str],
 ):
+    samples_qc_dict = parse_multiqc_general_stats(multiqc_general_stats)
 
-    in_fp = multiqc_general_stats
+    if merged_hb_estimate:
+        # Add HB estimate data
+        hb_data = process_hb_estimate_data(merged_hb_estimate)
 
-    header = []
-    batches = []
-    with open(in_fp, "r") as in_fh:
-        curr_batch = []
-        for line in in_fh:
-            line = line.strip()
-            fields = line.split("\t")
-
-            if len(header) == 0:
-                header = fields
+        for sample, hb_values in hb_data.items():
+            if sample in samples_qc_dict:
+                samples_qc_dict[sample].add_qc_result("hb_perc", hb_values)
+            else:
                 continue
-
-            fields = line.split("\t")
-            curr_batch.append(fields)
-            if len(curr_batch) == 3:
-                batches.append(curr_batch)
-                curr_batch = []
-
-    for batch in batches:
-        sample, combined_dict = make_combined_dict(header, batch[0], batch[1], batch[2])
-
-    results = {}
-
-    for batch in batches:
-        sample, combined_dict = make_combined_dict(header, batch[0], batch[1], batch[2])
-        results[sample] = combined_dict
-
-        if merged_hb_estimate:
-            # Add HB estimate data
-            hb_data = process_hb_estimate_data(merged_hb_estimate)
-
-            for sample, hb_values in hb_data.items():
-                if sample in results:
-                    results[sample].update(hb_values)
-                else:
-                    continue
 
     # Calculate slope for Rna gene body coverage
     if picard_rna_coverage:
@@ -75,13 +58,49 @@ def main(
         for sample, star_stats in star_data.items():
             results[sample].update(star_stats)
 
+    # Heterogenicity calls
+    if hetcalls_vcf:
+        het_qcs = calculate_het_qcs(hetcalls_vcf)
+        for sample, het_qc in het_qcs.items():
+            results[sample].update(het_qc)
+
     if output_file:
         write_results(results, output_file, sample_id)
 
 
-def write_results(
-    data: Dict[str, Any], output_path: str, sample_id: Optional[str]
-) -> None:
+def parse_multiqc_general_stats(multiqc_general_stats_fp: str) -> Dict[str, SampleQCResults]:
+    header = []
+    row_triplets = []
+    with open(multiqc_general_stats_fp, "r") as fh:
+        curr_triplet = []
+        for line in fh:
+            line = line.strip()
+            fields = line.split("\t")
+
+            if len(header) == 0:
+                header = fields
+                continue
+
+            fields = line.split("\t")
+            curr_triplet.append(fields)
+            if len(curr_triplet) == 3:
+                row_triplets.append(curr_triplet)
+                curr_triplet = []
+
+    qc_samples = {}
+
+    for row_triplet in row_triplets:
+        sample, qc_dict = parse_multiqc_sample(header, row_triplet[0], row_triplet[1], row_triplet[2])
+        qc_samples[sample] = qc_dict
+    
+    return qc_samples
+
+
+def calculate_het_qcs(het_path):
+    pass
+
+
+def write_results(data: Dict[str, Any], output_path: str, sample_id: Optional[str]) -> None:
     """
     Write json blob with general statistics and rna cov values to a file.
 
@@ -116,7 +135,7 @@ def build_dict(headers: List[str], fields: List[str]) -> Dict[str, str]:
     return value_dict
 
 
-def make_combined_dict(
+def parse_multiqc_sample(
     headers: List[str],
     shared_fields: List[str],
     fw_fields: List[str],
@@ -147,9 +166,7 @@ def make_combined_dict(
     shared_keys["m_aligned"] = "star-uniquely_mapped"
     shared_keys["pct_aligned"] = "star-uniquely_mapped_percent"
     shared_keys["pct_dup"] = "fastp-pct_duplication"
-    shared_keys["m_reads_after_filtering"] = (
-        "fastp-filtering_result_passed_filter_reads"
-    )
+    shared_keys["m_reads_after_filtering"] = "fastp-filtering_result_passed_filter_reads"
     shared_keys["gc"] = "fastp-after_filtering_gc_content"
     shared_keys["pct_pass_filter"] = "fastp-after_filtering_q30_rate"
     shared_keys["pct_adapter"] = "fastp-pct_adapter"
@@ -323,10 +340,7 @@ def process_multiqc_star_stats(
         # Calculate splice_ratio
         sliced_data[key]["splice_ratio"] = int(
             round(
-                (
-                    sliced_data[key]["canon_splice"]
-                    / sliced_data[key]["non_canon_splice"]
-                ),
+                (sliced_data[key]["canon_splice"] / sliced_data[key]["non_canon_splice"]),
                 0,
             )
         )
@@ -341,7 +355,7 @@ def process_hb_estimate_data(
     Process HB data for a sample.
     """
     hb_json_per_sample = {}
-    hb_sample_id = hb_estimate.replace("_perc_mapping.json","")
+    hb_sample_id = hb_estimate.replace("_perc_mapping.json", "")
     with open(hb_estimate) as file:
         for line in file:
             json_data = line.strip()
@@ -351,7 +365,9 @@ def process_hb_estimate_data(
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--multiqc_general_stats", required=True)
+    parser.add_argument(
+        "--multiqc_general_stats", help="MultiQC file: multiqc_general_stats.txt", required=True
+    )
     parser.add_argument(
         "--sample_id",
         default=None,
@@ -359,7 +375,7 @@ def parse_arguments() -> argparse.Namespace:
     )
     parser.add_argument(
         "--picard_rna_coverage",
-        help="Path to the input file containing RNA coverage data.",
+        help="Path to the input file containing RNA coverage data."
     )
     parser.add_argument(
         "--multiqc_star",
@@ -370,8 +386,7 @@ def parse_arguments() -> argparse.Namespace:
         help="Path to the input file containing merged HB estimate data.",
     )
     parser.add_argument(
-        "--hetcalls_vcf",
-        help="VCF containing heterozygosity calls for selected SNPs"
+        "--hetcalls_vcf", help="VCF containing heterozygosity calls for selected SNPs"
     )
     parser.add_argument("--output_file", required=True)
     parser.add_argument(
@@ -388,13 +403,12 @@ def parse_arguments() -> argparse.Namespace:
 if __name__ == "__main__":
     args = parse_arguments()
 
-    print(f"--hetcalls_vcf: {args.hetcalls_vcf} (currently not used)")
-
     main(
         args.multiqc_general_stats,
         args.picard_rna_coverage,
         args.multiqc_star,
         args.hb_estimate,
+        args.hetcalls_vcf,
         args.output_file,
         args.sample_id,
     )
