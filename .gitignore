@@ -19,3 +19,4 @@ data/
 main.run
 slurm_logs/
 .vscode/
+*.swp
