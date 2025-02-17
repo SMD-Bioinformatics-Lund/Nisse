@@ -7,7 +7,7 @@ import numpy as np
 from ast import literal_eval
 from pathlib import Path
 from collections import defaultdict
-from typing import Any, Dict, List, Set, Tuple, Union, Optional
+from typing import Any, Dict, List, Mapping, Set, Tuple, Union, Optional
 
 VERSION = "1.1.0"
 
@@ -15,9 +15,9 @@ VERSION = "1.1.0"
 class SampleQCResults:
     def __init__(self, sample):
         self.sample = sample
-        self.qc_results: Dict[str, Dict[str, str]] = {}
+        self.qc_results: Dict[str, Mapping[str, Union[str, int, float]]] = {}
     
-    def add_qc_result(self, result_key, results: Dict[str, str]):
+    def add_qc_result(self, result_key, results: Mapping[str, Union[str, int, float]]):
         if result_key in self.qc_results:
             raise ValueError(f"{result_key} already added for sample {self.sample}")
         self.qc_results[result_key] = results
@@ -49,23 +49,28 @@ def main(
 
         for sample, coverage_values in coverage_data.items():
             slope = calculate_slope(coverage_values)
-            results[sample]["genebody_cov_slope"] = round(slope * 1000, 4)
-            results[sample]["genebody_cov"] = list(coverage_values)
+
+            cov_data = {
+                "genebody_cov_slope": round(slope * 1000, 4),
+                "genebody_cov": list(coverage_values)
+            }
+
+            samples_qc_dict[sample].add_qc_result("cov_data", cov_data)
 
     # Process multiqc star stats
     if multiqc_star:
         star_data = process_multiqc_star_stats(multiqc_star)
         for sample, star_stats in star_data.items():
-            results[sample].update(star_stats)
+            samples_qc_dict[sample].add_qc_result("star", star_stats)
 
     # Heterogenicity calls
     if hetcalls_vcf:
         het_qcs = calculate_het_qcs(hetcalls_vcf)
         for sample, het_qc in het_qcs.items():
-            results[sample].update(het_qc)
+            samples_qc_dict[sample].add_qc_result("heterozygosity_calls", het_qc)
 
     if output_file:
-        write_results(results, output_file, sample_id)
+        write_results(samples_qc_dict, output_file, sample_id)
 
 
 def parse_multiqc_general_stats(multiqc_general_stats_fp: str) -> Dict[str, SampleQCResults]:
@@ -96,11 +101,29 @@ def parse_multiqc_general_stats(multiqc_general_stats_fp: str) -> Dict[str, Samp
     return qc_samples
 
 
-def calculate_het_qcs(het_path):
-    pass
+def calculate_het_qcs(het_call_vcf) -> Dict[str, str]:
+
+    het_calls = {}
+
+    with open(het_call_vcf, "r") as fh:
+        for line in fh:
+            line = line.rstrip()
+
+            if line.startswith("#"):
+                continue
+
+            fields = line.split("\t")
+
+            rsid = fields[1]
+            call = fields[9]
+            het_calls[rsid] = call
+    
+    print(het_calls)
+                
+            
 
 
-def write_results(data: Dict[str, Any], output_path: str, sample_id: Optional[str]) -> None:
+def write_results(data: Dict[str, SampleQCResults], output_path: str, sample_id: Optional[str]) -> None:
     """
     Write json blob with general statistics and rna cov values to a file.
 
@@ -350,7 +373,7 @@ def process_multiqc_star_stats(
 
 def process_hb_estimate_data(
     hb_estimate: str,
-) -> Dict[str, Dict[str, Union[int, float]]]:
+) -> Dict[str, Mapping[str, Union[int, float]]]:
     """
     Process HB data for a sample.
     """
