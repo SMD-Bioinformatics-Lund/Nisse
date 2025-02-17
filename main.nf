@@ -150,8 +150,8 @@ workflow {
         params.idsnps,
         params.het_calls
     )
-
     ch_versions = ch_versions.mix(NISSE_QC.out.versions)
+
     if (!params.qc_only) {
         NISSE(
             ch_versions,
@@ -163,7 +163,7 @@ workflow {
             ch_drop_as_out_research
         )
     }
-    ch_versions = ch_versions.mix(NISSE_QC.out.versions)
+    ch_versions = ch_versions.mix(NISSE.out.versions)
 
     ch_joined_versions = ch_versions.collect()
     OUTPUT_VERSIONS(ch_joined_versions)
