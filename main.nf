@@ -142,10 +142,6 @@ workflow {
         }
     }
 
-    ch_versions.view { it -> "ch_versions (outside) ${it}" }
-    ch_multiqc.view { it -> "ch_multiqc (outside) ${it} "}
-    ch_hb_estimates.view { it -> "ch_hb_estimates ${it}"}
-
     NISSE_QC(
         ch_versions,
         ch_multiqc,
@@ -170,7 +166,8 @@ workflow {
     }
     ch_versions = ch_versions.mix(NISSE.out.versions)
 
-    ch_joined_versions = ch_versions.collect()
+    // Join the paths, skipping the meta value
+    ch_joined_versions = ch_versions.collect { it -> it[1] }
     OUTPUT_VERSIONS(ch_joined_versions)
 
     workflow.onComplete {
@@ -200,11 +197,6 @@ workflow NISSE_QC {
     ch_qc = ch_multiqc
         .join(ch_hb_estimates)
         .join(PERC_HETEROZYGOTES.out.vcf)
-
-    // ch_multiqc.view { it -> "ch_multiqc: ${it}" }
-    // ch_hb_estimates.view { it -> "ch_hb_estimates: ${it}" }
-    // PERC_HETEROZYGOTES.out.vcf { it -> "PERC_HET: ${it}" }
-    // ch_qc.view { it -> "ch_qc ${it}" }
 
     PARSE_TOMTE_QC(ch_qc)
 

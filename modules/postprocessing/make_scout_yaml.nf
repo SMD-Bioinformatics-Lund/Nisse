@@ -24,7 +24,7 @@ process MAKE_SCOUT_YAML {
     val tissue
 
     output:
-    path "${meta.sample}_scout.yaml", emit: yaml
+    tuple val(meta), path("${meta.sample}_scout.yaml"), emit: yaml
 
     script:
     def sex = "${meta.sex}" == "M" ? "male" : "${meta.sex}" == "F" ? "female" : "unknown"
