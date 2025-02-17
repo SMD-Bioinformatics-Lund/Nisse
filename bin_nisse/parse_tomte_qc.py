@@ -27,7 +27,7 @@ def main(
     picard_rna_coverage: Optional[str],
     multiqc_star: Optional[str],
     merged_hb_estimate: Optional[str],
-    hetcalls_vcf: Optional[str],
+    hetcalls_vcfs: Optional[List[str]],
     output_file: str,
     sample_id: Optional[str],
 ):
@@ -64,9 +64,11 @@ def main(
             samples_qc_dict[sample].add_qc_result("star", star_stats)
 
     # Heterogenicity calls
+    # FIXME: We'll need multiple sample paths for this one
     if hetcalls_vcf:
-        het_qcs = calculate_het_qcs(hetcalls_vcf)
-        for sample, het_qc in het_qcs.items():
+        for hetcalls_vcf in hetcalls_vcfs:
+            sample, het_qc = calculate_het_qcs(hetcalls_vcf)
+            # for sample, het_qc in het_qcs.items():
             samples_qc_dict[sample].add_qc_result("heterozygosity_calls", het_qc)
 
     if output_file:
@@ -101,9 +103,9 @@ def parse_multiqc_general_stats(multiqc_general_stats_fp: str) -> Dict[str, Samp
     return qc_samples
 
 
-def calculate_het_qcs(het_call_vcf) -> Dict[str, str]:
+def calculate_het_qcs(het_call_vcf) -> Tuple[str, Dict[str, Any]]:
 
-    het_calls = {}
+    calls = {}
 
     with open(het_call_vcf, "r") as fh:
         for line in fh:
@@ -114,15 +116,33 @@ def calculate_het_qcs(het_call_vcf) -> Dict[str, str]:
 
             fields = line.split("\t")
 
-            rsid = fields[1]
-            call = fields[9]
-            het_calls[rsid] = call
+            rsid = fields[2]
+            call = fields[9].split(":")[0]
+            calls[rsid] = call
     
-    print(het_calls)
+    nbr_calls = 0
+    non_calls = 0
+    nbr_het_calls = 0
+    for rsid, call in calls.items():
+        if call == "./.":
+            non_calls += 1
+            continue
+
+        nbr_calls += 1
+        ref, alt = call.split("/")
+        if ref == alt:
+            nbr_het_calls += 1
+
+    qc_dict = {
+        "nbr_calls": nbr_calls,
+        "non_calls": non_calls,
+        "nbr_het_calls": nbr_het_calls,
+        "calls": calls
+    }
+
+    return(qc_dict)
                 
             
-
-
 def write_results(data: Dict[str, SampleQCResults], output_path: str, sample_id: Optional[str]) -> None:
     """
     Write json blob with general statistics and rna cov values to a file.
@@ -409,7 +429,7 @@ def parse_arguments() -> argparse.Namespace:
         help="Path to the input file containing merged HB estimate data.",
     )
     parser.add_argument(
-        "--hetcalls_vcf", help="VCF containing heterozygosity calls for selected SNPs"
+        "--hetcalls_vcf", help="VCF containing heterozygosity calls for selected SNPs", nargs="+"
     )
     parser.add_argument("--output_file", required=True)
     parser.add_argument(
