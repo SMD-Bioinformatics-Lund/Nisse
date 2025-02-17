@@ -16,11 +16,23 @@ class SampleQCResults:
     def __init__(self, sample):
         self.sample = sample
         self.qc_results: Dict[str, Mapping[str, Union[str, int, float]]] = {}
-    
+
     def add_qc_result(self, result_key, results: Mapping[str, Union[str, int, float]]):
         if result_key in self.qc_results:
             raise ValueError(f"{result_key} already added for sample {self.sample}")
         self.qc_results[result_key] = results
+
+    def get_json(self) -> Dict[str, Any]:
+        combined_results = {}
+        for qc_result in self.qc_results.values():
+            for key, value in qc_result.items():
+                if key in combined_results:
+                    raise ValueError(
+                        f"Key {key} already loaded into results of sample {self.sample}"
+                    )
+                combined_results[key] = value
+        return combined_results
+
 
 def main(
     multiqc_general_stats: str,
@@ -52,7 +64,7 @@ def main(
 
             cov_data = {
                 "genebody_cov_slope": round(slope * 1000, 4),
-                "genebody_cov": list(coverage_values)
+                "genebody_cov": list(coverage_values),
             }
 
             samples_qc_dict[sample].add_qc_result("cov_data", cov_data)
@@ -98,11 +110,13 @@ def parse_multiqc_general_stats(multiqc_general_stats_fp: str) -> Dict[str, Samp
     samples_qcs = {}
 
     for row_triplet in row_triplets:
-        sample, qc_dict = parse_multiqc_sample(header, row_triplet[0], row_triplet[1], row_triplet[2])
+        sample, qc_dict = parse_multiqc_sample(
+            header, row_triplet[0], row_triplet[1], row_triplet[2]
+        )
         sample_qc = SampleQCResults(sample)
         sample_qc.add_qc_result("multiqc_general_stats", qc_dict)
         samples_qcs[sample] = sample_qc
-    
+
     return samples_qcs
 
 
@@ -133,7 +147,7 @@ def calculate_het_qcs(het_call_vcf) -> Tuple[str, Dict[str, Any]]:
             rsid = fields[id_col]
             call = fields[sample_col].split(":")[0]
             calls[rsid] = call
-    
+
     nbr_calls = 0
     non_calls = 0
     nbr_het_calls = 0
@@ -151,36 +165,13 @@ def calculate_het_qcs(het_call_vcf) -> Tuple[str, Dict[str, Any]]:
         "nbr_calls": nbr_calls,
         "non_calls": non_calls,
         "nbr_het_calls": nbr_het_calls,
-        "calls": calls
+        "het_calls": calls,
     }
 
     if not sample:
         raise ValueError("No header line (prefixed by a single #) was found in the VCF, aborting")
 
     return sample, qc_dict
-                
-            
-def write_results(data: Dict[str, SampleQCResults], output_path: str, sample_id: Optional[str]) -> None:
-    """
-    Write json blob with general statistics and rna cov values to a file.
-
-    Args:
-        data (dict): Dictionary with sample names as keys and coverage arrays as values.
-        output_path (str): Path to the output file.
-    """
-    with open(output_path, "w") as output_file:
-        if sample_id is not None:
-            sample_only_data = data.get(sample_id)
-            if sample_only_data is None:
-                all_valid_ids = list(data.keys())
-                raise ValueError(
-                    f"Tried getting sample_id {sample_id}. Valid IDs are: {', '.join(all_valid_ids)}"
-                )
-            output_file.write(json.dumps(sample_only_data))
-        else:
-            for sample_name, values in data.items():
-                output_file.write(f"{sample_name}\t{json.dumps(values)}\n")
-    print(f"Results written to {output_path}.")
 
 
 def build_dict(headers: List[str], fields: List[str]) -> Dict[str, str]:
@@ -423,6 +414,33 @@ def process_hb_estimate_data(
     return hb_json_per_sample
 
 
+def write_results(
+    qc_results: Dict[str, SampleQCResults], output_path: str, stdout_sample: Optional[str]
+) -> None:
+    """
+    Write json blob with general statistics and rna cov values to a file.
+
+    Args:
+        data (dict): Dictionary with sample names as keys and coverage arrays as values.
+        output_path (str): Path to the output file.
+    """
+
+    if stdout_sample:
+        if stdout_sample not in qc_results:
+            all_valid_ids = list(qc_results.keys())
+            raise ValueError(
+                f"Tried getting sample_id {stdout_sample}. Valid IDs are: {', '.join(all_valid_ids)}"
+            )
+        qc_result = qc_results[stdout_sample]
+        debug_json = json.dumps(qc_result.get_json())
+        print(debug_json)
+
+    with open(output_path, "w") as output_file:
+        for sample_name, values in qc_results.items():
+            output_file.write(f"{sample_name}\t{json.dumps(values)}\n")
+    print(f"Results for {len(qc_results)} samples written to {output_path}.")
+
+
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -434,8 +452,7 @@ def parse_arguments() -> argparse.Namespace:
         help="Limit output to one sample and print to STDOUT",
     )
     parser.add_argument(
-        "--picard_rna_coverage",
-        help="Path to the input file containing RNA coverage data."
+        "--picard_rna_coverage", help="Path to the input file containing RNA coverage data."
     )
     parser.add_argument(
         "--multiqc_star",
