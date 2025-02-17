@@ -200,9 +200,11 @@ workflow NISSE_QC {
 
     ch_qc = ch_multiqc
     ch_qc.view { it -> ">>> ch_qc 1 ${it}" }
-    ch_qc = ch_qc.join(ch_hb_estimates)
+    // These did not join despite the meta looking the same
+    // Likely a consequence of the meta being edited in the Tomte pipeline
+    ch_qc = ch_qc.join(ch_hb_estimates){ a, b -> a.sample == b.sample }
     ch_qc.view { it -> ">>> ch_qc 2 ${it}" }
-    ch_qc = ch_qc.join(PERC_HETEROZYGOTES.out.vcf)
+    ch_qc = ch_qc.join(PERC_HETEROZYGOTES.out.vcf){ a, b -> a.sample == b.sample }
     ch_qc.view { it -> ">>> ch_qc 3 ${it}" }
         // .join(ch_hb_estimates)
         // .join(PERC_HETEROZYGOTES.out.vcf)
