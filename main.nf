@@ -161,9 +161,7 @@ workflow {
     }
     ch_versions = ch_versions.mix(NISSE_QC.out.versions)
 
-    ch_versions.view { it -> "Versions: ${it}" }
-
-    ch_joined_versions = ch_versions.collect { it[1] }
+    ch_joined_versions = ch_versions.collect()
     OUTPUT_VERSIONS(ch_joined_versions)
 
     workflow.onComplete {
