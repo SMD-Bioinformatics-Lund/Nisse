@@ -11,26 +11,48 @@ from typing import Any, Dict, List, Mapping, Set, Tuple, Union, Optional
 VERSION = "1.1.0"
 
 
-class SampleQCResults:
-    def __init__(self, sample):
-        self.sample = sample
-        self.qc_results: Dict[str, Dict[str, Any]] = {}
+class QCEntry:
+    def __init__(
+        self, results: Dict[str, Any], label: Optional[str], software: str, version: str, url: str
+    ):
+        self.results = results
 
-    def add_qc_result(self, result_key, results: Dict[str, Any]):
-        if result_key in self.qc_results:
-            raise ValueError(f"{result_key} already added for sample {self.sample}")
-        self.qc_results[result_key] = results
+        self.label = label
+        self.software = software
+        self.version = version
+        self.url = url
 
-    def get_json(self) -> Dict[str, Any]:
-        combined_results = {}
-        for qc_result in self.qc_results.values():
-            for key, value in qc_result.items():
-                if key in combined_results:
-                    raise ValueError(
-                        f"Key {key} already loaded into results of sample {self.sample}"
-                    )
-                combined_results[key] = value
-        return combined_results
+    def get_result_dict(self) -> Dict[str, Any]:
+
+        entry_dict: Dict[str, Any] = {}
+
+        if self.label:
+            entry_dict["label"] = self.label
+
+        if self.software:
+            entry_dict["software"] = self.software
+
+        if self.version:
+            entry_dict["version"] = self.version
+
+        if self.url:
+            entry_dict["url"] = self.url
+
+        entry_dict["results"] = self.results
+
+        return entry_dict
+
+
+# class SampleQCResults:
+#     def __init__(self, sample):
+#         self.sample = sample
+#         self.qc_entries: List[QCEntry] = []
+
+#     def add_qc_result(self, qc_entry: QCEntry):
+#         self.qc_entries.append(qc_entry)
+
+#     def get_qc_jsons(self) -> List[Dict[str, Any]]:
+#         return [qc_res.get_json_dict() for qc_res in self.qc_entries]
 
 
 def main(
@@ -42,6 +64,7 @@ def main(
     output_file: str,
     sample_id: Optional[str],
 ):
+    # FIXME: move out the QCEntry to the top function
     samples_qc_dict = parse_multiqc_general_stats(multiqc_general_stats)
 
     if merged_hb_estimate:
@@ -50,7 +73,10 @@ def main(
 
         for sample, hb_values in hb_data.items():
             if sample in samples_qc_dict:
-                samples_qc_dict[sample].add_qc_result("hb_perc", hb_values)
+                entry = QCEntry(
+                    hb_values, "Hemoglobin fraction", "calculate_perc_mapping.py", "1.0.0", ""
+                )
+                samples_qc_dict[sample].append(entry)
             else:
                 continue
 
@@ -66,28 +92,30 @@ def main(
                 "genebody_cov": list(coverage_values),
             }
 
-            samples_qc_dict[sample].add_qc_result("cov_data", cov_data)
+            entry = QCEntry(cov_data, "Genebody coverage slope", "FIXME", "FIXME", "FIXME")
+            samples_qc_dict[sample].append(entry)
 
     # Process multiqc star stats
     if multiqc_star:
         star_data = process_multiqc_star_stats(multiqc_star)
         for sample, star_stats in star_data.items():
-            samples_qc_dict[sample].add_qc_result("star", star_stats)
+            entry = QCEntry(star_stats, "Multiqc STAR stats", "MultiQC", "FIXME", "FIXME")
+            samples_qc_dict[sample].append(entry)
 
     # Heterogenicity calls
     # FIXME: We'll need multiple sample paths for this one
     if hetcalls_vcfs:
         for hetcalls_vcf in hetcalls_vcfs:
-            print(hetcalls_vcf)
             sample, het_qc = calculate_het_qcs(hetcalls_vcf)
             # for sample, het_qc in het_qcs.items():
-            samples_qc_dict[sample].add_qc_result("heterozygosity_calls", het_qc)
+            entry = QCEntry(het_qc, "Heterozygosity fraction", "FIXME", "FIXME", "FIXME")
+            samples_qc_dict[sample].append(entry)
 
     if output_file:
         write_results(samples_qc_dict, output_file, sample_id)
 
 
-def parse_multiqc_general_stats(multiqc_general_stats_fp: str) -> Dict[str, SampleQCResults]:
+def parse_multiqc_general_stats(multiqc_general_stats_fp: str) -> Dict[str, List[QCEntry]]:
     header = []
     row_triplets = []
     with open(multiqc_general_stats_fp, "r") as fh:
@@ -112,9 +140,8 @@ def parse_multiqc_general_stats(multiqc_general_stats_fp: str) -> Dict[str, Samp
         sample, qc_dict = parse_multiqc_sample(
             header, row_triplet[0], row_triplet[1], row_triplet[2]
         )
-        sample_qc = SampleQCResults(sample)
-        sample_qc.add_qc_result("multiqc_general_stats", qc_dict)
-        samples_qcs[sample] = sample_qc
+        qc_entry = QCEntry(qc_dict, "MultiQC general stats", "MultiQC", "FIXME", "FIXME")
+        samples_qcs[sample] = [qc_entry]
 
     return samples_qcs
 
@@ -165,7 +192,7 @@ def calculate_het_qcs(het_call_vcf) -> Tuple[str, Dict[str, Any]]:
         "non_calls": non_calls,
         "nbr_het_calls": nbr_het_calls,
         "het_calls": calls,
-        "het_calls_fraction": nbr_het_calls / nbr_calls
+        "het_calls_fraction": nbr_het_calls / nbr_calls,
     }
 
     if not sample:
@@ -415,7 +442,7 @@ def process_hb_estimate_data(
 
 
 def write_results(
-    qc_results: Dict[str, SampleQCResults], output_path: str, stdout_sample: Optional[str]
+    qc_results: Dict[str, List[QCEntry]], output_path: str, stdout_sample: Optional[str]
 ) -> None:
     """
     Write json blob with general statistics and rna cov values to a file.
@@ -432,12 +459,15 @@ def write_results(
                 f"Tried getting sample_id {stdout_sample}. Valid IDs are: {', '.join(all_valid_ids)}"
             )
         qc_result = qc_results[stdout_sample]
-        debug_json = json.dumps(qc_result.get_json())
+        result_dicts = [qc.get_result_dict() for qc in qc_result]
+        debug_json = json.dumps(result_dicts)
         print(debug_json)
     else:
         with open(output_path, "w") as output_file:
-            for sample_name, values in qc_results.items():
-                output_file.write(f"{sample_name}\t{json.dumps(values)}\n")
+            for sample_name, qc_result in qc_results.items():
+                result_dicts = [qc.get_result_dict() for qc in qc_result]
+                result_json = json.dumps(result_dicts)
+                output_file.write(f"{sample_name}\t{json.dumps(result_json)}\n")
         print(f"Results for {len(qc_results)} samples written to {output_path}.")
 
 
