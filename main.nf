@@ -142,6 +142,10 @@ workflow {
         }
     }
 
+    ch_versions.view { it -> "ch_versions (outside) ${it}" }
+    ch_multiqc.view { it -> "ch_multiqc (outside) ${it} "}
+    ch_hb_estimates.view { it -> "ch_hb_estimates ${it}"}
+
     NISSE_QC(
         ch_versions,
         ch_multiqc,
