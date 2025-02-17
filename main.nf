@@ -206,12 +206,12 @@ workflow NISSE_QC {
     // PERC_HETEROZYGOTES.out.vcf { it -> "PERC_HET: ${it}" }
     // ch_qc.view { it -> "ch_qc ${it}" }
 
-    // PARSE_TOMTE_QC(ch_qc)
+    PARSE_TOMTE_QC(ch_qc)
 
     ch_versions = ch_versions.mix(PERC_HETEROZYGOTES.out.versions)
     ch_versions = ch_versions.mix(IDSNP_CALL.out.versions)
     ch_versions = ch_versions.mix(IDSNP_VCF_TO_JSON.out.versions)
-    // ch_versions = ch_versions.mix(PARSE_TOMTE_QC.out.versions)
+    ch_versions = ch_versions.mix(PARSE_TOMTE_QC.out.versions)
 
     emit:
     versions = ch_versions
