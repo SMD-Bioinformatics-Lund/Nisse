@@ -201,10 +201,10 @@ workflow NISSE_QC {
         .join(ch_hb_estimates)
         .join(PERC_HETEROZYGOTES.out.vcf)
 
-    ch_multiqc.view { it -> "ch_multiqc: ${it}" }
-    ch_hb_estimates.view { it -> "ch_hb_estimates: ${it}" }
-    PERC_HETEROZYGOTES.out.vcf { it -> "PERC_HET: ${it}" }
-    ch_qc.view { it -> "ch_qc ${it}" }
+    // ch_multiqc.view { it -> "ch_multiqc: ${it}" }
+    // ch_hb_estimates.view { it -> "ch_hb_estimates: ${it}" }
+    // PERC_HETEROZYGOTES.out.vcf { it -> "PERC_HET: ${it}" }
+    // ch_qc.view { it -> "ch_qc ${it}" }
 
     // PARSE_TOMTE_QC(ch_qc)
 
