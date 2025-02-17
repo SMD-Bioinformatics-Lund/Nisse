@@ -34,6 +34,7 @@ include { TOMTE } from './tomte/workflows/tomte.nf'
 include { IDSNP_CALL } from './modules/defined_calls.nf'
 include { IDSNP_VCF_TO_JSON } from './modules/defined_calls.nf'
 include { PERC_HETEROZYGOTES } from './modules/defined_calls.nf'
+include { versions } from './modules/postprocessing/bgzip_tabix.nf'
 
 workflow {
 
@@ -65,6 +66,7 @@ workflow {
             .set { ch_tomte }
 
         TOMTE(ch_tomte)
+        ch_versions.mix(TOMTE.out.versions)
 
         ch_multiqc = ch_meta.combine(TOMTE.out.multiqc_data).map { meta, multiqc_folder ->
             def multiqc_summary = file("${multiqc_folder}/multiqc_general_stats.txt")
@@ -113,6 +115,7 @@ workflow {
 
         if (!params.qc_only) {
             BGZIP_TABIX_VCF(ch_vcf)
+            versions.mix(BGZIP_TABIX_VCF.out.versions)
             ch_vcf_tbi = BGZIP_TABIX_VCF.out.vcf_tbi
 
             ch_junction_bed = ch_meta.map { meta ->
@@ -122,6 +125,7 @@ workflow {
             }
 
             BGZIP_TABIX_BED(ch_junction_bed)
+            versions.mix(BGZIP_TABIX_BED.out.versions)
             ch_junction_bed_tbi = BGZIP_TABIX_BED.out.bed_tbi
 
             ch_drop_ae_out_research = ch_meta.map { meta ->
