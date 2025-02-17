@@ -145,7 +145,7 @@ workflow {
         ch_fasta_fai,
         params.idsnps,
         params.het_calls
-)
+    )
 
     ch_versions = ch_versions.mix(NISSE_QC.out.versions)
     if (!params.qc_only) {
@@ -160,6 +160,8 @@ workflow {
         )
     }
     ch_versions = ch_versions.mix(NISSE_QC.out.versions)
+
+    ch_versions.view { it -> "Versions: ${it}" }
 
     ch_joined_versions = ch_versions.collect { it[1] }
     OUTPUT_VERSIONS(ch_joined_versions)
