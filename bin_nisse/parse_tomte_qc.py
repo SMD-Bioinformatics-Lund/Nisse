@@ -65,8 +65,9 @@ def main(
 
     # Heterogenicity calls
     # FIXME: We'll need multiple sample paths for this one
-    if hetcalls_vcf:
+    if hetcalls_vcfs:
         for hetcalls_vcf in hetcalls_vcfs:
+            print(hetcalls_vcf)
             sample, het_qc = calculate_het_qcs(hetcalls_vcf)
             # for sample, het_qc in het_qcs.items():
             samples_qc_dict[sample].add_qc_result("heterozygosity_calls", het_qc)
@@ -94,30 +95,43 @@ def parse_multiqc_general_stats(multiqc_general_stats_fp: str) -> Dict[str, Samp
                 row_triplets.append(curr_triplet)
                 curr_triplet = []
 
-    qc_samples = {}
+    samples_qcs = {}
 
     for row_triplet in row_triplets:
         sample, qc_dict = parse_multiqc_sample(header, row_triplet[0], row_triplet[1], row_triplet[2])
-        qc_samples[sample] = qc_dict
+        sample_qc = SampleQCResults(sample)
+        sample_qc.add_qc_result("multiqc_general_stats", qc_dict)
+        samples_qcs[sample] = sample_qc
     
-    return qc_samples
+    return samples_qcs
 
 
 def calculate_het_qcs(het_call_vcf) -> Tuple[str, Dict[str, Any]]:
-
     calls = {}
+
+    sample = None
 
     with open(het_call_vcf, "r") as fh:
         for line in fh:
             line = line.rstrip()
 
+            if line.startswith("##"):
+                continue
+
             if line.startswith("#"):
+                header_fields = line.split("\t")
+                if len(header_fields) != 10:
+                    raise ValueError(f"Expected a proband-only VCF, found header: {header_fields}")
+                sample = header_fields[-1]
                 continue
 
             fields = line.split("\t")
 
-            rsid = fields[2]
-            call = fields[9].split(":")[0]
+            id_col = 2
+            sample_col = 9
+
+            rsid = fields[id_col]
+            call = fields[sample_col].split(":")[0]
             calls[rsid] = call
     
     nbr_calls = 0
@@ -140,7 +154,10 @@ def calculate_het_qcs(het_call_vcf) -> Tuple[str, Dict[str, Any]]:
         "calls": calls
     }
 
-    return(qc_dict)
+    if not sample:
+        raise ValueError("No header line (prefixed by a single #) was found in the VCF, aborting")
+
+    return sample, qc_dict
                 
             
 def write_results(data: Dict[str, SampleQCResults], output_path: str, sample_id: Optional[str]) -> None:
@@ -429,7 +446,7 @@ def parse_arguments() -> argparse.Namespace:
         help="Path to the input file containing merged HB estimate data.",
     )
     parser.add_argument(
-        "--hetcalls_vcf", help="VCF containing heterozygosity calls for selected SNPs", nargs="+"
+        "--hetcalls_vcfs", help="VCF containing heterozygosity calls for selected SNPs", nargs="*"
     )
     parser.add_argument("--output_file", required=True)
     parser.add_argument(
@@ -451,7 +468,7 @@ if __name__ == "__main__":
         args.picard_rna_coverage,
         args.multiqc_star,
         args.hb_estimate,
-        args.hetcalls_vcf,
+        args.hetcalls_vcfs,
         args.output_file,
         args.sample_id,
     )
