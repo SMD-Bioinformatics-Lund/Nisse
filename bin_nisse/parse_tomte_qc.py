@@ -2,7 +2,6 @@
 
 import argparse
 import json
-import csv
 import numpy as np
 from ast import literal_eval
 from pathlib import Path
@@ -15,9 +14,9 @@ VERSION = "1.1.0"
 class SampleQCResults:
     def __init__(self, sample):
         self.sample = sample
-        self.qc_results: Dict[str, Mapping[str, Union[str, int, float]]] = {}
+        self.qc_results: Dict[str, Dict[str, Any]] = {}
 
-    def add_qc_result(self, result_key, results: Mapping[str, Union[str, int, float]]):
+    def add_qc_result(self, result_key, results: Dict[str, Any]):
         if result_key in self.qc_results:
             raise ValueError(f"{result_key} already added for sample {self.sample}")
         self.qc_results[result_key] = results
@@ -166,6 +165,7 @@ def calculate_het_qcs(het_call_vcf) -> Tuple[str, Dict[str, Any]]:
         "non_calls": non_calls,
         "nbr_het_calls": nbr_het_calls,
         "het_calls": calls,
+        "het_calls_fraction": nbr_het_calls / nbr_calls
     }
 
     if not sample:
@@ -343,7 +343,7 @@ def process_multiqc_star_stats(
         ```
 
     """
-    columns_needed: Dict[str, Union[type, str]] = {
+    columns_needed: Dict[str, type] = {
         "total_reads": int,
         "num_noncanonical_splices": int,
         "num_splices": int,
@@ -401,7 +401,7 @@ def process_multiqc_star_stats(
 
 def process_hb_estimate_data(
     hb_estimate: str,
-) -> Dict[str, Mapping[str, Union[int, float]]]:
+) -> Dict[str, Dict[str, Any]]:
     """
     Process HB data for a sample.
     """
@@ -434,11 +434,11 @@ def write_results(
         qc_result = qc_results[stdout_sample]
         debug_json = json.dumps(qc_result.get_json())
         print(debug_json)
-
-    with open(output_path, "w") as output_file:
-        for sample_name, values in qc_results.items():
-            output_file.write(f"{sample_name}\t{json.dumps(values)}\n")
-    print(f"Results for {len(qc_results)} samples written to {output_path}.")
+    else:
+        with open(output_path, "w") as output_file:
+            for sample_name, values in qc_results.items():
+                output_file.write(f"{sample_name}\t{json.dumps(values)}\n")
+        print(f"Results for {len(qc_results)} samples written to {output_path}.")
 
 
 def parse_arguments() -> argparse.Namespace:
