@@ -197,21 +197,21 @@ workflow NISSE_QC {
     IDSNP_CALL(ch_bam_bai, ch_fasta_fai, val_idsnp_params)
     IDSNP_VCF_TO_JSON(IDSNP_CALL.out.vcf)
 
-    // ch_qc = ch_multiqc
-    //     .join(ch_hb_estimates)
-    //     .join(PERC_HETEROZYGOTES.out.vcf)
+    ch_qc = ch_multiqc
+        .join(ch_hb_estimates)
+        .join(PERC_HETEROZYGOTES.out.vcf)
 
-    // ch_multiqc.view { it -> "ch_multiqc: ${it}" }
-    // ch_hb_estimates.view { it -> "ch_hb_estimates: ${it}" }
-    // PERC_HETEROZYGOTES.out.vcf { it -> "PERC_HET: ${it}" }
-    // ch_qc.view { it -> "ch_qc ${it}" }
+    ch_multiqc.view { it -> "ch_multiqc: ${it}" }
+    ch_hb_estimates.view { it -> "ch_hb_estimates: ${it}" }
+    PERC_HETEROZYGOTES.out.vcf { it -> "PERC_HET: ${it}" }
+    ch_qc.view { it -> "ch_qc ${it}" }
 
     // PARSE_TOMTE_QC(ch_qc)
 
-    ch_versions = ch_versions.mix(PARSE_TOMTE_QC.out.versions)
     ch_versions = ch_versions.mix(PERC_HETEROZYGOTES.out.versions)
     ch_versions = ch_versions.mix(IDSNP_CALL.out.versions)
     ch_versions = ch_versions.mix(IDSNP_VCF_TO_JSON.out.versions)
+    // ch_versions = ch_versions.mix(PARSE_TOMTE_QC.out.versions)
 
     emit:
     versions = ch_versions
