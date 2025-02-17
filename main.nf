@@ -47,7 +47,7 @@ workflow {
         .map { meta ->
             // Needed for Tomte's internal workings
             // FIXME: We need to calculate the number of fq-pairs here when running many samples
-            meta = meta + [ fq_pairs: 1, single_end: false, is_fastq: true, id: meta.sample ]
+            meta = meta + [ fq_pairs: 1, single_end: false, is_fastq: true ]
             meta
         }
         .set { ch_meta }
@@ -68,7 +68,9 @@ workflow {
         TOMTE(ch_tomte)
         ch_versions.mix(TOMTE.out.versions)
 
-        ch_multiqc = ch_meta.combine(TOMTE.out.multiqc_data).map { meta, multiqc_folder ->
+        ch_tomte_meta = TOMTE.out.bam_bai.map { it -> it[0]}
+
+        ch_multiqc = ch_tomte_meta.combine(TOMTE.out.multiqc_data).map { meta, multiqc_folder ->
             def multiqc_summary = file("${multiqc_folder}/multiqc_general_stats.txt")
             def picard_coverage = file("${multiqc_folder}/picard_rna_coverage.txt")
             tuple(meta, multiqc_summary, picard_coverage)
@@ -202,9 +204,9 @@ workflow NISSE_QC {
     ch_qc.view { it -> ">>> ch_qc 1 ${it}" }
     // These did not join despite the meta looking the same
     // Likely a consequence of the meta being edited in the Tomte pipeline
-    ch_qc = ch_qc.join(ch_hb_estimates){ a, b -> a.sample == b.sample }
+    ch_qc = ch_qc.join(ch_hb_estimates, by: 0)
     ch_qc.view { it -> ">>> ch_qc 2 ${it}" }
-    ch_qc = ch_qc.join(PERC_HETEROZYGOTES.out.vcf){ a, b -> a.sample == b.sample }
+    ch_qc = ch_qc.join(PERC_HETEROZYGOTES.out.vcf, by: 0)
     ch_qc.view { it -> ">>> ch_qc 3 ${it}" }
         // .join(ch_hb_estimates)
         // .join(PERC_HETEROZYGOTES.out.vcf)
