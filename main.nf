@@ -68,6 +68,8 @@ workflow {
         TOMTE(ch_tomte)
         ch_versions.mix(TOMTE.out.versions)
 
+        // Tomte adds "id: meta.sample" in one step making the Nisse and Tomte
+        // meta objects different
         ch_tomte_meta = TOMTE.out.bam_bai.map { it -> it[0]}
 
         ch_multiqc = ch_tomte_meta.combine(TOMTE.out.multiqc_data).map { meta, multiqc_folder ->
@@ -204,9 +206,9 @@ workflow NISSE_QC {
     ch_qc.view { it -> ">>> ch_qc 1 ${it}" }
     // These did not join despite the meta looking the same
     // Likely a consequence of the meta being edited in the Tomte pipeline
-    ch_qc = ch_qc.join(ch_hb_estimates, by: 0)
+    ch_qc = ch_qc.join(ch_hb_estimates)
     ch_qc.view { it -> ">>> ch_qc 2 ${it}" }
-    ch_qc = ch_qc.join(PERC_HETEROZYGOTES.out.vcf, by: 0)
+    ch_qc = ch_qc.join(PERC_HETEROZYGOTES.out.vcf)
     ch_qc.view { it -> ">>> ch_qc 3 ${it}" }
         // .join(ch_hb_estimates)
         // .join(PERC_HETEROZYGOTES.out.vcf)
