@@ -197,16 +197,16 @@ workflow NISSE_QC {
     IDSNP_CALL(ch_bam_bai, ch_fasta_fai, val_idsnp_params)
     IDSNP_VCF_TO_JSON(IDSNP_CALL.out.vcf)
 
-    ch_qc = ch_multiqc
-        .join(ch_hb_estimates)
-        .join(PERC_HETEROZYGOTES.out.vcf)
+    // ch_qc = ch_multiqc
+    //     .join(ch_hb_estimates)
+    //     .join(PERC_HETEROZYGOTES.out.vcf)
 
-    ch_multiqc.view { it -> "ch_multiqc: ${it}" }
-    ch_hb_estimates.view { it -> "ch_hb_estimates: ${it}" }
-    PERC_HETEROZYGOTES.out.vcf { it -> "PERC_HET: ${it}" }
-    ch_qc.view { it -> "ch_qc ${it}" }
+    // ch_multiqc.view { it -> "ch_multiqc: ${it}" }
+    // ch_hb_estimates.view { it -> "ch_hb_estimates: ${it}" }
+    // PERC_HETEROZYGOTES.out.vcf { it -> "PERC_HET: ${it}" }
+    // ch_qc.view { it -> "ch_qc ${it}" }
 
-    PARSE_TOMTE_QC(ch_qc)
+    // PARSE_TOMTE_QC(ch_qc)
 
     ch_versions = ch_versions.mix(PARSE_TOMTE_QC.out.versions)
     ch_versions = ch_versions.mix(PERC_HETEROZYGOTES.out.versions)
@@ -252,9 +252,6 @@ workflow NISSE {
     ch_versions = ch_versions.mix(SNV_SCORE.out.versions)
 
     ch_drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
-
-    // BGZIP_TABIX_BED(TOMTE.out.junction_bed)
-    // BGZIP_TABIX_BED(ch_junction_bed)
 
     ch_all_result_files = ch_drop_results
         .join(SNV_SCORE.out.vcf_tbi)
