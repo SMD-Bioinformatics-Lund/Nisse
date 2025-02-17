@@ -198,6 +198,10 @@ workflow NISSE_QC {
         .join(ch_hb_estimates)
         .join(PERC_HETEROZYGOTES.out.vcf)
 
+    ch_multiqc.view()
+    ch_hb_estimates.view()
+    PERC_HETEROZYGOTES.out.vcf.view()
+
     PARSE_TOMTE_QC(ch_qc)
 
     ch_versions = ch_versions.mix(PERC_HETEROZYGOTES.out.versions)
