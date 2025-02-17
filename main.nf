@@ -194,14 +194,20 @@ workflow NISSE_QC {
     IDSNP_CALL(ch_bam_bai, ch_fasta_fai, val_idsnp_params)
     IDSNP_VCF_TO_JSON(IDSNP_CALL.out.vcf)
 
-    ch_qc = ch_multiqc
-        .join(ch_hb_estimates)
-        .join(PERC_HETEROZYGOTES.out.vcf)
+    ch_multiqc.view { it -> ">>> ch_multiqc ${it}" }
+    ch_hb_estimates.view { it -> ">>> ch_hb ${it}" }
+    PERC_HETEROZYGOTES.out.vcf.view { it -> ">>> ch_perc_het ${it}" }
 
-    ch_multiqc.view { it -> "ch_multiqc ${it}" }
-    ch_hb_estimates.view { it -> "ch_hb ${it}" }
-    PERC_HETEROZYGOTES.out.vcf.view { it -> "ch_perc_het ${it}" }
-    ch_qc.view { it -> "ch_qc ${it}" }
+    ch_qc = ch_multiqc
+    ch_qc.view { it -> ">>> ch_qc 1 ${it}" }
+    ch_qc = ch_qc.join(ch_hb_estimates)
+    ch_qc.view { it -> ">>> ch_qc 2 ${it}" }
+    ch_qc = ch_qc.join(PERC_HETEROZYGOTES.out.vcf)
+    ch_qc.view { it -> ">>> ch_qc 3 ${it}" }
+        // .join(ch_hb_estimates)
+        // .join(PERC_HETEROZYGOTES.out.vcf)
+
+    // ch_qc.view { it -> "ch_qc ${it}" }
 
     PARSE_TOMTE_QC(ch_qc)
 
