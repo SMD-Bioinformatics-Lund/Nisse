@@ -74,7 +74,7 @@ workflow {
             tuple(meta, multiqc_summary, picard_coverage)
         }
 
-        ch_qc = ch_multiqc.join(TOMTE.out.hb_estimates)
+        ch_hb_estimates = TOMTE.out.hb_estimates
 
         ch_junction_bed_tbi = TOMTE.out.junction_bed
         ch_ped = TOMTE.out.ped
@@ -97,7 +97,7 @@ workflow {
             tuple(meta, file(multiqc_summary), file(picard_coverage))
         }
 
-        ch_qc = ch_multiqc.join(ch_hb_estimates)
+        // ch_qc = ch_multiqc.join(ch_hb_estimates)
 
         ch_vcf = ch_meta.map { meta ->
             def sample_id = meta.sample
@@ -144,7 +144,8 @@ workflow {
 
     NISSE_QC(
         ch_versions,
-        ch_qc,
+        ch_multiqc,
+        ch_hb_estimates,
         ch_bam_bai,
         ch_fasta_fai,
         params.idsnps,
@@ -181,6 +182,7 @@ workflow NISSE_QC {
     take:
     ch_versions
     ch_multiqc
+    ch_hb_estimates
     ch_bam_bai
     ch_fasta_fai
     val_idsnp_params
@@ -190,7 +192,17 @@ workflow NISSE_QC {
     PERC_HETEROZYGOTES(ch_bam_bai, ch_fasta_fai, val_hetcalls_params)
     IDSNP_CALL(ch_bam_bai, ch_fasta_fai, val_idsnp_params)
     IDSNP_VCF_TO_JSON(IDSNP_CALL.out.vcf)
-    PARSE_TOMTE_QC(ch_multiqc, PERC_HETEROZYGOTES.out.vcf)
+
+    ch_qc = ch_multiqc
+        .join(ch_hb_estimates)
+        .join(PERC_HETEROZYGOTES.out.vcf)
+
+    ch_multiqc.view { it -> "ch_multiqc: ${it}" }
+    ch_hb_estimates.view { it -> "ch_hb_estimates: ${it}" }
+    PERC_HETEROZYGOTES.out.vcf { it -> "PERC_HET: ${it}" }
+    ch_qc.view { it -> "ch_qc ${it}" }
+
+    PARSE_TOMTE_QC(ch_qc)
 
     ch_versions = ch_versions.mix(PARSE_TOMTE_QC.out.versions)
     ch_versions = ch_versions.mix(PERC_HETEROZYGOTES.out.versions)
