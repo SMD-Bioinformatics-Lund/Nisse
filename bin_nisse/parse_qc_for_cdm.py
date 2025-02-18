@@ -14,6 +14,7 @@ Parse QC-output from Tomte and Nisse into a JSON format
 compatible with CDM.
 """
 
+
 class QCEntry:
     def __init__(
         self, results: Dict[str, Any], label: Optional[str], software: str, version: str, url: str
@@ -54,6 +55,7 @@ def main(
     hetcalls_vcfs: Optional[List[str]],
     output_file: str,
     sample_id: Optional[str],
+    debug: bool,
 ):
     samples_qc_dict = {}
 
@@ -131,7 +133,7 @@ def main(
             samples_qc_dict[sample].append(entry)
 
     if output_file:
-        write_results(samples_qc_dict, output_file, sample_id)
+        write_results(samples_qc_dict, output_file, sample_id, debug)
 
 
 def parse_multiqc_general_stats(multiqc_general_stats_fp: str) -> List[Tuple[str, Dict[str, str]]]:
@@ -462,7 +464,10 @@ def process_hb_estimate_data(
 
 
 def write_results(
-    qc_results: Dict[str, List[QCEntry]], output_path: str, stdout_sample: Optional[str]
+    qc_results: Dict[str, List[QCEntry]],
+    output_path: str,
+    stdout_sample: Optional[str],
+    debug: bool,
 ) -> None:
     """
     Write json blob with general statistics and rna cov values to a file.
@@ -480,8 +485,12 @@ def write_results(
             )
         qc_result = qc_results[stdout_sample]
         result_dicts = [qc.get_result_dict() for qc in qc_result]
-        debug_json = json.dumps(result_dicts)
-        print(debug_json)
+        out_json = json.dumps(result_dicts)
+        if debug:
+            print(out_json)
+        else:
+            with open(output_path, "w") as out_fh:
+                out_fh.write(out_json)
     else:
         with open(output_path, "w") as output_file:
             for sample_name, qc_result in qc_results.items():
@@ -499,7 +508,12 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--sample_id",
         default=None,
-        help="Limit output to one sample and print to STDOUT",
+        help="Limit output to one sample",
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Run in debug mode, printing to STDOUT instead of to file, if limiting output to a single sample",
     )
     parser.add_argument(
         "--picard_rna_coverage", help="Path to the input file containing RNA coverage data."
@@ -538,4 +552,5 @@ if __name__ == "__main__":
         args.hetcalls_vcfs,
         args.output_file,
         args.sample_id,
+        args.debug,
     )
