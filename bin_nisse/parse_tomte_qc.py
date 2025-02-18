@@ -43,18 +43,6 @@ class QCEntry:
         return entry_dict
 
 
-# class SampleQCResults:
-#     def __init__(self, sample):
-#         self.sample = sample
-#         self.qc_entries: List[QCEntry] = []
-
-#     def add_qc_result(self, qc_entry: QCEntry):
-#         self.qc_entries.append(qc_entry)
-
-#     def get_qc_jsons(self) -> List[Dict[str, Any]]:
-#         return [qc_res.get_json_dict() for qc_res in self.qc_entries]
-
-
 def main(
     multiqc_general_stats: str,
     picard_rna_coverage: Optional[str],
@@ -64,8 +52,14 @@ def main(
     output_file: str,
     sample_id: Optional[str],
 ):
-    # FIXME: move out the QCEntry to the top function
-    samples_qc_dict = parse_multiqc_general_stats(multiqc_general_stats)
+    samples_qc_dict = {}
+
+    sample_qc_tups = parse_multiqc_general_stats(multiqc_general_stats)
+    for sample, qc_dict in sample_qc_tups:
+        qc_entry = QCEntry(
+            qc_dict, "MultiQC general stats", "MultiQC", "No version", "https://seqera.io/multiqc/"
+        )
+        samples_qc_dict[sample] = [qc_entry]
 
     if merged_hb_estimate:
         # Add HB estimate data
@@ -74,7 +68,11 @@ def main(
         for sample, hb_values in hb_data.items():
             if sample in samples_qc_dict:
                 entry = QCEntry(
-                    hb_values, "Hemoglobin fraction", "calculate_perc_mapping.py", "1.0.0", ""
+                    hb_values,
+                    "Hemoglobin fraction",
+                    "calculate_perc_mapping.py",
+                    "No version",
+                    "https://github.com/genomic-medicine-sweden/tomte/blob/dev/bin/calculate_perc_mapping.py",
                 )
                 samples_qc_dict[sample].append(entry)
             else:
@@ -92,14 +90,26 @@ def main(
                 "genebody_cov": list(coverage_values),
             }
 
-            entry = QCEntry(cov_data, "Genebody coverage slope", "FIXME", "FIXME", "FIXME")
+            entry = QCEntry(
+                cov_data,
+                "Genebody coverage slope",
+                "Picard",
+                "FIXME",
+                "https://broadinstitute.github.io/picard/",
+            )
             samples_qc_dict[sample].append(entry)
 
     # Process multiqc star stats
     if multiqc_star:
         star_data = process_multiqc_star_stats(multiqc_star)
         for sample, star_stats in star_data.items():
-            entry = QCEntry(star_stats, "Multiqc STAR stats", "MultiQC", "FIXME", "FIXME")
+            entry = QCEntry(
+                star_stats,
+                "Multiqc STAR stats",
+                "MultiQC",
+                "No version",
+                "https://seqera.io/multiqc/",
+            )
             samples_qc_dict[sample].append(entry)
 
     # Heterogenicity calls
@@ -108,14 +118,20 @@ def main(
         for hetcalls_vcf in hetcalls_vcfs:
             sample, het_qc = calculate_het_qcs(hetcalls_vcf)
             # for sample, het_qc in het_qcs.items():
-            entry = QCEntry(het_qc, "Heterozygosity fraction", "FIXME", "FIXME", "FIXME")
+            entry = QCEntry(
+                het_qc,
+                "Heterozygosity fraction",
+                "BCFTools",
+                "No version",
+                "https://samtools.github.io/bcftools/bcftools.html",
+            )
             samples_qc_dict[sample].append(entry)
 
     if output_file:
         write_results(samples_qc_dict, output_file, sample_id)
 
 
-def parse_multiqc_general_stats(multiqc_general_stats_fp: str) -> Dict[str, List[QCEntry]]:
+def parse_multiqc_general_stats(multiqc_general_stats_fp: str) -> List[Tuple[str, Dict[str, str]]]:
     header = []
     row_triplets = []
     with open(multiqc_general_stats_fp, "r") as fh:
@@ -134,16 +150,17 @@ def parse_multiqc_general_stats(multiqc_general_stats_fp: str) -> Dict[str, List
                 row_triplets.append(curr_triplet)
                 curr_triplet = []
 
-    samples_qcs = {}
+    # samples_qcs = {}
+
+    sample_qc_tups: List[Tuple[str, Dict[str, str]]] = []
 
     for row_triplet in row_triplets:
         sample, qc_dict = parse_multiqc_sample(
             header, row_triplet[0], row_triplet[1], row_triplet[2]
         )
-        qc_entry = QCEntry(qc_dict, "MultiQC general stats", "MultiQC", "FIXME", "FIXME")
-        samples_qcs[sample] = [qc_entry]
+        sample_qc_tups.append((sample, qc_dict))
 
-    return samples_qcs
+    return sample_qc_tups
 
 
 def calculate_het_qcs(het_call_vcf) -> Tuple[str, Dict[str, Any]]:
