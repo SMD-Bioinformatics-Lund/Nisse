@@ -9,7 +9,10 @@ from collections import defaultdict
 from typing import Any, Dict, List, Mapping, Set, Tuple, Union, Optional
 
 VERSION = "1.1.0"
-
+DESCRIPTION = """
+Parse QC-output from Tomte and Nisse into a JSON format
+compatible with CDM.
+"""
 
 class QCEntry:
     def __init__(
@@ -489,7 +492,7 @@ def write_results(
 
 
 def parse_arguments() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description=DESCRIPTION)
     parser.add_argument(
         "--multiqc_general_stats", help="MultiQC file: multiqc_general_stats.txt", required=True
     )

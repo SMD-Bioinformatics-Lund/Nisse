@@ -24,7 +24,7 @@ include { GENMOD_SORT } from './modules/genmod/genmod_sort.nf'
 
 // Postprocessing
 include { FILTER_VARIANTS_ON_SCORE } from './modules/postprocessing/filter_variants_on_score.nf'
-include { PARSE_TOMTE_QC } from './modules/postprocessing/parse_tomte_qc.nf'
+include { PARSE_QC_FOR_CDM } from './modules/postprocessing/parse_qc_for_cdm.nf'
 include { MAKE_SCOUT_YAML } from './modules/postprocessing/make_scout_yaml.nf'
 include { BGZIP_TABIX as BGZIP_TABIX_VCF } from './modules/postprocessing/bgzip_tabix.nf'
 include { BGZIP_TABIX as BGZIP_TABIX_BED } from './modules/postprocessing/bgzip_tabix.nf'
@@ -97,11 +97,10 @@ workflow {
 
         ch_multiqc = ch_meta.map { meta ->
             def multiqc_summary = String.format(params.tomte_results_paths.multiqc_summary, params.tomte_results)
+            def star_qc = String.format(params.tomte_results_paths.star_qc, params.tomte_results)
             def picard_coverage = String.format(params.tomte_results_paths.picard_coverage, params.tomte_results)
-            tuple(meta, file(multiqc_summary), file(picard_coverage))
+            tuple(meta, file(multiqc_summary), file(star_qc), file(picard_coverage))
         }
-
-        // ch_qc = ch_multiqc.join(ch_hb_estimates)
 
         ch_vcf = ch_meta.map { meta ->
             def sample_id = meta.sample
@@ -198,29 +197,16 @@ workflow NISSE_QC {
     IDSNP_CALL(ch_bam_bai, ch_fasta_fai, val_idsnp_params)
     IDSNP_VCF_TO_JSON(IDSNP_CALL.out.vcf)
 
-    ch_multiqc.view { it -> ">>> ch_multiqc ${it}" }
-    ch_hb_estimates.view { it -> ">>> ch_hb ${it}" }
-    PERC_HETEROZYGOTES.out.vcf.view { it -> ">>> ch_perc_het ${it}" }
-
     ch_qc = ch_multiqc
-    ch_qc.view { it -> ">>> ch_qc 1 ${it}" }
-    // These did not join despite the meta looking the same
-    // Likely a consequence of the meta being edited in the Tomte pipeline
     ch_qc = ch_qc.join(ch_hb_estimates)
-    ch_qc.view { it -> ">>> ch_qc 2 ${it}" }
     ch_qc = ch_qc.join(PERC_HETEROZYGOTES.out.vcf)
-    ch_qc.view { it -> ">>> ch_qc 3 ${it}" }
-        // .join(ch_hb_estimates)
-        // .join(PERC_HETEROZYGOTES.out.vcf)
 
-    // ch_qc.view { it -> "ch_qc ${it}" }
-
-    PARSE_TOMTE_QC(ch_qc)
+    PARSE_QC_FOR_CDM(ch_qc)
 
     ch_versions = ch_versions.mix(PERC_HETEROZYGOTES.out.versions)
     ch_versions = ch_versions.mix(IDSNP_CALL.out.versions)
     ch_versions = ch_versions.mix(IDSNP_VCF_TO_JSON.out.versions)
-    ch_versions = ch_versions.mix(PARSE_TOMTE_QC.out.versions)
+    ch_versions = ch_versions.mix(PARSE_QC_FOR_CDM.out.versions)
 
     emit:
     versions = ch_versions
