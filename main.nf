@@ -74,7 +74,7 @@ workflow {
 
         ch_multiqc = ch_tomte_meta.combine(TOMTE.out.multiqc_data).map { meta, multiqc_folder ->
             def multiqc_summary = file("${multiqc_folder}/multiqc_general_stats.txt")
-            def star_qc = file("${multiqc_folder}/star_summary_table.txt")
+            def star_qc = file("${multiqc_folder}/multiqc_star.txt")
             def picard_coverage = file("${multiqc_folder}/picard_rna_coverage.txt")
             tuple(meta, multiqc_summary, star_qc, picard_coverage)
         }
