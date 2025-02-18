@@ -4,6 +4,8 @@ import argparse
 from pathlib import Path
 from typing import List
 
+DESCRIPTION = """Generate YAML config used to load sample into Scout"""
+
 def get_space(level: int) -> str:
     return " " * 4 * level
 
@@ -41,6 +43,7 @@ class Sample:
 
 def main(
     sample_id: str,
+    sample_description: str,
     sex: str,
     phenotype: str,
     tissue: str,
@@ -91,7 +94,7 @@ def main(
         'owner': 'rnaseq',
         'family': sample_id,
         'family_name': sample_id,
-        'synopsis': ['First batch of Tomte samples'],
+        'synopsis': [sample_description],
         'samples': [
             Sample(
                 analysis_type="wgs",
@@ -146,8 +149,9 @@ def main(
 
 
 def parse_arguments():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description=DESCRIPTION)
     parser.add_argument("--sample_id", required=True)
+    parser.add_argument("--description", required=True, help="Synopsis field in YAML")
     parser.add_argument("--vcf", required=True)
     parser.add_argument("--sex", required=True)
     parser.add_argument("--phenotype", required=True)
@@ -167,6 +171,7 @@ if __name__ == "__main__":
     args = parse_arguments()
     main(
         sample_id=args.sample_id,
+        sample_description=args.description,
         vcf=Path(args.vcf),
         sex=args.sex,
         phenotype=args.phenotype,
