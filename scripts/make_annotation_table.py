@@ -80,13 +80,13 @@ if __name__ == "__main__":
     args = parse_arguments()
 
     if not Path(args.source_tsv).exists():
-        raise ValueError("--source_tsv must exist")
+        raise ValueError(f"The file specified by --source_tsv ({args.source_tsv}) must exist")
 
     if not Path(args.splice_counts_dir).exists():
-        raise ValueError("--splice_counts_dir must exist")
+        raise ValueError(f"The file specified by --splice_counts_dir ({args.splice_counts_dir}) must exist")
 
     if not Path(args.gene_counts_file).exists():
-        raise ValueError("--gene_counts_file must exist")
+        raise ValueError(f"The file specified by --gene_counts_file ({args.gene_counts_file}) must exist")
 
 
     main(
