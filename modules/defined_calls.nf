@@ -101,7 +101,6 @@ def python_version(task) {
 	"""
 }
 
-// FIXME: This is not fully processed yet
 process PERC_HETEROZYGOTES {
     tag "${meta.sample}"
     label "process_low"
