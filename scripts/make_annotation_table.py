@@ -2,6 +2,7 @@
 
 import pandas as pd
 import argparse
+from pathlib import Path
 
 DESCRIPTION = """Prepare annotation table for DROP database"""
 
@@ -77,6 +78,17 @@ def parse_arguments():
 
 if __name__ == "__main__":
     args = parse_arguments()
+
+    if not Path(args.source_tsv).exists():
+        raise ValueError("--source_tsv must exist")
+
+    if not Path(args.splice_counts_dir).exists():
+        raise ValueError("--splice_counts_dir must exist")
+
+    if not Path(args.gene_counts_file).exists():
+        raise ValueError("--gene_counts_file must exist")
+
+
     main(
         args.source_tsv,
         args.rna_id_col,
