@@ -14,7 +14,7 @@ process GENMOD_MODELS {
 
     script:
     """
-    grep -P "^#|^${meta.case}\b" "${family_all_cases}" > "${meta.case}.ped"
+    grep -E "^#|^${meta.case}\t" "${family_all_cases}" > "${meta.case}.ped"
     genmod \\
         models \\
         --whole_gene \\
