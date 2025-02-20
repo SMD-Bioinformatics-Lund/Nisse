@@ -6,7 +6,7 @@ process GENMOD_MODELS {
 
     input:
     tuple val(meta), path(vcf)
-    path(family)
+    path(family_all_cases)
 
     output:
     tuple val(meta), path("${meta.sample}_models.vcf"), emit: vcf
@@ -14,11 +14,12 @@ process GENMOD_MODELS {
 
     script:
     """
+    grep -P "^#|^${meta.case}\b" "${family_all_cases}" > "${meta.case}.ped"
     genmod \\
         models \\
         --whole_gene \\
         --processes "${task.cpus}" \\
-        --family_file "${family}" \\
+        --family_file "${meta.case}.ped" \\
         --outfile "${meta.sample}_models.vcf" \\
         "${vcf}"
     

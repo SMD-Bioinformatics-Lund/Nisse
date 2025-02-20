@@ -70,7 +70,7 @@ workflow {
 
         // Tomte adds "id: meta.sample" in one step making the Nisse and Tomte
         // meta objects different
-        ch_tomte_meta = TOMTE.out.bam_bai.map { it -> it[0]}
+        ch_tomte_meta = TOMTE.out.bam_bai.map { it -> it[0] }
 
         ch_multiqc = ch_tomte_meta.combine(TOMTE.out.multiqc_data).map { meta, multiqc_folder ->
             def multiqc_summary = file("${multiqc_folder}/multiqc_general_stats.txt")
