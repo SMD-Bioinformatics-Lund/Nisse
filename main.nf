@@ -21,6 +21,7 @@ include { GENMOD_MODELS } from './modules/genmod/genmod_models.nf'
 include { GENMOD_SCORE } from './modules/genmod/genmod_score.nf'
 include { GENMOD_COMPOUND } from './modules/genmod/genmod_compound.nf'
 include { GENMOD_SORT } from './modules/genmod/genmod_sort.nf'
+include { MAKE_CASE_PED } from './modules/genmod/make_case_ped.nf'
 
 // Postprocessing
 include { FILTER_VARIANTS_ON_SCORE } from './modules/postprocessing/filter_variants_on_score.nf'
@@ -218,7 +219,7 @@ workflow NISSE {
     ch_versions
     ch_meta
     ch_tomte_junction_bed
-    ch_tomte_ped
+    ch_combined_ped
     ch_tomte_vcf_tbi
     ch_tomte_drop_ae_out_research
     ch_tomte_drop_as_out_research
@@ -244,7 +245,7 @@ workflow NISSE {
     SNV_ANNOTATE(PREPROCESS.out.vcf, params.vep)
     ch_versions = ch_versions.mix(SNV_ANNOTATE.out.versions)
 
-    SNV_SCORE(SNV_ANNOTATE.out.vcf, ch_tomte_ped, params.score_config, params.score_threshold)
+    SNV_SCORE(ch_meta, SNV_ANNOTATE.out.vcf, ch_combined_ped, params.score_config, params.score_threshold)
     ch_versions = ch_versions.mix(SNV_SCORE.out.versions)
 
     ch_drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
@@ -314,14 +315,17 @@ workflow SNV_ANNOTATE {
 
 workflow SNV_SCORE {
     take:
+    ch_meta
     ch_annotated_vcf
-    ch_ped
+    ch_combined_ped
     val_score_config
     val_score_threshold
 
     main:
-    GENMOD_MODELS(ch_annotated_vcf, ch_ped)
-    GENMOD_SCORE(GENMOD_MODELS.out.vcf, ch_ped, val_score_config)
+    ch_make_case_ped = ch_meta.join(ch_combined_ped)
+    MAKE_CASE_PED(ch_make_case_ped)
+    GENMOD_MODELS(ch_annotated_vcf, MAKE_CASE_PED.out.ped)
+    GENMOD_SCORE(GENMOD_MODELS.out.vcf, MAKE_CASE_PED.out.ped, val_score_config)
     GENMOD_COMPOUND(GENMOD_SCORE.out.vcf)
     GENMOD_SORT(GENMOD_COMPOUND.out.vcf)
     VCF_COMPLETION(GENMOD_SORT.out.vcf)
