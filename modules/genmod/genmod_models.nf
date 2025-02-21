@@ -19,7 +19,7 @@ process GENMOD_MODELS {
         models \\
         --whole_gene \\
         --processes "${task.cpus}" \\
-        --family_file "${meta.case}.ped" \\
+        --family_file "${meta.case}_local.ped" \\
         --outfile "${meta.sample}_models.vcf" \\
         "${vcf}"
     
