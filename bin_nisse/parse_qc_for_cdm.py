@@ -226,7 +226,7 @@ def calculate_het_qcs(het_call_vcf) -> Tuple[str, Dict[str, Any]]:
 def build_dict(headers: List[str], fields: List[str]) -> Dict[str, str]:
     assert len(headers) == len(
         fields
-    ), f"Headers and fields nbrs differs {len(headers)} {len(fields)}"
+    ), f"Headers and fields nbrs differs {len(headers)} {len(fields)}. Headers: {headers}, fields: {fields}"
 
     value_dict = {}
     for i, header in enumerate(headers):
