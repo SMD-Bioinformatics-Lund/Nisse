@@ -7,7 +7,6 @@ def bcftools_version(task) {
 	"""
 }
 
-// FIXME: publishDir
 process IDSNP_CALL {
     label 'process_single'
     tag "${meta.id}"
