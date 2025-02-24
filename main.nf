@@ -82,9 +82,8 @@ workflow {
 
         ch_hb_estimates = TOMTE.out.hb_estimates
 
-        BGZIP_TABIX_JUNCTION_BED(TOMTE.out.junction_bed)
-        versions.mix(BGZIP_TABIX_JUNCTION_BED.out.versions)
-        ch_junction_bed_tbi = BGZIP_TABIX_JUNCTION_BED.out.bed_tbi
+        // FIXME: Is this one published to the Tomte results? No need to publish it in Nisse as well or?
+        ch_junction_bed_tbi = TOMTE.out.junction_bed
 
 
         ch_ped = TOMTE.out.ped
