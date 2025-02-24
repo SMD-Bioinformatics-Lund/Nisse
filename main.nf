@@ -82,7 +82,11 @@ workflow {
 
         ch_hb_estimates = TOMTE.out.hb_estimates
 
-        ch_junction_bed_tbi = TOMTE.out.junction_bed
+        BGZIP_TABIX_JUNCTION_BED(TOMTE.out.junction_bed)
+        versions.mix(BGZIP_TABIX_JUNCTION_BED.out.versions)
+        ch_junction_bed_tbi = BGZIP_TABIX_JUNCTION_BED.out.bed_tbi
+
+
         ch_ped = TOMTE.out.ped
         ch_vcf_tbi = TOMTE.out.vcf_tbi
         ch_drop_ae_out_research = TOMTE.out.drop_ae_out_research
@@ -128,6 +132,9 @@ workflow {
                 def junction_bed = String.format(params.tomte_results_paths.junction_bed, params.tomte_results, sample_id)
                 tuple(meta, file(junction_bed))
             }
+            BGZIP_TABIX_JUNCTION_BED(ch_junction_bed)
+            versions.mix(BGZIP_TABIX_JUNCTION_BED.out.versions)
+            ch_junction_bed_tbi = BGZIP_TABIX_JUNCTION_BED.out.bed_tbi
 
             ch_drop_ae_out_research = ch_meta.map { meta ->
                 def case_id = meta.case
@@ -214,7 +221,7 @@ workflow NISSE {
     take:
     ch_versions
     ch_meta
-    ch_tomte_junction_bed
+    ch_tomte_junction_bed_tbi
     ch_combined_ped
     ch_tomte_vcf_tbi
     ch_tomte_drop_ae_out_research
@@ -246,12 +253,9 @@ workflow NISSE {
 
     ch_drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
 
-    BGZIP_TABIX_JUNCTION_BED(ch_tomte_junction_bed)
-    versions.mix(BGZIP_TABIX_JUNCTION_BED.out.versions)
-
     ch_all_result_files = ch_drop_results
         .join(SNV_SCORE.out.vcf_tbi)
-        .join(ch_tomte_junction_bed)
+        .join(ch_tomte_junction_bed_tbi)
         .join(ch_tomte_raw_results)
     MAKE_SCOUT_YAML(ch_all_result_files, params.tomte_results, params.outdir, params.phenotype, params.tissue)
 
