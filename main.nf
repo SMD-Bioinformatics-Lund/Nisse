@@ -28,7 +28,7 @@ include { FILTER_VARIANTS_ON_SCORE } from './modules/postprocessing/filter_varia
 include { PARSE_QC_FOR_CDM } from './modules/postprocessing/parse_qc_for_cdm.nf'
 include { MAKE_SCOUT_YAML } from './modules/postprocessing/make_scout_yaml.nf'
 include { BGZIP_TABIX as BGZIP_TABIX_VCF } from './modules/postprocessing/bgzip_tabix.nf'
-include { BGZIP_TABIX as BGZIP_TABIX_BED } from './modules/postprocessing/bgzip_tabix.nf'
+include { BGZIP_TABIX as BGZIP_TABIX_JUNCTION_BED } from './modules/postprocessing/bgzip_tabix.nf'
 include { OUTPUT_VERSIONS } from './modules/postprocessing/output_versions.nf'
 
 include { TOMTE } from './tomte/workflows/tomte.nf'
@@ -128,10 +128,6 @@ workflow {
                 def junction_bed = String.format(params.tomte_results_paths.junction_bed, params.tomte_results, sample_id)
                 tuple(meta, file(junction_bed))
             }
-
-            BGZIP_TABIX_BED(ch_junction_bed)
-            versions.mix(BGZIP_TABIX_BED.out.versions)
-            ch_junction_bed_tbi = BGZIP_TABIX_BED.out.bed_tbi
 
             ch_drop_ae_out_research = ch_meta.map { meta ->
                 def case_id = meta.case
@@ -249,6 +245,9 @@ workflow NISSE {
     ch_versions = ch_versions.mix(SNV_SCORE.out.versions)
 
     ch_drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
+
+    BGZIP_TABIX_JUNCTION_BED(ch_tomte_junction_bed)
+    versions.mix(BGZIP_TABIX_JUNCTION_BED.out.versions)
 
     ch_all_result_files = ch_drop_results
         .join(SNV_SCORE.out.vcf_tbi)

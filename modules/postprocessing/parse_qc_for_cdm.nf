@@ -33,7 +33,7 @@ process PARSE_QC_FOR_CDM {
     touch "${meta.sample}_out.json"
 
     cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
+    ${task.process}:
         parse_qc_for_cdm: \$(parse_qc_for_cdm.py --version)
     END_VERSIONS
     """
