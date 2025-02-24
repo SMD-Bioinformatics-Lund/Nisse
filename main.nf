@@ -48,7 +48,7 @@ workflow {
         .map { meta ->
             // Needed for Tomte's internal workings
             // FIXME: We need to calculate the number of fq-pairs here when running many samples
-            meta = meta + [ fq_pairs: 1, single_end: false, is_fastq: true ]
+            meta = meta + [ fq_pairs: 1, single_end: false, is_fastq: true, id: meta.sample ]
             meta
         }
         .set { ch_meta }
