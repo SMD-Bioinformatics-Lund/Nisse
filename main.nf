@@ -27,9 +27,9 @@ include { MAKE_CASE_PED } from './modules/genmod/make_case_ped.nf'
 include { FILTER_VARIANTS_ON_SCORE } from './modules/postprocessing/filter_variants_on_score.nf'
 include { PARSE_QC_FOR_CDM } from './modules/postprocessing/parse_qc_for_cdm.nf'
 include { MAKE_SCOUT_YAML } from './modules/postprocessing/make_scout_yaml.nf'
-// include { BGZIP as BGZIP_VCF } from './modules/postprocessing/bgzip.nf'
-// include { TABIX as TABIX_VCF } from './modules/postprocessing/tabix.nf'
-include { BGZIP_TABIX as BGZIP_TABIX_JUNCTION_BED } from './modules/postprocessing/bgzip_tabix.nf'
+include { BGZIP as BGZIP_JUNCTION_BED } from './modules/postprocessing/bgzip.nf'
+include { TABIX as TABIX_JUNCTION_BED } from './modules/postprocessing/tabix.nf'
+// include { BGZIP_TABIX as BGZIP_TABIX_JUNCTION_BED } from './modules/postprocessing/bgzip_tabix.nf'
 include { BGZIP_TABIX as BGZIP_TABIX_VCF } from './modules/postprocessing/bgzip_tabix.nf'
 include { OUTPUT_VERSIONS } from './modules/postprocessing/output_versions.nf'
 
@@ -82,15 +82,16 @@ workflow {
             tuple(meta, multiqc_summary, star_qc, picard_coverage)
         }
 
+        ch_junction_bed = ch_meta.map { meta ->
+            def sample_id = meta.sample
+            def junction_bed_gz = String.format(params.tomte_results_paths.junction_bed_gz, params.outdir, sample_id)
+            def junction_bed_gz_tbi = String.format(params.tomte_results_paths.junction_bed_gz_tbi, params.outdir, sample_id)
+            tuple(meta, file(junction_bed_gz), file(junction_bed_gz_tbi))
+        }
+
         ch_hb_estimates = TOMTE.out.hb_estimates
 
-        // FIXME: Is this one published to the Tomte results? No need to publish it in Nisse as well or?
-        // ch_junction_bed_tbi = TOMTE.out.junction_bed
-
-        // Remove .tbi to harmonize with reading from file
-        // and getting a process to publish
-        ch_vcf = TOMTE.out.vcf_tbi.map { meta, vcf, _tbi -> [meta, vcf]}
-        ch_junction_bed = TOMTE.out.junction_bed.map { meta, bed, _tbi -> [meta, bed] }
+        ch_vcf = TOMTE.out.vcf_tbi
 
         ch_ped = TOMTE.out.ped
         ch_vcf_tbi = TOMTE.out.vcf_tbi
@@ -142,11 +143,11 @@ workflow {
         }
     }
 
-    if (!params.qc_only) {
-        BGZIP_TABIX_JUNCTION_BED(ch_junction_bed)
-        ch_versions.mix(BGZIP_TABIX_JUNCTION_BED.out.versions)
-        ch_junction_bed_tbi = BGZIP_TABIX_JUNCTION_BED.out.bed_tbi
-    }
+    // if (!params.qc_only) {
+    //     BGZIP_TABIX_JUNCTION_BED(ch_junction_bed)
+    //     ch_versions.mix(BGZIP_TABIX_JUNCTION_BED.out.versions)
+    //     ch_junction_bed_tbi = BGZIP_TABIX_JUNCTION_BED.out.bed_tbi
+    // }
 
     NISSE_QC(
         ch_versions,
@@ -163,7 +164,7 @@ workflow {
         NISSE(
             ch_versions,
             ch_meta,
-            ch_junction_bed_tbi,
+            ch_junction_bed,
             ch_ped,
             ch_vcf_tbi,
             ch_drop_ae_out_research,
