@@ -27,8 +27,10 @@ include { MAKE_CASE_PED } from './modules/genmod/make_case_ped.nf'
 include { FILTER_VARIANTS_ON_SCORE } from './modules/postprocessing/filter_variants_on_score.nf'
 include { PARSE_QC_FOR_CDM } from './modules/postprocessing/parse_qc_for_cdm.nf'
 include { MAKE_SCOUT_YAML } from './modules/postprocessing/make_scout_yaml.nf'
-include { BGZIP_TABIX as BGZIP_TABIX_VCF } from './modules/postprocessing/bgzip_tabix.nf'
+// include { BGZIP as BGZIP_VCF } from './modules/postprocessing/bgzip.nf'
+// include { TABIX as TABIX_VCF } from './modules/postprocessing/tabix.nf'
 include { BGZIP_TABIX as BGZIP_TABIX_JUNCTION_BED } from './modules/postprocessing/bgzip_tabix.nf'
+include { BGZIP_TABIX as BGZIP_TABIX_VCF } from './modules/postprocessing/bgzip_tabix.nf'
 include { OUTPUT_VERSIONS } from './modules/postprocessing/output_versions.nf'
 
 include { TOMTE } from './tomte/workflows/tomte.nf'
@@ -126,19 +128,6 @@ workflow {
         }
 
         if (!params.qc_only) {
-            // BGZIP_TABIX_VCF(ch_vcf)
-            // versions.mix(BGZIP_TABIX_VCF.out.versions)
-            // ch_vcf_tbi = BGZIP_TABIX_VCF.out.vcf_tbi
-
-            // ch_junction_bed = ch_meta.map { meta ->
-            //     def sample_id = meta.sample
-            //     def junction_bed = String.format(params.tomte_results_paths.junction_bed, params.tomte_results, sample_id)
-            //     tuple(meta, file(junction_bed))
-            // }
-            // BGZIP_TABIX_JUNCTION_BED(ch_junction_bed)
-            // versions.mix(BGZIP_TABIX_JUNCTION_BED.out.versions)
-            // ch_junction_bed_tbi = BGZIP_TABIX_JUNCTION_BED.out.bed_tbi
-
             ch_drop_ae_out_research = ch_meta.map { meta ->
                 def case_id = meta.case
                 def outrider_results = String.format(params.tomte_results_paths.outrider_tsv, params.tomte_results, case_id)
@@ -154,10 +143,6 @@ workflow {
     }
 
     if (!params.qc_only) {
-        BGZIP_TABIX_VCF(ch_vcf)
-        ch_versions.mix(BGZIP_TABIX_VCF.out.versions)
-        ch_vcf_tbi = BGZIP_TABIX_VCF.out.vcf_tbi
-
         BGZIP_TABIX_JUNCTION_BED(ch_junction_bed)
         ch_versions.mix(BGZIP_TABIX_JUNCTION_BED.out.versions)
         ch_junction_bed_tbi = BGZIP_TABIX_JUNCTION_BED.out.bed_tbi
