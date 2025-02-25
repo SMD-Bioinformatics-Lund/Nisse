@@ -57,7 +57,7 @@ def main(
     peddy_check: Path,
     peddy_sex: Path,
 ):
-    not_found = []
+    not_found: list[Path] = []
     if not bam_path.exists():
         print(f"File in {bam_path} not found (bam_path)")
         not_found.append(bam_path)
@@ -87,7 +87,7 @@ def main(
         not_found.append(peddy_sex)
 
     if len(not_found) > 0:
-        not_found_str = '\n'.join(not_found)
+        not_found_str = '\n'.join([str(p) for p in not_found])
         raise ValueError(f"All required paths not present. Missing:\n{not_found_str}")
 
     yaml_dict = {
