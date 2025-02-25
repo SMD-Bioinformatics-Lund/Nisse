@@ -5,8 +5,7 @@ process GENMOD_SCORE {
 	container "${params.containers.genmod}"
 
     input:
-        tuple val(meta), path(vcf)
-        path(ped)
+        tuple val(meta), path(vcf), path(ped)
         path(score_config)
 
     output:

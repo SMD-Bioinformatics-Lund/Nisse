@@ -5,11 +5,10 @@ process GENMOD_MODELS {
     container "${params.containers.genmod}"
 
     input:
-    tuple val(meta), path(vcf)
-    path(per_case_ped)
+    tuple val(meta), path(vcf), path(per_case_ped)
 
     output:
-    tuple val(meta), path("${meta.sample}_models.vcf"), emit: vcf
+    tuple val(meta), path("${meta.sample}_models.vcf"), path(per_case_ped), emit: vcf_ped
     tuple val(meta), path("*_versions.yml"), emit: versions
 
     script:

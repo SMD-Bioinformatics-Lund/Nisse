@@ -335,9 +335,15 @@ workflow SNV_SCORE {
     //     meta + [pedigree]
     // }
     // ch_make_case_ped = ch_meta.join(ch_combined_ped)
+
     MAKE_CASE_PED(ch_meta, ch_combined_ped)
-    GENMOD_MODELS(ch_annotated_vcf, MAKE_CASE_PED.out.ped)
-    GENMOD_SCORE(GENMOD_MODELS.out.vcf, MAKE_CASE_PED.out.ped, val_score_config)
+    
+    ch_annotated_vcf_ped = ch_annotated_vcf.join(MAKE_CASE_PED.out.ped)
+
+    GENMOD_MODELS(ch_annotated_vcf_ped)
+   
+    // GENMOD_MODELS(ch_annotated_vcf, MAKE_CASE_PED.out.ped)
+    GENMOD_SCORE(GENMOD_MODELS.out.vcf_ped, val_score_config)
     GENMOD_COMPOUND(GENMOD_SCORE.out.vcf)
     GENMOD_SORT(GENMOD_COMPOUND.out.vcf)
     VCF_COMPLETION(GENMOD_SORT.out.vcf)
