@@ -1,6 +1,6 @@
 process MAKE_CASE_PED {
 
-    tag "${meta.sample}"
+    tag "${meta.case}"
     label "process_low"
 
     input:
@@ -8,7 +8,7 @@ process MAKE_CASE_PED {
     path(family_all_cases)
 
     output:
-    tuple val(meta), path("${meta.sample}_per_case.ped"), emit: ped
+    tuple val(meta), path("${meta.case}_per_case.ped"), emit: ped
 
     script:
     """
