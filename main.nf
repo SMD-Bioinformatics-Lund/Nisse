@@ -251,9 +251,9 @@ workflow NISSE {
     SNV_ANNOTATE(PREPROCESS.out.vcf, params.vep)
     ch_versions = ch_versions.mix(SNV_ANNOTATE.out.versions)
 
-    ch_meta.view { it -> "ch_meta ${it}" }
-    SNV_ANNOTATE.out.vcf.view { it -> "SNV_ANNOTATE ${it}" }
-    ch_combined_ped.view { it -> "ch_combined_ped ${it}" }
+    // ch_meta.view { it -> "ch_meta ${it}" }
+    // SNV_ANNOTATE.out.vcf.view { it -> "SNV_ANNOTATE ${it}" }
+    // ch_combined_ped.view { it -> "ch_combined_ped ${it}" }
 
     SNV_SCORE(ch_meta, SNV_ANNOTATE.out.vcf, ch_combined_ped, params.score_config, params.score_threshold)
     ch_versions = ch_versions.mix(SNV_SCORE.out.versions)
@@ -332,7 +332,10 @@ workflow SNV_SCORE {
     val_score_threshold
 
     main:
-    ch_make_case_ped = ch_meta.join(ch_combined_ped)
+    ch_make_case_ped = ch_meta.combine(ch_combined_ped) { meta, pedigree ->
+        meta + [pedigree]
+    }
+    // ch_make_case_ped = ch_meta.join(ch_combined_ped)
     MAKE_CASE_PED(ch_make_case_ped)
     GENMOD_MODELS(ch_annotated_vcf, MAKE_CASE_PED.out.ped)
     GENMOD_SCORE(GENMOD_MODELS.out.vcf, MAKE_CASE_PED.out.ped, val_score_config)
