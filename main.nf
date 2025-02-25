@@ -328,14 +328,14 @@ workflow SNV_SCORE {
     val_score_threshold
 
     main:
-    ch_meta.view { it -> "ch_meta ${it}" }
-    ch_combined_ped.view { it -> "ch_combined_ped ${it}" }
+    // ch_meta.view { it -> "ch_meta ${it}" }
+    // ch_combined_ped.view { it -> "ch_combined_ped ${it}" }
 
-    ch_make_case_ped = ch_meta.combine(ch_combined_ped) { meta, pedigree ->
-        meta + [pedigree]
-    }
+    // ch_make_case_ped = ch_meta.combine(ch_combined_ped) { meta, pedigree ->
+    //     meta + [pedigree]
+    // }
     // ch_make_case_ped = ch_meta.join(ch_combined_ped)
-    MAKE_CASE_PED(ch_make_case_ped)
+    MAKE_CASE_PED(ch_meta, ch_combined_ped)
     GENMOD_MODELS(ch_annotated_vcf, MAKE_CASE_PED.out.ped)
     GENMOD_SCORE(GENMOD_MODELS.out.vcf, MAKE_CASE_PED.out.ped, val_score_config)
     GENMOD_COMPOUND(GENMOD_SCORE.out.vcf)

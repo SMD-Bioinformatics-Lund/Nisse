@@ -4,7 +4,8 @@ process MAKE_CASE_PED {
     label "process_low"
 
     input:
-    tuple val(meta), path(family_all_cases)
+    val(meta)
+    path(family_all_cases)
 
     output:
     tuple val(meta), path("${meta.sample}_per_case.ped"), emit: ped
