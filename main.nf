@@ -155,11 +155,11 @@ workflow {
 
     if (!params.qc_only) {
         BGZIP_TABIX_VCF(ch_vcf)
-        versions.mix(BGZIP_TABIX_VCF.out.versions)
+        ch_versions.mix(BGZIP_TABIX_VCF.out.versions)
         ch_vcf_tbi = BGZIP_TABIX_VCF.out.vcf_tbi
 
         BGZIP_TABIX_JUNCTION_BED(ch_junction_bed)
-        versions.mix(BGZIP_TABIX_JUNCTION_BED.out.versions)
+        ch_versions.mix(BGZIP_TABIX_JUNCTION_BED.out.versions)
         ch_junction_bed_tbi = BGZIP_TABIX_JUNCTION_BED.out.bed_tbi
     }
 
