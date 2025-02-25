@@ -93,7 +93,7 @@ workflow {
 
         ch_vcf = TOMTE.out.vcf_tbi
 
-        ch_ped = TOMTE.out.ped
+        ch_ped = Channel.value(TOMTE.out.ped)
         ch_vcf_tbi = TOMTE.out.vcf_tbi
         ch_drop_ae_out_research = TOMTE.out.drop_ae_out_research
         ch_drop_as_out_research = TOMTE.out.drop_as_out_research
