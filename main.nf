@@ -100,6 +100,10 @@ workflow {
         ch_bam_bai = TOMTE.out.bam_bai
 
     } else {
+        // FIXME: This branch has not been as thoroughly tested
+        // Will likely require some further touches to get it running again, if needed
+        // If not needed - consider removing it
+
         // Creating a channel for Hb percentage from Tomte results
         ch_hb_estimates = ch_meta.map { meta ->
             def sample_id = meta.sample
@@ -246,6 +250,10 @@ workflow NISSE {
 
     SNV_ANNOTATE(PREPROCESS.out.vcf, params.vep)
     ch_versions = ch_versions.mix(SNV_ANNOTATE.out.versions)
+
+    ch_meta.view { it -> "ch_meta ${it}" }
+    SNV_ANNOTATE.out.vcf.view { it -> "SNV_ANNOTATE ${it}" }
+    ch_combined_ped.view { it -> "ch_combined_ped ${it}" }
 
     SNV_SCORE(ch_meta, SNV_ANNOTATE.out.vcf, ch_combined_ped, params.score_config, params.score_threshold)
     ch_versions = ch_versions.mix(SNV_SCORE.out.versions)
