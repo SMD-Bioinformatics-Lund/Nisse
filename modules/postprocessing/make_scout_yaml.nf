@@ -39,7 +39,7 @@ process MAKE_SCOUT_YAML {
         --phenotype "${phenotype}" \\
         --tissue "${tissue}" \\
         --bam_path "${tomte_results_dir}/alignment/${cram}" \\
-        --splice_junctions "${nisse_output_dir}/ucsc/${junctions}" \\
+        --splice_junctions "${tomte_results_dir}/ucsc/${junctions}" \\
         --rna_bigwig "${tomte_results_dir}/ucsc/${bigwig}" \\
         --peddy_ped "${tomte_results_dir}/qc/peddy/${peddy_ped}" \\
         --peddy_check "${tomte_results_dir}/qc/peddy/${peddy_check}" \\
