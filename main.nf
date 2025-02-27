@@ -260,7 +260,14 @@ workflow NISSE {
         .join(SNV_SCORE.out.vcf_tbi)
         .join(ch_tomte_junction_bed_tbi)
         .join(ch_tomte_raw_results)
-    MAKE_SCOUT_YAML(ch_all_result_files, params.tomte_results, params.outdir, params.phenotype, params.tissue)
+
+    ch_drop_results.view { it -> "ch_drop_results ${it}" }
+    SNV_SCORE.out.vcf_tbi.view { it -> "SNV_SCORE.out.vcf_tbi ${it}" }
+    ch_tomte_junction_bed_tbi.view { it -> "ch_tomte_junction_bed_tbi ${it}" }
+    ch_tomte_raw_results.view { it -> "ch_tomte_raw_results ${it}" }
+    ch_all_result_files.view { it -> "ch_all_result_files ${it}" }
+
+    MAKE_SCOUT_YAML(ch_all_result_files, params.tomte_results, params.nisse_outdir, params.phenotype, params.tissue)
 
     emit:
     versions = ch_versions
@@ -328,14 +335,6 @@ workflow SNV_SCORE {
     val_score_threshold
 
     main:
-    // ch_meta.view { it -> "ch_meta ${it}" }
-    // ch_combined_ped.view { it -> "ch_combined_ped ${it}" }
-
-    // ch_make_case_ped = ch_meta.combine(ch_combined_ped) { meta, pedigree ->
-    //     meta + [pedigree]
-    // }
-    // ch_make_case_ped = ch_meta.join(ch_combined_ped)
-
     MAKE_CASE_PED(ch_meta, ch_combined_ped)
     
     ch_annotated_vcf_ped = ch_annotated_vcf.join(MAKE_CASE_PED.out.ped)
