@@ -75,8 +75,13 @@ def main(
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
+
     parser.add_argument("--in_path", required=True)
     parser.add_argument("--out_path", required=True)
+
+    parser.add_argument("--sample_col", required=True, help="Only return hits for the specific sample")
+    parser.add_argument("--sample", required=True)
+
     parser.add_argument("--stat_col", required=True)
     parser.add_argument("--stat_cutoff", required=True, type=float)
     parser.add_argument("--hgnc_symbol_col", required=True)
