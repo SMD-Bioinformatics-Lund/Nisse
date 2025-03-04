@@ -41,7 +41,7 @@ include { versions } from './modules/postprocessing/bgzip_tabix.nf'
 
 workflow {
 
-    startupMessage()
+    startupMessage(params.show_params)
 
     ch_versions = Channel.empty()
     Channel
@@ -356,7 +356,12 @@ workflow SNV_SCORE {
     versions = ch_versions
 }
 
-def startupMessage() {
+def startupMessage(showParams) {
     print("Starting Nisse")
     print("Output dir: ${params.outdir}")
+
+    if (showParams) {
+        def prettyParams = params.collect { k, v -> "$k: $v" }.join('\n')
+        log.info "Workflow params:\n${prettyParams}"
+    }
 }

@@ -1,6 +1,6 @@
 process MAKE_CASE_PED {
 
-    tag "${meta.case}"
+    tag "${meta.sample}"
     label "process_low"
 
     input:
