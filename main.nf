@@ -39,7 +39,9 @@ include { IDSNP_VCF_TO_JSON } from './modules/defined_calls.nf'
 include { PERC_HETEROZYGOTES } from './modules/defined_calls.nf'
 include { versions } from './modules/postprocessing/bgzip_tabix.nf'
 
+
 workflow {
+
 
     startupMessage(params.show_params)
 
