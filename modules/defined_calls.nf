@@ -22,18 +22,15 @@ process IDSNP_CALL {
 
     script:
         def prefix  = "${meta.sample}"
-        // Document flags
-        // -d 1000
-        // -q 10
-        // FIXME: Check the params.bed arguments
-        // FIXME: Is there also a variant argument needed?
+        def max_depth = 1000
+        def min_map_qual = 10
         """
         bcftools mpileup \\
             -Ou \\
             -R "${idsnp_params.idsnp_bed}" \\
             -f "${idsnp_params.genome}" \\
-            -d 1000 \\
-            -q 10 \\
+            -d "${max_depth}" \\
+            -q "${min_map_qual}" \\
             "${bam}" | \\
         bcftools call \\
             -A \\

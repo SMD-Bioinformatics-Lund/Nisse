@@ -99,7 +99,7 @@ def main(
                 cov_data,
                 "Genebody coverage slope",
                 "Picard",
-                "FIXME",
+                "No version",
                 "https://broadinstitute.github.io/picard/",
             )
             samples_qc_dict[sample].append(entry)

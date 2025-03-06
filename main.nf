@@ -51,7 +51,7 @@ workflow {
         .splitCsv(header: true)
         .map { meta ->
             // Needed for Tomte's internal workings
-            // FIXME: We need to calculate the number of fq-pairs here when running many samples
+            // FIXME: See if "placeholder" works as well
             meta = meta + [ fq_pairs: 1, single_end: false, is_fastq: true, id: meta.sample ]
             meta
         }
