@@ -57,8 +57,6 @@ workflow {
         }
         .set { ch_meta }
 
-    ch_fasta_fai = Channel.of(tuple(file(params.genome_fasta), file(params.genome_fasta_fai)))
-
     // Either execute Tomte as part of Nisse, or start with its results folder
     if (params.run_tomte) {
         ch_meta
@@ -160,7 +158,6 @@ workflow {
         ch_multiqc,
         ch_hb_estimates,
         ch_bam_bai,
-        ch_fasta_fai,
         params.idsnps,
         params.het_calls
     )
@@ -198,20 +195,12 @@ workflow NISSE_QC {
     ch_multiqc
     ch_hb_estimates
     ch_bam_bai
-    ch_fasta_fai
     val_idsnp_params
     val_hetcalls_params
 
     main:
-    PERC_HETEROZYGOTES(ch_bam_bai, ch_fasta_fai, val_hetcalls_params)
-
-    ch_bam_bai.view { it -> "ch_bam_bai: ${it}" }
-    ch_fasta_fai.view { it -> "ch_fasta_fai: ${it}" }
-
-    ch_idsnp = ch_bam_bai.cross(ch_fasta_fai)
-    ch_idsnp.view { it -> "ch_idsnp: ${it}" }
-
-    IDSNP_CALL(ch_idsnp, val_idsnp_params)
+    PERC_HETEROZYGOTES(ch_bam_bai, val_hetcalls_params)
+    IDSNP_CALL(ch_bam_bai, val_idsnp_params)
     IDSNP_VCF_TO_JSON(IDSNP_CALL.out.vcf)
 
     ch_qc = ch_multiqc

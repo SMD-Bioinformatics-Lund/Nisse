@@ -13,7 +13,7 @@ process IDSNP_CALL {
     container "${params.containers.bcftools}"
 
     input:
-        tuple val(meta), path(bam), path(bai), path(genome), path(genome_fai)
+        tuple val(meta), path(bam), path(bai)
         val idsnp_params
 
     output:
@@ -31,7 +31,7 @@ process IDSNP_CALL {
         bcftools mpileup \\
             -Ou \\
             -R "${idsnp_params.idsnp_bed}" \\
-            -f "${genome}" \\
+            -f "${idsnp_params.genome}" \\
             -d 1000 \\
             -q 10 \\
             "${bam}" | \\
@@ -106,7 +106,6 @@ process PERC_HETEROZYGOTES {
 
     input:
         tuple val(meta), path(bam), path(bai)
-        tuple path(genome), path(genome_fai)
         val hetcall_params
     
     output:
@@ -119,7 +118,7 @@ process PERC_HETEROZYGOTES {
     bcftools mpileup \\
         -Ou \\
         -R "${hetcall_params.targets_bed}" \\
-        -f "${genome}" \\
+        -f "${hetcall_params.genome}" \\
         "${bam}" | \\
     bcftools call \\
         -A \\
