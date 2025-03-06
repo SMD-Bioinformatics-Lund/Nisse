@@ -13,8 +13,7 @@ process IDSNP_CALL {
     container "${params.containers.bcftools}"
 
     input:
-        tuple val(meta), path(bam), path(bai)
-        tuple path(genome), path(genome_fai)
+        tuple val(meta), path(bam), path(bai), path(genome), path(genome_fai)
         val idsnp_params
 
     output:

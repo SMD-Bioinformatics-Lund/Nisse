@@ -204,7 +204,14 @@ workflow NISSE_QC {
 
     main:
     PERC_HETEROZYGOTES(ch_bam_bai, ch_fasta_fai, val_hetcalls_params)
-    IDSNP_CALL(ch_bam_bai, ch_fasta_fai, val_idsnp_params)
+
+    ch_bam_bai.view { it -> "ch_bam_bai: ${it}" }
+    ch_fasta_fai.view { it -> "ch_fasta_fai: ${it}" }
+
+    ch_idsnp = ch_bam_bai.cross(ch_fasta_fai)
+    ch_idsnp.view { it -> "ch_idsnp: ${it}" }
+
+    IDSNP_CALL(ch_idsnp, val_idsnp_params)
     IDSNP_VCF_TO_JSON(IDSNP_CALL.out.vcf)
 
     ch_qc = ch_multiqc
