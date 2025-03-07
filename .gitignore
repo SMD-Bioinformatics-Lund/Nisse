@@ -2,7 +2,7 @@
 bin_tomte
 assets
 bin
-tomte/
+#tomte/
 cmd_tomte.config
 nextflow_schema.json
 
