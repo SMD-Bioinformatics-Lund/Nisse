@@ -40,6 +40,12 @@ include { PERC_HETEROZYGOTES } from './modules/defined_calls.nf'
 include { versions } from './modules/postprocessing/bgzip_tabix.nf'
 
 
+def join_on_sample(ch1, ch2) {
+    def mapped1 = ch1.map { tuple -> [ tuple[0].sample, tuple ] }
+    def mapped2 = ch2.map { tuple -> [ tuple[0].sample, tuple ] }
+    return mapped1.join(mapped2).map { it[1] }
+}
+
 workflow {
 
 
@@ -254,17 +260,22 @@ workflow NISSE {
 
     ch_drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
 
-    ch_all_result_files = ch_drop_results
-        .join(SNV_SCORE.out.vcf_tbi)
-        .join(ch_tomte_junction_bed_tbi)
-        .join(ch_tomte_raw_results)
+    // ch_all_result_files = ch_drop_results
+    //     .join(SNV_SCORE.out.vcf_tbi)
+    //     .join(ch_tomte_junction_bed_tbi)
+    //     .join(ch_tomte_raw_results)
+
+    // ch_all_result_files = ch_drop_results
+    //     .join(SNV_SCORE.out.vcf_tbi)
+    //     .join(ch_tomte_junction_bed_tbi)
+    //     .join(ch_tomte_raw_results)
 
     ch_drop_results.first().view { it -> "1: ${it}" }
-    ch_2 = ch_drop_results.join(SNV_SCORE.out.vcf_tbi)
+    ch_2 = join_on_sample(ch_drop_results, SNV_SCORE.out.vcf_tbi)
     ch_2.first().view { it -> "2: ${it}" }
-    ch_3 = ch_2.join(ch_tomte_junction_bed_tbi)
+    ch_3 = join_on_sample(ch_2, ch_tomte_junction_bed_tbi)
     ch_3.first().view { it -> "3: ${it}" }
-    ch_all_result_files = ch_3.join(ch_tomte_raw_results)
+    ch_all_result_files = join_on_sample(ch_3, ch_tomte_raw_results)
     ch_all_result_files.first().view { it -> "4: ${it}"}
 
     // ch_drop_results.first().view { it -> "ch_drop_results ${it}" }
