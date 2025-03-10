@@ -44,9 +44,9 @@ def join_on_sample(ch1, ch2) {
     def mapped1 = ch1.map { tuple -> [ tuple[0].sample, tuple ] }
     def mapped2 = ch2.map { tuple -> [ tuple[0].sample, tuple ] }
     return mapped1.join(mapped2).map { key_values -> 
-        def values = key_values[1]
-        def ch1_values = values[0]
-        def ch2_values = values[1]
+        def key = key_values[0]
+        def ch1_values = key_values[1]
+        def ch2_values = key_values[2]
         [ ch1_values[0] ] + ch1_values.drop(1) + ch2_values.drop(1)
     }
 }
