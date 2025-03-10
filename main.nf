@@ -44,7 +44,7 @@ def join_on_sample(ch1, ch2) {
     def mapped1 = ch1.map { tuple -> [ tuple[0].sample, tuple ] }
     def mapped2 = ch2.map { tuple -> [ tuple[0].sample, tuple ] }
     return mapped1.join(mapped2).map { key_values -> 
-        def key = key_values[0]
+        def _key = key_values[0]
         def ch1_values = key_values[1]
         def ch2_values = key_values[2]
         [ ch1_values[0] ] + ch1_values.drop(1) + ch2_values.drop(1)
@@ -52,7 +52,6 @@ def join_on_sample(ch1, ch2) {
 }
 
 workflow {
-
 
     startupMessage(params.show_params)
 
@@ -270,18 +269,23 @@ workflow NISSE {
     //     .join(ch_tomte_junction_bed_tbi)
     //     .join(ch_tomte_raw_results)
 
-    // ch_all_result_files = ch_drop_results
-    //     .join(SNV_SCORE.out.vcf_tbi)
+    // ch_drop_results.first().view { it -> "1: ${it}" }
+    ch_2 = join_on_sample(ch_drop_results, SNV_SCORE.out.vcf_tbi)
+    // ch_2.first().view { it -> "2: ${it}" }
+    ch_3 = join_on_sample(ch_2, ch_tomte_junction_bed_tbi)
+    // ch_3.first().view { it -> "3: ${it}" }
+    ch_all_result_files = join_on_sample(ch_3, ch_tomte_raw_results)
+    // ch_all_result_files.first().view { it -> "4: ${it}"}
+
+    ch_drop_results.view { it -> ">>> ch_drop_results: ${it}" }
+    SNV_SCORE.out.vcf_tbi.view { it -> ">>> SNV_SCORE.out.vcf_tbi: ${it}" }
+    ch_test = ch_drop_results.join(SNV_SCORE.out.vcf_tbi)
+    ch_test.view { it -> ">>> ch_test: ${it}" }
+
+
     //     .join(ch_tomte_junction_bed_tbi)
     //     .join(ch_tomte_raw_results)
 
-    ch_drop_results.first().view { it -> "1: ${it}" }
-    ch_2 = join_on_sample(ch_drop_results, SNV_SCORE.out.vcf_tbi)
-    ch_2.first().view { it -> "2: ${it}" }
-    ch_3 = join_on_sample(ch_2, ch_tomte_junction_bed_tbi)
-    ch_3.first().view { it -> "3: ${it}" }
-    ch_all_result_files = join_on_sample(ch_3, ch_tomte_raw_results)
-    ch_all_result_files.first().view { it -> "4: ${it}"}
 
     // ch_drop_results.first().view { it -> "ch_drop_results ${it}" }
     // SNV_SCORE.out.vcf_tbi.first().view { it -> "SNV_SCORE.out.vcf_tbi ${it}" }
