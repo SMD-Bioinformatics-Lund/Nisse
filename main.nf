@@ -259,6 +259,12 @@ workflow NISSE {
         .join(ch_tomte_junction_bed_tbi)
         .join(ch_tomte_raw_results)
 
+    ch_drop_results.first().view { it -> "ch_drop_results ${it}" }
+    SNV_SCORE.out.vcf_tbi.first().view { it -> "SNV_SCORE.out.vcf_tbi ${it}" }
+    ch_tomte_junction_bed_tbi.first().view { it -> "ch_tomte_junction_bed_tbi ${it}" }
+    ch_tomte_raw_results.first().view { it -> "ch_tomte_raw_results ${it}" }
+    ch_all_result_files.first().view { it -> "ch_all_result_files ${it}" }
+
     MAKE_SCOUT_YAML(ch_all_result_files, params.tomte_results, params.nisse_outdir, params.phenotype, params.tissue)
 
     emit:
