@@ -15,7 +15,7 @@ process PREPARE_DROP {
     tuple val(meta), path("${meta.sample}_${label}_parsed.tsv"), emit: drop
 
     script:
-def hgnc_symbol_col = "hgncSymbol"
+    def hgnc_symbol_col = "hgncSymbol"
     """
     prepare_drop.py \\
         --in_path "${drop_full}" \\

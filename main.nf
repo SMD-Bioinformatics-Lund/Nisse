@@ -156,12 +156,6 @@ workflow {
         }
     }
 
-    // if (!params.qc_only) {
-    //     BGZIP_TABIX_JUNCTION_BED(ch_junction_bed)
-    //     ch_versions.mix(BGZIP_TABIX_JUNCTION_BED.out.versions)
-    //     ch_junction_bed_tbi = BGZIP_TABIX_JUNCTION_BED.out.bed_tbi
-    // }
-
     NISSE_QC(
         ch_versions,
         ch_multiqc,
@@ -342,7 +336,6 @@ workflow SNV_SCORE {
 
     GENMOD_MODELS(ch_annotated_vcf_ped)
    
-    // GENMOD_MODELS(ch_annotated_vcf, MAKE_CASE_PED.out.ped)
     GENMOD_SCORE(GENMOD_MODELS.out.vcf_ped, val_score_config)
     GENMOD_COMPOUND(GENMOD_SCORE.out.vcf)
     GENMOD_SORT(GENMOD_COMPOUND.out.vcf)
