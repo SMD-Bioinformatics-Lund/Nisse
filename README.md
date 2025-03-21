@@ -4,7 +4,7 @@ Home for CMD [Tomte](https://github.com/genomic-medicine-sweden/tomte) post proc
 
 Run Tomte as part of Nisse. Tomte and config-files repo are available as sub modules.
 
-Execute this while providing the Tomte configs:
+Execute while providing the Tomte configs:
 
 ```
 nextflow run main.nf \
