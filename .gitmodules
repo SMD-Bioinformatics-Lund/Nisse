@@ -1,3 +1,6 @@
 [submodule "tomte"]
 	path = tomte
 	url = git@github.com:genomic-medicine-sweden/tomte.git
+[submodule "config-files"]
+	path = config-files
+	url = ./config-files/
