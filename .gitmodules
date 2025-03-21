@@ -3,4 +3,4 @@
 	url = git@github.com:genomic-medicine-sweden/tomte.git
 [submodule "config-files"]
 	path = config-files
-	url = ./config-files/
+	url = git@github.com:SMD-Bioinformatics-Lund/config-files.git
