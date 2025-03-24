@@ -1,5 +1,31 @@
 Home for CMD [Tomte](https://github.com/genomic-medicine-sweden/tomte) post processing pipeline.
 
+### Setting things up
+
+Retrieving the correct versions of Nisse, Tomte and config-files.
+
+(If targeting a different branch than master, you'll need to add the `--branch` flag).
+
+```
+$ git clone --recurse-submodules git@github.com:SMD-Bioinformatics-Lund/Nisse.git
+```
+
+Furthermore, certain Tomte files will need to be linked into the Nisse repo.
+
+```
+cd Nisse
+ln -s tomte/nextflow_schema.json
+ln -s tomte/assets
+```
+
+And scripts from both Nisse (`bin_nisse`) and Tomte (`tomte/bin`) needs to be copied into `bin`.
+
+```
+mkdir bin/
+cp bin_nisse/* bin/
+cp tomte/bin/* bin/
+```
+
 ### Running Nisse
 
 Run Tomte as part of Nisse. Tomte and config-files repo are available as sub modules.
