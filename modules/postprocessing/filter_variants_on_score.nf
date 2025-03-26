@@ -6,13 +6,12 @@ process FILTER_VARIANTS_ON_SCORE {
 
     input:
     tuple val(meta), path(scored_vcf), path(scored_vcf_tbi)
-    val threshold
+    val score_threshold
 
     output:
     tuple val(meta), path("${meta.sample}_filtered.vcf"), emit: vcf
 
     script:
-    def score_threshold = 17
     """
     filter_score.py "${scored_vcf}" "${score_threshold}" > "${meta.sample}_filtered.vcf"
     """

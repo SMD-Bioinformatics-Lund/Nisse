@@ -20,6 +20,8 @@ process PREPARE_DROP {
     prepare_drop.py \\
         --in_path "${drop_full}" \\
         --out_path "${meta.sample}_${label}_parsed.tsv" \\
+        --sample_col "sampleID" \\
+        --sample "${meta.sample}" \\
         --stat_col "${stat_col}" \\
         --stat_cutoff "${stat_cutoff}" \\
         --hgnc_symbol_col "${hgnc_symbol_col}" \\

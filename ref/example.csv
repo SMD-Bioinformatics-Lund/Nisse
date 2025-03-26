@@ -1,0 +1,3 @@
+extraction_method,case,sample,fastq_1,fastq_2,strandedness,sex
+EDTA,case1,c1_s1,/data/c1_s1_R1.fastq.gz,/data/c1_s1_R2.fastq.gz,reverse,M
+EDTA,case2,c2_s1,/data/c1_s2_R1.fastq.gz,/data/c1_s2_R2.fastq.gz,reverse,M

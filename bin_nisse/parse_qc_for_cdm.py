@@ -2,32 +2,146 @@
 
 import argparse
 import json
-import csv
 import numpy as np
 from ast import literal_eval
 from pathlib import Path
 from collections import defaultdict
-from typing import Any, Dict, List, Set, Tuple, Union, Optional
+from typing import Any, Dict, List, Mapping, Set, Tuple, Union, Optional
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
+DESCRIPTION = """
+Parse QC-output from Tomte and Nisse into a JSON format
+compatible with CDM.
+"""
+
+
+class QCEntry:
+    def __init__(
+        self, results: Dict[str, Any], label: Optional[str], software: str, version: str, url: str
+    ):
+        self.results = results
+
+        self.label = label
+        self.software = software
+        self.version = version
+        self.url = url
+
+    def get_result_dict(self) -> Dict[str, Any]:
+
+        entry_dict: Dict[str, Any] = {}
+
+        if self.label:
+            entry_dict["label"] = self.label
+
+        if self.software:
+            entry_dict["software"] = self.software
+
+        if self.version:
+            entry_dict["version"] = self.version
+
+        if self.url:
+            entry_dict["url"] = self.url
+
+        entry_dict["results"] = self.results
+
+        return entry_dict
 
 
 def main(
     multiqc_general_stats: str,
-    picard_rna_coverage: str,
-    multiqc_star: str,
-    merged_hb_estimate: str,
+    picard_rna_coverage: Optional[str],
+    multiqc_star: Optional[str],
+    merged_hb_estimate: Optional[str],
+    hetcalls_vcfs: Optional[List[str]],
     output_file: str,
     sample_id: Optional[str],
+    debug: bool,
 ):
+    samples_qc_dict = {}
 
-    in_fp = multiqc_general_stats
+    sample_qc_tups = parse_multiqc_general_stats(multiqc_general_stats)
+    for sample, qc_dict in sample_qc_tups:
+        qc_entry = QCEntry(
+            qc_dict, "MultiQC general stats", "MultiQC", "No version", "https://seqera.io/multiqc/"
+        )
+        samples_qc_dict[sample] = [qc_entry]
 
+    if merged_hb_estimate:
+        # Add HB estimate data
+        hb_data = process_hb_estimate_data(merged_hb_estimate)
+
+        for sample, hb_values in hb_data.items():
+            if sample in samples_qc_dict:
+                entry = QCEntry(
+                    hb_values,
+                    "Hemoglobin fraction",
+                    "calculate_perc_mapping.py",
+                    "No version",
+                    "https://github.com/genomic-medicine-sweden/tomte/blob/dev/bin/calculate_perc_mapping.py",
+                )
+                samples_qc_dict[sample].append(entry)
+            else:
+                continue
+
+    # Calculate slope for Rna gene body coverage
+    if picard_rna_coverage:
+        coverage_data = load_coverage_data(picard_rna_coverage)
+
+        for sample, coverage_values in coverage_data.items():
+            slope = calculate_slope(coverage_values)
+
+            cov_data = {
+                "genebody_cov_slope": round(slope * 1000, 4),
+                "genebody_cov": list(coverage_values),
+            }
+
+            entry = QCEntry(
+                cov_data,
+                "Genebody coverage slope",
+                "Picard",
+                "No version",
+                "https://broadinstitute.github.io/picard/",
+            )
+            samples_qc_dict[sample].append(entry)
+
+    # Process multiqc star stats
+    if multiqc_star:
+        star_data = process_multiqc_star_stats(multiqc_star)
+        for sample, star_stats in star_data.items():
+            entry = QCEntry(
+                star_stats,
+                "Multiqc STAR stats",
+                "MultiQC",
+                "No version",
+                "https://seqera.io/multiqc/",
+            )
+            samples_qc_dict[sample].append(entry)
+
+    # Heterogenicity calls
+    # FIXME: We'll need multiple sample paths for this one
+    if hetcalls_vcfs:
+        for hetcalls_vcf in hetcalls_vcfs:
+            sample, het_qc = calculate_het_qcs(hetcalls_vcf)
+            # for sample, het_qc in het_qcs.items():
+            entry = QCEntry(
+                het_qc,
+                "Heterozygosity fraction",
+                "BCFTools",
+                "No version",
+                "https://samtools.github.io/bcftools/bcftools.html",
+            )
+            samples_qc_dict[sample].append(entry)
+
+    if output_file:
+        write_results(samples_qc_dict, output_file, sample_id, debug)
+
+
+def parse_multiqc_general_stats(multiqc_general_stats_fp: str) -> List[Tuple[str, Dict[str, str]]]:
     header = []
-    batches = []
-    with open(in_fp, "r") as in_fh:
-        curr_batch = []
-        for line in in_fh:
+    row_triplets = []
+    with open(multiqc_general_stats_fp, "r") as fh:
+        curr_triplet = []
+        for line in fh:
             line = line.strip()
             fields = line.split("\t")
 
@@ -36,78 +150,83 @@ def main(
                 continue
 
             fields = line.split("\t")
-            curr_batch.append(fields)
-            if len(curr_batch) == 3:
-                batches.append(curr_batch)
-                curr_batch = []
+            curr_triplet.append(fields)
+            if len(curr_triplet) == 3:
+                row_triplets.append(curr_triplet)
+                curr_triplet = []
 
-    for batch in batches:
-        sample, combined_dict = make_combined_dict(header, batch[0], batch[1], batch[2])
+    # samples_qcs = {}
 
-    results = {}
+    sample_qc_tups: List[Tuple[str, Dict[str, str]]] = []
 
-    for batch in batches:
-        sample, combined_dict = make_combined_dict(header, batch[0], batch[1], batch[2])
-        results[sample] = combined_dict
+    for row_triplet in row_triplets:
+        sample, qc_dict = parse_multiqc_sample(
+            header, row_triplet[0], row_triplet[1], row_triplet[2]
+        )
+        sample_qc_tups.append((sample, qc_dict))
 
-        if merged_hb_estimate:
-            # Add HB estimate data
-            hb_data = process_hb_estimate_data(merged_hb_estimate)
-
-            for sample, hb_values in hb_data.items():
-                if sample in results:
-                    results[sample].update(hb_values)
-                else:
-                    continue
-
-    # Calculate slope for Rna gene body coverage
-    if picard_rna_coverage:
-        coverage_data = load_coverage_data(picard_rna_coverage)
-
-        for sample, coverage_values in coverage_data.items():
-            slope = calculate_slope(coverage_values)
-            results[sample]["genebody_cov_slope"] = round(slope * 1000, 4)
-            results[sample]["genebody_cov"] = list(coverage_values)
-
-    # Process multiqc star stats
-    if multiqc_star:
-        star_data = process_multiqc_star_stats(multiqc_star)
-        for sample, star_stats in star_data.items():
-            results[sample].update(star_stats)
-
-    if output_file:
-        write_results(results, output_file, sample_id)
+    return sample_qc_tups
 
 
-def write_results(
-    data: Dict[str, Any], output_path: str, sample_id: Optional[str]
-) -> None:
-    """
-    Write json blob with general statistics and rna cov values to a file.
+def calculate_het_qcs(het_call_vcf) -> Tuple[str, Dict[str, Any]]:
+    calls = {}
 
-    Args:
-        data (dict): Dictionary with sample names as keys and coverage arrays as values.
-        output_path (str): Path to the output file.
-    """
-    with open(output_path, "w") as output_file:
-        if sample_id is not None:
-            sample_only_data = data.get(sample_id)
-            if sample_only_data is None:
-                all_valid_ids = list(data.keys())
-                raise ValueError(
-                    f"Tried getting sample_id {sample_id}. Valid IDs are: {', '.join(all_valid_ids)}"
-                )
-            output_file.write(json.dumps(sample_only_data))
-        else:
-            for sample_name, values in data.items():
-                output_file.write(f"{sample_name}\t{json.dumps(values)}\n")
-    print(f"Results written to {output_path}.")
+    sample = None
+
+    with open(het_call_vcf, "r") as fh:
+        for line in fh:
+            line = line.rstrip()
+
+            if line.startswith("##"):
+                continue
+
+            if line.startswith("#"):
+                header_fields = line.split("\t")
+                if len(header_fields) != 10:
+                    raise ValueError(f"Expected a proband-only VCF, found header: {header_fields}")
+                sample = header_fields[-1]
+                continue
+
+            fields = line.split("\t")
+
+            id_col = 2
+            sample_col = 9
+
+            rsid = fields[id_col]
+            call = fields[sample_col].split(":")[0]
+            calls[rsid] = call
+
+    nbr_calls = 0
+    non_calls = 0
+    nbr_het_calls = 0
+    for rsid, call in calls.items():
+        if call == "./.":
+            non_calls += 1
+            continue
+
+        nbr_calls += 1
+        ref, alt = call.split("/")
+        if ref == alt:
+            nbr_het_calls += 1
+
+    qc_dict = {
+        "nbr_calls": nbr_calls,
+        "non_calls": non_calls,
+        "nbr_het_calls": nbr_het_calls,
+        "het_calls": calls,
+        "het_calls_fraction": nbr_het_calls / nbr_calls,
+    }
+
+    if not sample:
+        raise ValueError("No header line (prefixed by a single #) was found in the VCF, aborting")
+
+    return sample, qc_dict
 
 
 def build_dict(headers: List[str], fields: List[str]) -> Dict[str, str]:
     assert len(headers) == len(
         fields
-    ), f"Headers and fields nbrs differs {len(headers)} {len(fields)}"
+    ), f"Headers and fields nbrs differs {len(headers)} {len(fields)}. Headers: {headers}, fields: {fields}"
 
     value_dict = {}
     for i, header in enumerate(headers):
@@ -116,7 +235,7 @@ def build_dict(headers: List[str], fields: List[str]) -> Dict[str, str]:
     return value_dict
 
 
-def make_combined_dict(
+def parse_multiqc_sample(
     headers: List[str],
     shared_fields: List[str],
     fw_fields: List[str],
@@ -147,9 +266,7 @@ def make_combined_dict(
     shared_keys["m_aligned"] = "star-uniquely_mapped"
     shared_keys["pct_aligned"] = "star-uniquely_mapped_percent"
     shared_keys["pct_dup"] = "fastp-pct_duplication"
-    shared_keys["m_reads_after_filtering"] = (
-        "fastp-filtering_result_passed_filter_reads"
-    )
+    shared_keys["m_reads_after_filtering"] = "fastp-filtering_result_passed_filter_reads"
     shared_keys["gc"] = "fastp-after_filtering_gc_content"
     shared_keys["pct_pass_filter"] = "fastp-after_filtering_q30_rate"
     shared_keys["pct_adapter"] = "fastp-pct_adapter"
@@ -275,7 +392,7 @@ def process_multiqc_star_stats(
         ```
 
     """
-    columns_needed: Dict[str, Union[type, str]] = {
+    columns_needed: Dict[str, type] = {
         "total_reads": int,
         "num_noncanonical_splices": int,
         "num_splices": int,
@@ -323,10 +440,7 @@ def process_multiqc_star_stats(
         # Calculate splice_ratio
         sliced_data[key]["splice_ratio"] = int(
             round(
-                (
-                    sliced_data[key]["canon_splice"]
-                    / sliced_data[key]["non_canon_splice"]
-                ),
+                (sliced_data[key]["canon_splice"] / sliced_data[key]["non_canon_splice"]),
                 0,
             )
         )
@@ -336,12 +450,12 @@ def process_multiqc_star_stats(
 
 def process_hb_estimate_data(
     hb_estimate: str,
-) -> Dict[str, Dict[str, Union[int, float]]]:
+) -> Dict[str, Dict[str, Any]]:
     """
     Process HB data for a sample.
     """
     hb_json_per_sample = {}
-    hb_sample_id = hb_estimate.replace("_perc_mapping.json","")
+    hb_sample_id = hb_estimate.replace("_perc_mapping.json", "")
     with open(hb_estimate) as file:
         for line in file:
             json_data = line.strip()
@@ -349,17 +463,60 @@ def process_hb_estimate_data(
     return hb_json_per_sample
 
 
+def write_results(
+    qc_results: Dict[str, List[QCEntry]],
+    output_path: str,
+    stdout_sample: Optional[str],
+    debug: bool,
+) -> None:
+    """
+    Write json blob with general statistics and rna cov values to a file.
+
+    Args:
+        data (dict): Dictionary with sample names as keys and coverage arrays as values.
+        output_path (str): Path to the output file.
+    """
+
+    if stdout_sample:
+        if stdout_sample not in qc_results:
+            all_valid_ids = list(qc_results.keys())
+            raise ValueError(
+                f"Tried getting sample_id {stdout_sample}. Valid IDs are: {', '.join(all_valid_ids)}"
+            )
+        qc_result = qc_results[stdout_sample]
+        result_dicts = [qc.get_result_dict() for qc in qc_result]
+        out_json = json.dumps(result_dicts)
+        if debug:
+            print(out_json)
+        else:
+            with open(output_path, "w") as out_fh:
+                out_fh.write(out_json)
+    else:
+        with open(output_path, "w") as output_file:
+            for sample_name, qc_result in qc_results.items():
+                result_dicts = [qc.get_result_dict() for qc in qc_result]
+                result_json = json.dumps(result_dicts)
+                output_file.write(f"{sample_name}\t{json.dumps(result_json)}\n")
+        print(f"Results for {len(qc_results)} samples written to {output_path}.")
+
+
 def parse_arguments() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--multiqc_general_stats", required=True)
+    parser = argparse.ArgumentParser(description=DESCRIPTION)
+    parser.add_argument(
+        "--multiqc_general_stats", help="MultiQC file: multiqc_general_stats.txt", required=True
+    )
     parser.add_argument(
         "--sample_id",
         default=None,
-        help="Limit output to one sample and print to STDOUT",
+        help="Limit output to one sample",
     )
     parser.add_argument(
-        "--picard_rna_coverage",
-        help="Path to the input file containing RNA coverage data.",
+        "--debug",
+        action="store_true",
+        help="Run in debug mode, printing to STDOUT instead of to file, if limiting output to a single sample",
+    )
+    parser.add_argument(
+        "--picard_rna_coverage", help="Path to the input file containing RNA coverage data."
     )
     parser.add_argument(
         "--multiqc_star",
@@ -368,6 +525,9 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--hb_estimate",
         help="Path to the input file containing merged HB estimate data.",
+    )
+    parser.add_argument(
+        "--hetcalls_vcfs", help="VCF containing heterozygosity calls for selected SNPs", nargs="*"
     )
     parser.add_argument("--output_file", required=True)
     parser.add_argument(
@@ -383,11 +543,14 @@ def parse_arguments() -> argparse.Namespace:
 
 if __name__ == "__main__":
     args = parse_arguments()
+
     main(
         args.multiqc_general_stats,
         args.picard_rna_coverage,
         args.multiqc_star,
         args.hb_estimate,
+        args.hetcalls_vcfs,
         args.output_file,
         args.sample_id,
+        args.debug,
     )

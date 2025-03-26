@@ -4,7 +4,6 @@ use Data::Dumper;
 use Exporter qw(import);
 our @EXPORT_OK = qw( new next_line parse_vcf parse_metainfo parse_variant parse_genotype parse_info ); 
 
-
 sub new {
     my( $class, @args ) = @_;
     my $self = {@args};

@@ -1,10 +1,22 @@
+# Tomte
+bin_tomte
+assets
+bin
+#tomte/
+cmd_tomte.config
+nextflow_schema.json
+
+cmd_nisse.config
+
+# Other
 .nextflow.log*
-tomte/
 .vscode/
 .nfconfig
 work/
+tmp/
 data/
 .nextflow/
 main.run
 slurm_logs/
 .vscode/
+*.swp

@@ -14,6 +14,8 @@ Splits it per sample into out_dir
 def main(
     in_path: Path,
     out_path: Path,
+    sample_col: str,
+    sample: str,
     stat_col: str,
     stat_cutoff: float,
     hgnc_symbol_col: str,
@@ -39,6 +41,10 @@ def main(
         for row in reader:
             if headers == None:
                 headers = list(row.keys()) + ["hgncId"]
+
+            if row[sample_col] != sample:
+                continue
+
             pass_stat_cutoff = float(row[stat_col]) < stat_cutoff
             has_hgnc_symbol = not row[hgnc_symbol_col].startswith("ENS")
             hgnc_symbol = row[hgnc_symbol_col]
@@ -75,8 +81,13 @@ def main(
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
+
     parser.add_argument("--in_path", required=True)
     parser.add_argument("--out_path", required=True)
+
+    parser.add_argument("--sample_col", required=True, help="Only return hits for the specific sample")
+    parser.add_argument("--sample", required=True)
+
     parser.add_argument("--stat_col", required=True)
     parser.add_argument("--stat_cutoff", required=True, type=float)
     parser.add_argument("--hgnc_symbol_col", required=True)
@@ -93,6 +104,8 @@ if __name__ == "__main__":
     main(
         args.in_path,
         args.out_path,
+        args.sample_col,
+        args.sample,
         args.stat_col,
         args.stat_cutoff,
         args.hgnc_symbol_col,
