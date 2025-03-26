@@ -214,7 +214,7 @@ def calculate_het_qcs(het_call_vcf) -> Tuple[str, Dict[str, Any]]:
         "non_calls": non_calls,
         "nbr_het_calls": nbr_het_calls,
         "het_calls": calls,
-        "het_calls_fraction": nbr_het_calls / nbr_calls,
+        "pct_het_calls": round((nbr_het_calls / nbr_calls) * 100,1),
     }
 
     if not sample:
@@ -259,7 +259,7 @@ def parse_multiqc_sample(
     shared_keys["snvs"] = "bcftools_stats-number_of_SNPs"
     shared_keys["indels"] = "bcftools_stats-number_of_indels"
     shared_keys["ts_tv"] = "bcftools_stats-tstv"
-    shared_keys["flendist"] = "picard_insertsizemetrics-summed_median"
+    shared_keys["median_insert_size"] = "picard_insertsizemetrics-summed_median"
     shared_keys["pct_rrna"] = "picard_rnaseqmetrics-PCT_RIBOSOMAL_BASES"
     shared_keys["pct_mrna"] = "picard_rnaseqmetrics-PCT_MRNA_BASES"
     shared_keys["n_reads"] = "star-total_reads"
@@ -402,7 +402,7 @@ def process_multiqc_star_stats(
     }
 
     new_column_names: Dict[str, str] = {
-        "total_reads": "tot_reads",
+        "total_reads": "nbr_read_pairs",
         "num_noncanonical_splices": "non_canon_splice",
         "num_splices": "canon_splice",
         "multimapped_percent": "multimap_pct",
@@ -460,6 +460,10 @@ def process_hb_estimate_data(
         for line in file:
             json_data = line.strip()
             hb_json_per_sample[hb_sample_id] = json.loads(json_data)
+            hb_json_per_sample[hb_sample_id]["pct_reads_mapped_to_hb_genes"] = round(
+                hb_json_per_sample[hb_sample_id].pop("target_genes_frac") * 100, 1
+            )
+
     return hb_json_per_sample
 
 
