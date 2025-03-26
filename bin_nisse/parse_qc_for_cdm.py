@@ -214,7 +214,7 @@ def calculate_het_qcs(het_call_vcf) -> Tuple[str, Dict[str, Any]]:
         "non_calls": non_calls,
         "nbr_het_calls": nbr_het_calls,
         "het_calls": calls,
-        "pct_het_calls": round((nbr_het_calls / nbr_calls) * 100,1),
+        "pct_het_calls": (nbr_het_calls / nbr_calls) * 100,
     }
 
     if not sample:
@@ -460,10 +460,7 @@ def process_hb_estimate_data(
         for line in file:
             json_data = line.strip()
             hb_json_per_sample[hb_sample_id] = json.loads(json_data)
-            hb_json_per_sample[hb_sample_id]["pct_reads_mapped_to_hb_genes"] = round(
-                hb_json_per_sample[hb_sample_id].pop("target_genes_frac") * 100, 1
-            )
-
+            hb_json_per_sample[hb_sample_id]["pct_reads_mapped_to_hb_genes"] = hb_json_per_sample[hb_sample_id]["target_genes_frac"] * 100
     return hb_json_per_sample
 
 
