@@ -4,9 +4,7 @@ import argparse
 import json
 import numpy as np
 from ast import literal_eval
-from pathlib import Path
-from collections import defaultdict
-from typing import Any, Dict, List, Mapping, Set, Tuple, Union, Optional
+from typing import Any, Dict, List, Tuple, Union, Optional
 
 VERSION = "1.1.0"
 DESCRIPTION = """
@@ -17,17 +15,22 @@ compatible with CDM.
 
 class QCEntry:
     def __init__(
-        self, results: Dict[str, Any], label: Optional[str], software: str, version: str, url: str
+        self,
+        results: Dict[str, Any],
+        id: str,
+        label: Optional[str],
+        software: str,
+        version: str,
+        url: str,
     ):
         self.results = results
-
+        self.id = id
         self.label = label
         self.software = software
         self.version = version
         self.url = url
 
     def get_result_dict(self) -> Dict[str, Any]:
-
         entry_dict: Dict[str, Any] = {}
 
         if self.label:
@@ -62,7 +65,12 @@ def main(
     sample_qc_tups = parse_multiqc_general_stats(multiqc_general_stats)
     for sample, qc_dict in sample_qc_tups:
         qc_entry = QCEntry(
-            qc_dict, "MultiQC general stats", "MultiQC", "No version", "https://seqera.io/multiqc/"
+            qc_dict,
+            "multiqc_general_stats",
+            "MultiQC general stats",
+            "MultiQC",
+            "No version",
+            "https://seqera.io/multiqc/",
         )
         samples_qc_dict[sample] = [qc_entry]
 
@@ -74,6 +82,7 @@ def main(
             if sample in samples_qc_dict:
                 entry = QCEntry(
                     hb_values,
+                    "hemoglobin_fraction",
                     "Hemoglobin fraction",
                     "calculate_perc_mapping.py",
                     "No version",
@@ -97,6 +106,7 @@ def main(
 
             entry = QCEntry(
                 cov_data,
+                "genebody_coverage_slope",
                 "Genebody coverage slope",
                 "Picard",
                 "No version",
@@ -110,6 +120,7 @@ def main(
         for sample, star_stats in star_data.items():
             entry = QCEntry(
                 star_stats,
+                "multiqc_star_stats",
                 "Multiqc STAR stats",
                 "MultiQC",
                 "No version",
@@ -125,6 +136,7 @@ def main(
             # for sample, het_qc in het_qcs.items():
             entry = QCEntry(
                 het_qc,
+                "heterozygosity_fraction",
                 "Heterozygosity fraction",
                 "BCFTools",
                 "No version",
