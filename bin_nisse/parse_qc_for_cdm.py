@@ -16,14 +16,14 @@ compatible with CDM.
 class QCEntry:
     def __init__(
         self,
-        results: Dict[str, Any],
+        result: Dict[str, Any],
         id: str,
         label: Optional[str],
         software: str,
         version: str,
         url: str,
     ):
-        self.results = results
+        self.result = result
         self.id = id
         self.label = label
         self.software = software
@@ -45,7 +45,7 @@ class QCEntry:
         if self.url:
             entry_dict["url"] = self.url
 
-        entry_dict["results"] = self.results
+        entry_dict["result"] = self.result
 
         return entry_dict
 

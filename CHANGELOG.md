@@ -1,3 +1,6 @@
+# v1.0.3
+* Changes to parse_qc_for_cdm.py, rename `results` field to `result`
+
 # v1.0.2
 * Changes to parse_qc_for_cdm.py, add "id" field to QC entries
 
