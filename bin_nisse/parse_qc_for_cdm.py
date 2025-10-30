@@ -148,13 +148,16 @@ def main(
         write_results(samples_qc_dict, output_file, sample_id, debug)
 
 
-def parse_multiqc_general_stats(multiqc_general_stats_fp: str) -> List[Tuple[str, Dict[str, str]]]:
+def parse_multiqc_general_stats(
+    multiqc_general_stats_fp: str,
+) -> List[Tuple[str, Dict[str, str]]]:
     header = []
     row_triplets = []
     with open(multiqc_general_stats_fp, "r") as fh:
         curr_triplet = []
         for line in fh:
-            line = line.strip()
+            # Only stripping the newline, keeping empty tabbed fields
+            line = line.strip("\n")
             fields = line.split("\t")
 
             if len(header) == 0:
@@ -195,7 +198,9 @@ def calculate_het_qcs(het_call_vcf) -> Tuple[str, Dict[str, Any]]:
             if line.startswith("#"):
                 header_fields = line.split("\t")
                 if len(header_fields) != 10:
-                    raise ValueError(f"Expected a proband-only VCF, found header: {header_fields}")
+                    raise ValueError(
+                        f"Expected a proband-only VCF, found header: {header_fields}"
+                    )
                 sample = header_fields[-1]
                 continue
 
@@ -230,7 +235,9 @@ def calculate_het_qcs(het_call_vcf) -> Tuple[str, Dict[str, Any]]:
     }
 
     if not sample:
-        raise ValueError("No header line (prefixed by a single #) was found in the VCF, aborting")
+        raise ValueError(
+            "No header line (prefixed by a single #) was found in the VCF, aborting"
+        )
 
     return sample, qc_dict
 
@@ -249,22 +256,53 @@ def build_dict(headers: List[str], fields: List[str]) -> Dict[str, str]:
 
 def parse_multiqc_sample(
     headers: List[str],
-    shared_fields: List[str],
-    fw_fields: List[str],
-    rv_fields: List[str],
+    shared_values: List[str],
+    fw_values: List[str],
+    rv_values: List[str],
 ) -> Tuple[str, Dict[str, str]]:
-    sample = shared_fields[0]
+    """
+    The MultiQC format is in the following format
 
-    nbr_shared = len(shared_fields) - 1
+    Sample                 bcftools_stats-number_of_records  fastqc-percent_gc
+    hg002                  189080
+    hg002_1                                                  49.0
+    hg002_2                                                  49.0
 
-    parsed_headers = [header.split("_generalstats_")[-1] for header in headers]
+    The input to this function is arrays containing these first four lines
+    """
 
-    shared_headers = parsed_headers[1 : nbr_shared + 1]
-    single_headers = parsed_headers[nbr_shared + 1 :]
+    shared_dict = {}
+    fw_dict = {}
+    rv_dict = {}
 
-    shared_dict = build_dict(shared_headers, shared_fields[1:])
-    fw_dict = build_dict(single_headers, fw_fields[nbr_shared + 1 :])
-    rv_dict = build_dict(single_headers, rv_fields[nbr_shared + 1 :])
+    sample = shared_values[0]
+    for i, header in enumerate(headers):
+
+        if i == 0:
+            # Skip the sample name column
+            continue
+
+        shared_value = shared_values[i]
+        fw_value = fw_values[i]
+        rv_value = rv_values[i]
+
+        assert (
+            shared_value != "" or fw_value != "" or rv_value != ""
+        ), f"Found no value for header {header}. Check the input data."
+
+        if shared_value != "":
+            assert (
+                fw_value == "" and rv_value == ""
+            ), f"Found shared value {shared_value} so expected empty fw and rv fields. Found {fw_value} and {rv_value}. Check the input data."
+
+            shared_dict[header] = shared_value
+        else:
+            assert (
+                fw_value != "" and rv_value != ""
+            ), f"Both fw and rv are expected to be present. Found fw {fw_value} and rv {rv_value}. Check the input data."
+
+            fw_dict[header] = fw_value
+            rv_dict[header] = rv_value
 
     # Shared keys (fw+rv)
     shared_keys = {}
@@ -278,7 +316,9 @@ def parse_multiqc_sample(
     shared_keys["m_aligned"] = "star-uniquely_mapped"
     shared_keys["pct_aligned"] = "star-uniquely_mapped_percent"
     shared_keys["pct_dup"] = "fastp-pct_duplication"
-    shared_keys["m_reads_after_filtering"] = "fastp-filtering_result_passed_filter_reads"
+    shared_keys["m_reads_after_filtering"] = (
+        "fastp-filtering_result_passed_filter_reads"
+    )
     shared_keys["gc"] = "fastp-after_filtering_gc_content"
     shared_keys["pct_pass_filter"] = "fastp-after_filtering_q30_rate"
     shared_keys["pct_adapter"] = "fastp-pct_adapter"
@@ -452,7 +492,10 @@ def process_multiqc_star_stats(
         # Calculate splice_ratio
         sliced_data[key]["splice_ratio"] = int(
             round(
-                (sliced_data[key]["canon_splice"] / sliced_data[key]["non_canon_splice"]),
+                (
+                    sliced_data[key]["canon_splice"]
+                    / sliced_data[key]["non_canon_splice"]
+                ),
                 0,
             )
         )
@@ -472,7 +515,9 @@ def process_hb_estimate_data(
         for line in file:
             json_data = line.strip()
             hb_json_per_sample[hb_sample_id] = json.loads(json_data)
-            hb_json_per_sample[hb_sample_id]["pct_reads_mapped_to_hb_genes"] = hb_json_per_sample[hb_sample_id]["target_genes_frac"] * 100
+            hb_json_per_sample[hb_sample_id]["pct_reads_mapped_to_hb_genes"] = (
+                hb_json_per_sample[hb_sample_id]["target_genes_frac"] * 100
+            )
     return hb_json_per_sample
 
 
@@ -516,7 +561,9 @@ def write_results(
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=DESCRIPTION)
     parser.add_argument(
-        "--multiqc_general_stats", help="MultiQC file: multiqc_general_stats.txt", required=True
+        "--multiqc_general_stats",
+        help="MultiQC file: multiqc_general_stats.txt",
+        required=True,
     )
     parser.add_argument(
         "--sample_id",
@@ -529,7 +576,8 @@ def parse_arguments() -> argparse.Namespace:
         help="Run in debug mode, printing to STDOUT instead of to file, if limiting output to a single sample",
     )
     parser.add_argument(
-        "--picard_rna_coverage", help="Path to the input file containing RNA coverage data."
+        "--picard_rna_coverage",
+        help="Path to the input file containing RNA coverage data.",
     )
     parser.add_argument(
         "--multiqc_star",
@@ -540,7 +588,9 @@ def parse_arguments() -> argparse.Namespace:
         help="Path to the input file containing merged HB estimate data.",
     )
     parser.add_argument(
-        "--hetcalls_vcfs", help="VCF containing heterozygosity calls for selected SNPs", nargs="*"
+        "--hetcalls_vcfs",
+        help="VCF containing heterozygosity calls for selected SNPs",
+        nargs="*",
     )
     parser.add_argument("--output_file", required=True)
     parser.add_argument(
