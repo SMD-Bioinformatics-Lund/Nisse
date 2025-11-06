@@ -1,3 +1,7 @@
+# v1.1.0 - Sync with Tomte v4.1.2
+* Run Tomte pipeline initialization step before Tomte itself.
+* Work on two separate csvs - one for Nisse and one for Tomte.
+
 # v1.0.3
 * Changes to parse_qc_for_cdm.py, rename `results` field to `result`
 

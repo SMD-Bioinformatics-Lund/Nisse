@@ -58,7 +58,7 @@ workflow {
     startupMessage(params.show_params)
 
     ch_versions = channel.empty()
-    channel.fromPath(params.nisse_input)
+    channel.fromPath(params.input)
         .splitCsv(header: true)
         .map { meta ->
             // Needed for Tomte's internal workings
