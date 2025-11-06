@@ -70,10 +70,12 @@ workflow {
     if (params.run_tomte) {
         ch_meta
             .map { meta ->
+                def tomte_meta = meta.clone()
+                ["phenotype", "assay", "group"].each { it -> tomte_meta.remove(it) }
                 // Also needed for Tomte's internal workings
                 def fastq_fw = meta.fastq_1
                 def fastq_rv = meta.fastq_2
-                tuple(meta, [fastq_fw, fastq_rv])
+                tuple(tomte_meta, [fastq_fw, fastq_rv])
             }
             .set { ch_tomte }
 
