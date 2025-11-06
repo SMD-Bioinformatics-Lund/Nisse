@@ -56,7 +56,7 @@ workflow {
 
     ch_versions = Channel.empty()
     Channel
-        .fromPath(params.csv)
+        .fromPath(params.nisse_input)
         .splitCsv(header: true)
         .map { meta ->
             // Needed for Tomte's internal workings
@@ -363,7 +363,7 @@ def startupMessage(showParams) {
     print("Output dir: ${params.outdir}")
 
     if (showParams) {
-        def prettyParams = params.collect { k, v -> "$k: $v" }.join('\n')
+        def prettyParams = params.sort().collect { k, v -> "$k: $v" }.join('\n')
         log.info "Workflow params:\n${prettyParams}"
     }
 }
