@@ -341,7 +341,7 @@ workflow SNV_ANNOTATE {
     ch_cadd_vcf = MARK_SPLICE.out.vcf.join(BGZIP_INDEL_CADD.out.cadd)
     ADD_CADD_SCORES_TO_VCF(ch_cadd_vcf)
 
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
     ch_versions = ch_versions.mix(ANNOTATE_VEP.out.versions)
     ch_versions = ch_versions.mix(VCF_ANNO.out.versions)
     ch_versions = ch_versions.mix(EXTRACT_INDELS_FOR_CADD.out.versions)
@@ -377,7 +377,7 @@ workflow SNV_SCORE {
     FILTER_VARIANTS_ON_SCORE(VCF_COMPLETION.out.vcf, val_score_threshold)
     BGZIP_TABIX_VCF(FILTER_VARIANTS_ON_SCORE.out.vcf)
 
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
     ch_versions = ch_versions.mix(GENMOD_MODELS.out.versions)
     ch_versions = ch_versions.mix(GENMOD_COMPOUND.out.versions)
     ch_versions = ch_versions.mix(GENMOD_SCORE.out.versions)
