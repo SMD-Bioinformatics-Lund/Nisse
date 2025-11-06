@@ -54,8 +54,8 @@ workflow {
 
     startupMessage(params.show_params)
 
-    ch_versions = Channel.empty()
-    Channel
+    ch_versions = channel.empty()
+    channel
         .fromPath(params.nisse_input)
         .splitCsv(header: true)
         .map { meta ->
@@ -68,16 +68,33 @@ workflow {
 
     // Either execute Tomte as part of Nisse, or start with its results folder
     if (params.run_tomte) {
-        ch_meta
+
+        channel
+            .fromPath(params.input)
+            .splitCsv(header: true)
             .map { meta ->
-                def tomte_meta = meta.clone()
-                ["phenotype", "assay", "group"].each { it -> tomte_meta.remove(it) }
-                // Also needed for Tomte's internal workings
+                // Needed for Tomte's internal workings
+                // FIXME: See if "placeholder" works as well
+                meta = meta + [ fq_pairs: 1, single_end: false, is_fastq: true, id: meta.sample ]
+                meta
+            }
+            .map { meta ->
                 def fastq_fw = meta.fastq_1
                 def fastq_rv = meta.fastq_2
-                tuple(tomte_meta, [fastq_fw, fastq_rv])
+                tuple(meta, [fastq_fw, fastq_rv])
             }
             .set { ch_tomte }
+
+        // ch_meta
+        //     .map { meta ->
+        //         def tomte_meta = meta.clone()
+        //         ["phenotype", "assay", "group"].each { it -> tomte_meta.remove(it) }
+        //         // Also needed for Tomte's internal workings
+        //         def fastq_fw = meta.fastq_1
+        //         def fastq_rv = meta.fastq_2
+        //         tuple(tomte_meta, [fastq_fw, fastq_rv])
+        //     }
+        //     .set { ch_tomte }
 
         TOMTE(ch_tomte)
         ch_versions.mix(TOMTE.out.versions)
