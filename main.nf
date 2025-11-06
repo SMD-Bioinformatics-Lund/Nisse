@@ -60,12 +60,13 @@ workflow {
     ch_versions = channel.empty()
     channel.fromPath(params.input)
         .splitCsv(header: true)
-        .map { meta ->
-            // Needed for Tomte's internal workings
-            // FIXME: See if "placeholder" works as well
-            meta = meta + [fq_pairs: 1, single_end: false, is_fastq: true, id: meta.sample]
-            meta
-        }
+        // .map { meta ->
+        //     // Needed for Tomte's internal workings
+        //     // FIXME: See if "placeholder" works as well
+        //     // FIXME: No more or?
+        //     meta = meta + [fq_pairs: 1, single_end: false, is_fastq: true, id: meta.sample]
+        //     meta
+        // }
         .set { ch_meta }
 
     // Either execute Tomte as part of Nisse, or start with its results folder
