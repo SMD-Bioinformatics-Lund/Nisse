@@ -38,16 +38,19 @@ include { IDSNP_CALL } from './modules/defined_calls.nf'
 include { IDSNP_VCF_TO_JSON } from './modules/defined_calls.nf'
 include { PERC_HETEROZYGOTES } from './modules/defined_calls.nf'
 include { versions } from './modules/postprocessing/bgzip_tabix.nf'
+include { PIPELINE_INITIALISATION } from './tomte/subworkflows/local/utils_nfcore_tomte_pipeline/main.nf'
 
 def join_on_sample(ch1, ch2) {
-    def mapped1 = ch1.map { tuple -> [ tuple[0].sample, tuple ] }
-    def mapped2 = ch2.map { tuple -> [ tuple[0].sample, tuple ] }
-    return mapped1.join(mapped2).map { key_values -> 
-        def _key = key_values[0]
-        def ch1_values = key_values[1]
-        def ch2_values = key_values[2]
-        [ ch1_values[0] ] + ch1_values.drop(1) + ch2_values.drop(1)
-    }
+    def mapped1 = ch1.map { tuple -> [tuple[0].sample, tuple] }
+    def mapped2 = ch2.map { tuple -> [tuple[0].sample, tuple] }
+    return mapped1
+        .join(mapped2)
+        .map { key_values ->
+            def _key = key_values[0]
+            def ch1_values = key_values[1]
+            def ch2_values = key_values[2]
+            [ch1_values[0]] + ch1_values.drop(1) + ch2_values.drop(1)
+        }
 }
 
 workflow {
@@ -55,13 +58,12 @@ workflow {
     startupMessage(params.show_params)
 
     ch_versions = channel.empty()
-    channel
-        .fromPath(params.nisse_input)
+    channel.fromPath(params.nisse_input)
         .splitCsv(header: true)
         .map { meta ->
             // Needed for Tomte's internal workings
             // FIXME: See if "placeholder" works as well
-            meta = meta + [ fq_pairs: 1, single_end: false, is_fastq: true, id: meta.sample ]
+            meta = meta + [fq_pairs: 1, single_end: false, is_fastq: true, id: meta.sample]
             meta
         }
         .set { ch_meta }
@@ -69,21 +71,31 @@ workflow {
     // Either execute Tomte as part of Nisse, or start with its results folder
     if (params.run_tomte) {
 
-        channel
-            .fromPath(params.input)
-            .splitCsv(header: true)
-            .map { meta ->
-                // Needed for Tomte's internal workings
-                // FIXME: See if "placeholder" works as well
-                meta = meta + [ fq_pairs: 1, single_end: false, is_fastq: true, id: meta.sample ]
-                meta
-            }
-            .map { meta ->
-                def fastq_fw = meta.fastq_1
-                def fastq_rv = meta.fastq_2
-                tuple(meta, [fastq_fw, fastq_rv])
-            }
-            .set { ch_tomte }
+        PIPELINE_INITIALISATION(
+            params.version,
+            params.validate_params,
+            params.monochrome_logs,
+            args,
+            params.outdir,
+            params.input
+        )
+
+        TOMTE(PIPELINE_INITIALISATION.out.samplesheet)
+
+        // channel.fromPath(params.input)
+        //     .splitCsv(header: true)
+        //     .map { meta ->
+        //         // Needed for Tomte's internal workings
+        //         // FIXME: See if "placeholder" works as well
+        //         meta = meta + [fq_pairs: 1, single_end: false, is_fastq: true, id: meta.sample]
+        //         meta
+        //     }
+        //     .map { meta ->
+        //         def fastq_fw = meta.fastq_1
+        //         def fastq_rv = meta.fastq_2
+        //         tuple(meta, [fastq_fw, fastq_rv])
+        //     }
+        //     .set { ch_tomte }
 
         // ch_meta
         //     .map { meta ->
@@ -96,19 +108,21 @@ workflow {
         //     }
         //     .set { ch_tomte }
 
-        TOMTE(ch_tomte)
+        // TOMTE(ch_tomte)
         ch_versions.mix(TOMTE.out.versions)
 
         // Tomte adds "id: meta.sample" in one step making the Nisse and Tomte
         // meta objects different
         ch_tomte_meta = TOMTE.out.bam_bai.map { it -> it[0] }
 
-        ch_multiqc = ch_tomte_meta.combine(TOMTE.out.multiqc_data).map { meta, multiqc_folder ->
-            def multiqc_summary = file("${multiqc_folder}/multiqc_general_stats.txt")
-            def star_qc = file("${multiqc_folder}/multiqc_star.txt")
-            def picard_coverage = file("${multiqc_folder}/picard_rna_coverage.txt")
-            tuple(meta, multiqc_summary, star_qc, picard_coverage)
-        }
+        ch_multiqc = ch_tomte_meta
+            .combine(TOMTE.out.multiqc_data)
+            .map { meta, multiqc_folder ->
+                def multiqc_summary = file("${multiqc_folder}/multiqc_general_stats.txt")
+                def star_qc = file("${multiqc_folder}/multiqc_star.txt")
+                def picard_coverage = file("${multiqc_folder}/picard_rna_coverage.txt")
+                tuple(meta, multiqc_summary, star_qc, picard_coverage)
+            }
 
         ch_junction_bed = ch_meta.map { meta ->
             def sample_id = meta.sample
@@ -126,8 +140,8 @@ workflow {
         ch_drop_ae_out_research = TOMTE.out.drop_ae_out_research
         ch_drop_as_out_research = TOMTE.out.drop_as_out_research
         ch_bam_bai = TOMTE.out.bam_bai
-
-    } else {
+    }
+    else {
         // FIXME: This branch has not been as thoroughly tested
         // Will likely require some further touches to get it running again, if needed
         // If not needed - consider removing it
@@ -181,7 +195,7 @@ workflow {
         ch_hb_estimates,
         ch_bam_bai,
         params.idsnps,
-        params.het_calls
+        params.het_calls,
     )
     ch_versions = ch_versions.mix(NISSE_QC.out.versions)
 
@@ -193,7 +207,7 @@ workflow {
             ch_ped,
             ch_vcf_tbi,
             ch_drop_ae_out_research,
-            ch_drop_as_out_research
+            ch_drop_as_out_research,
         )
     }
     ch_versions = ch_versions.mix(NISSE.out.versions)
@@ -350,11 +364,11 @@ workflow SNV_SCORE {
 
     main:
     MAKE_CASE_PED(ch_meta, ch_combined_ped)
-    
+
     ch_annotated_vcf_ped = ch_annotated_vcf.join(MAKE_CASE_PED.out.ped)
 
     GENMOD_MODELS(ch_annotated_vcf_ped)
-   
+
     GENMOD_SCORE(GENMOD_MODELS.out.vcf_ped, val_score_config)
     GENMOD_COMPOUND(GENMOD_SCORE.out.vcf)
     GENMOD_SORT(GENMOD_COMPOUND.out.vcf)
@@ -380,7 +394,7 @@ def startupMessage(showParams) {
     print("Output dir: ${params.outdir}")
 
     if (showParams) {
-        def prettyParams = params.sort().collect { k, v -> "$k: $v" }.join('\n')
-        log.info "Workflow params:\n${prettyParams}"
+        def prettyParams = params.sort().collect { k, v -> "${k}: ${v}" }.join('\n')
+        log.info("Workflow params:\n${prettyParams}")
     }
 }
