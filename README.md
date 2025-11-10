@@ -36,7 +36,7 @@ Execute while providing the Tomte configs:
 nextflow run main.nf \
     --csv ... \
     --outdir ... \
-    -c ./config-files/nextflow/nextflow_tomte.config \
+    -c ./tomte/nextflow_tomte.config \
     -c ./config-files/nextflow/cmd_tomte.config \
     -c ./config-files/nextflow/cmd_nisse.config
 ```
