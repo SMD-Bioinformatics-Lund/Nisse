@@ -60,13 +60,6 @@ workflow {
     ch_versions = channel.empty()
     channel.fromPath(params.input)
         .splitCsv(header: true)
-        // .map { meta ->
-        //     // Needed for Tomte's internal workings
-        //     // FIXME: See if "placeholder" works as well
-        //     // FIXME: No more or?
-        //     meta = meta + [fq_pairs: 1, single_end: false, is_fastq: true, id: meta.sample]
-        //     meta
-        // }
         .set { ch_meta }
 
     // Either execute Tomte as part of Nisse, or start with its results folder
@@ -83,33 +76,6 @@ workflow {
 
         TOMTE(PIPELINE_INITIALISATION.out.samplesheet)
 
-        // channel.fromPath(params.input)
-        //     .splitCsv(header: true)
-        //     .map { meta ->
-        //         // Needed for Tomte's internal workings
-        //         // FIXME: See if "placeholder" works as well
-        //         meta = meta + [fq_pairs: 1, single_end: false, is_fastq: true, id: meta.sample]
-        //         meta
-        //     }
-        //     .map { meta ->
-        //         def fastq_fw = meta.fastq_1
-        //         def fastq_rv = meta.fastq_2
-        //         tuple(meta, [fastq_fw, fastq_rv])
-        //     }
-        //     .set { ch_tomte }
-
-        // ch_meta
-        //     .map { meta ->
-        //         def tomte_meta = meta.clone()
-        //         ["phenotype", "assay", "group"].each { it -> tomte_meta.remove(it) }
-        //         // Also needed for Tomte's internal workings
-        //         def fastq_fw = meta.fastq_1
-        //         def fastq_rv = meta.fastq_2
-        //         tuple(tomte_meta, [fastq_fw, fastq_rv])
-        //     }
-        //     .set { ch_tomte }
-
-        // TOMTE(ch_tomte)
         ch_versions.mix(TOMTE.out.versions)
 
         // Tomte adds "id: meta.sample" in one step making the Nisse and Tomte
