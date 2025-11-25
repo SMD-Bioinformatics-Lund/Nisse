@@ -76,9 +76,9 @@ Example run script which can be executed using `sbatch`:
 #SBATCH --time=7-00:00:00
 #SBATCH --partition="grace-lowest"
 
-module load Java/13.0.2
-module load nextflow/24.04.3
-module load singularity/3.2.0
+module load Java/17.0.6      
+module load singularity/3.8.0
+module load nextflow/25.10.0 
 
 NXF_OFFLINE=true
 
