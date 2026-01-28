@@ -74,14 +74,13 @@ workflow {
 
     TOMTE(PIPELINE_INITIALISATION.out.samplesheet)
 
-    ch_versions.mix(TOMTE.out.versions)
+    ch_versions = ch_versions.mix(TOMTE.out.versions)
 
     // Tomte adds "id: meta.sample" in one step making the Nisse and Tomte
     // meta objects different
     ch_tomte_meta = TOMTE.out.bam_bai.map { it -> it[0] }
 
-    ch_multiqc = ch_tomte_meta
-        .combine(TOMTE.out.multiqc_data)
+    ch_multiqc = join_on_sample(ch_tomte_meta, TOMTE.out.multiqc_data)
         .map { meta, multiqc_folder ->
             def multiqc_summary = file("${multiqc_folder}/multiqc_general_stats.txt")
             def star_qc = file("${multiqc_folder}/multiqc_star.txt")
@@ -258,7 +257,7 @@ workflow SNV_ANNOTATE {
     CALCULATE_INDEL_CADD(INDEL_VEP.out.vcf)
     BGZIP_INDEL_CADD(CALCULATE_INDEL_CADD.out.vcf)
 
-    ch_cadd_vcf = MARK_SPLICE.out.vcf.join(BGZIP_INDEL_CADD.out.cadd)
+    ch_cadd_vcf = join_on_sample(MARK_SPLICE.out.vcf, BGZIP_INDEL_CADD.out.cadd)
     ADD_CADD_SCORES_TO_VCF(ch_cadd_vcf)
 
     ch_versions = channel.empty()
