@@ -9,7 +9,7 @@ process EXTRACT_INDELS_FOR_CADD {
 	
 	output:
 		tuple val(meta), file("${meta.sample}.only_indels.vcf"), emit: vcf
-		file("*versions.yml"), emit: versions
+		path("*versions.yml"), emit: versions
 
 	script:
 		"""
