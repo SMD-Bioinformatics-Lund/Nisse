@@ -39,6 +39,7 @@ include { IDSNP_VCF_TO_JSON } from './modules/defined_calls.nf'
 include { PERC_HETEROZYGOTES } from './modules/defined_calls.nf'
 include { PIPELINE_INITIALISATION } from './tomte/subworkflows/local/utils_nfcore_tomte_pipeline/main.nf'
 include { CREATE_PED } from './modules/annotate/create_ped.nf'
+include { softwareVersionsToYAML } from './tomte/subworkflows/nf-core/utils_nfcore_pipeline'
 
 def join_on_sample(ch1, ch2) {
     def normalize_tuple = { item ->
@@ -149,8 +150,8 @@ workflow {
         ch_versions = ch_versions.mix(NISSE.out.versions)
     }
 
-    // Join the paths, skipping the meta value
-    ch_joined_versions = ch_versions.collect { it -> it[1] }
+    // Format versions the same way as Tomte (YAML strings)
+    ch_joined_versions = softwareVersionsToYAML(ch_versions).collect()
     OUTPUT_VERSIONS(ch_joined_versions)
 
     workflow.onComplete {

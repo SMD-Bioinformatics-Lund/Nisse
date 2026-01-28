@@ -10,7 +10,7 @@ process GENMOD_ANNOTATE_CADD {
 
     output:
     tuple val(meta), path("*_cadd_annotate.vcf"), emit: vcf
-    tuple val(meta), path("*_versions.yml"), emit: versions
+    path("*_versions.yml"), emit: versions
 
     script:
     """

@@ -18,7 +18,7 @@ process IDSNP_CALL {
 
     output:
         tuple val(meta), path("*final.vcf"), emit: vcf
-        tuple val(meta), path("*versions.yml"), emit: versions
+        path("*versions.yml"), emit: versions
 
     script:
         def prefix  = "${meta.sample}"
@@ -69,7 +69,7 @@ process IDSNP_VCF_TO_JSON {
     
     output:
         tuple val(meta), path("*.json"), emit: json
-        tuple val(meta), path("*versions.yml"), emit: versions
+        path("*versions.yml"), emit: versions
     
     script:
     def prefix = "${meta.sample}"
@@ -107,7 +107,7 @@ process PERC_HETEROZYGOTES {
     
     output:
         tuple val(meta), path("*_heterozygosity_calls.vcf"), emit: vcf
-        tuple val(meta), path("*versions.yml"), emit: versions
+        path("*versions.yml"), emit: versions
 
     script:
     def prefix = "${meta.sample}"

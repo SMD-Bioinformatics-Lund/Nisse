@@ -9,7 +9,7 @@ process VCF_COMPLETION {
 
 	output:
 		tuple val(meta), path("${meta.sample}_scored.vcf.gz"), path("${meta.sample}_scored.vcf.gz.tbi"), emit: vcf
-		tuple val(meta), path("*versions.yml"), emit: versions
+		path("*versions.yml"), emit: versions
 
 	script:
 		"""

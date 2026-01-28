@@ -9,7 +9,7 @@ process ADD_CADD_SCORES_TO_VCF {
 
     output:
         tuple val(meta), path("${meta.sample}.cadd.vcf"), emit: vcf
-        tuple val(meta), path("*versions.yml"), emit: versions
+        path("*versions.yml"), emit: versions
 
     script:
         """
