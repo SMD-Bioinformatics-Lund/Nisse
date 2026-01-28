@@ -37,7 +37,7 @@ process MAKE_SCOUT_YAML {
         --tissue "${tissue}" \\
         --bam_path "${tomte_results_dir}/alignment/${cram}" \\
         --splice_junctions "${tomte_results_dir}/ucsc/${junctions}" \\
-        --rna_bigwig "${tomte_results_dir}/ucsc/${bigwig}"
+        --rna_bigwig "${tomte_results_dir}/ucsc/${bigwig}" \\
          > ${meta.sample}_scout.yaml
     """
 
