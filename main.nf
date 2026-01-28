@@ -41,8 +41,31 @@ include { PIPELINE_INITIALISATION } from './tomte/subworkflows/local/utils_nfcor
 include { CREATE_PED } from './modules/annotate/create_ped.nf'
 
 def join_on_sample(ch1, ch2) {
-    def mapped1 = ch1.map { tuple -> [tuple[0].sample, tuple] }
-    def mapped2 = ch2.map { tuple -> [tuple[0].sample, tuple] }
+    def normalize_tuple = { item ->
+        if (item == null) {
+            return [null]
+        }
+        if (item instanceof List || item instanceof Tuple) {
+            return item
+        }
+        if (item instanceof Map) {
+            return [item]
+        }
+        return [item]
+    }
+
+    def keyed = { item ->
+        def tup = normalize_tuple(item)
+        def meta = tup ? tup[0] : null
+        def sample = meta?.sample
+        if (sample == null) {
+            error("join_on_sample: missing meta.sample in item: ${item}")
+        }
+        return [sample, tup]
+    }
+
+    def mapped1 = ch1.map { item -> keyed(item) }
+    def mapped2 = ch2.map { item -> keyed(item) }
     return mapped1
         .join(mapped2)
         .map { key_values ->
@@ -76,7 +99,8 @@ workflow {
 
     ch_versions = ch_versions.mix(TOMTE.out.versions)
 
-    ch_multiqc = join_on_sample(TOMTE.out.bam_bai, TOMTE.out.multiqc_data)
+    ch_multiqc = TOMTE.out.bam_bai
+        .combine(TOMTE.out.multiqc_data)
         .map { meta, _bam, _bai, multiqc_folder ->
             def multiqc_summary = file("${multiqc_folder}/multiqc_general_stats.txt")
             def star_qc = file("${multiqc_folder}/multiqc_star.txt")
@@ -190,8 +214,12 @@ workflow NISSE {
         tuple(meta, file(cram), file(cram_crai), file(bigwig), file(peddy_ped), file(peddy_check), file(peddy_sex))
     }
 
-    ch_drop_ae_per_sample = join_on_sample(ch_meta_nisse, ch_tomte_drop_ae_out_research_tomte)
-    ch_drop_as_per_sample = join_on_sample(ch_meta_nisse, ch_tomte_drop_as_out_research_tomte)
+    ch_drop_ae_per_sample = ch_meta_nisse
+        .combine(ch_tomte_drop_ae_out_research_tomte)
+        .map { meta, drop_file -> tuple(meta, drop_file) }
+    ch_drop_as_per_sample = ch_meta_nisse
+        .combine(ch_tomte_drop_as_out_research_tomte)
+        .map { meta, drop_file -> tuple(meta, drop_file) }
 
     PREPROCESS(ch_drop_ae_per_sample, ch_drop_as_per_sample, ch_tomte_vcf_tbi_tomte, params.hgnc_map, params.stat_col, params.stat_cutoff)
 
