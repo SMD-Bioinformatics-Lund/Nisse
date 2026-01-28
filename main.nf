@@ -208,10 +208,11 @@ workflow NISSE {
         def cram = String.format(params.tomte_results_paths.cram, params.outdir, sample_id)
         def cram_crai = String.format(params.tomte_results_paths.cram_crai, params.outdir, sample_id)
         def bigwig = String.format(params.tomte_results_paths.bigwig, params.outdir, sample_id)
-        def peddy_ped = String.format(params.tomte_results_paths.peddy_ped, params.outdir, sample_id)
-        def peddy_check = String.format(params.tomte_results_paths.peddy_check, params.outdir, sample_id)
-        def peddy_sex = String.format(params.tomte_results_paths.peddy_sex, params.outdir, sample_id)
-        tuple(meta, file(cram), file(cram_crai), file(bigwig), file(peddy_ped), file(peddy_check), file(peddy_sex))
+        // def peddy_ped = String.format(params.tomte_results_paths.peddy_ped, params.outdir, sample_id)
+        // def peddy_check = String.format(params.tomte_results_paths.peddy_check, params.outdir, sample_id)
+        // def peddy_sex = String.format(params.tomte_results_paths.peddy_sex, params.outdir, sample_id)
+        tuple(meta, file(cram), file(cram_crai), file(bigwig))
+        // tuple(meta, file(cram), file(cram_crai), file(bigwig), file(peddy_ped), file(peddy_check), file(peddy_sex))
     }
 
     ch_drop_ae_per_sample = ch_meta_nisse
