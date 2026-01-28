@@ -76,12 +76,8 @@ workflow {
 
     ch_versions = ch_versions.mix(TOMTE.out.versions)
 
-    // Tomte adds "id: meta.sample" in one step making the Nisse and Tomte
-    // meta objects different
-    ch_tomte_meta = TOMTE.out.bam_bai.map { it -> it[0] }
-
-    ch_multiqc = join_on_sample(ch_tomte_meta, TOMTE.out.multiqc_data)
-        .map { meta, multiqc_folder ->
+    ch_multiqc = join_on_sample(TOMTE.out.bam_bai, TOMTE.out.multiqc_data)
+        .map { meta, _bam, _bai, multiqc_folder ->
             def multiqc_summary = file("${multiqc_folder}/multiqc_general_stats.txt")
             def star_qc = file("${multiqc_folder}/multiqc_star.txt")
             def picard_coverage = file("${multiqc_folder}/picard_rna_coverage.txt")
