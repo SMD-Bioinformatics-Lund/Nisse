@@ -37,7 +37,6 @@ include { TOMTE } from './tomte/workflows/tomte.nf'
 include { IDSNP_CALL } from './modules/defined_calls.nf'
 include { IDSNP_VCF_TO_JSON } from './modules/defined_calls.nf'
 include { PERC_HETEROZYGOTES } from './modules/defined_calls.nf'
-include { versions } from './modules/postprocessing/bgzip_tabix.nf'
 include { PIPELINE_INITIALISATION } from './tomte/subworkflows/local/utils_nfcore_tomte_pipeline/main.nf'
 include { CREATE_PED } from './modules/annotate/create_ped.nf'
 
@@ -50,7 +49,7 @@ def join_on_sample(ch1, ch2) {
             def _key = key_values[0]
             def ch1_values = key_values[1]
             def ch2_values = key_values[2]
-            [ch1_values[0]] + ch1_values.drop(1) + ch2_values.drop(1)
+            tuple(*[ch1_values[0]] + ch1_values.drop(1) + ch2_values.drop(1))
         }
 }
 
@@ -128,8 +127,8 @@ workflow {
             ch_drop_ae_out_research_tomte,
             ch_drop_as_out_research_tomte,
         )
+        ch_versions = ch_versions.mix(NISSE.out.versions)
     }
-    ch_versions = ch_versions.mix(NISSE.out.versions)
 
     // Join the paths, skipping the meta value
     ch_joined_versions = ch_versions.collect { it -> it[1] }
@@ -159,8 +158,8 @@ workflow NISSE_QC {
     IDSNP_VCF_TO_JSON(IDSNP_CALL.out.vcf)
 
     ch_qc = ch_multiqc
-    ch_qc = ch_qc.join(ch_hb_estimates)
-    ch_qc = ch_qc.join(PERC_HETEROZYGOTES.out.vcf)
+    ch_qc = join_on_sample(ch_qc, ch_hb_estimates)
+    ch_qc = join_on_sample(ch_qc, PERC_HETEROZYGOTES.out.vcf)
 
     PARSE_QC_FOR_CDM(ch_qc)
 
@@ -196,8 +195,8 @@ workflow NISSE {
         tuple(meta, file(cram), file(cram_crai), file(bigwig), file(peddy_ped), file(peddy_check), file(peddy_sex))
     }
 
-    ch_drop_ae_per_sample = ch_meta_nisse.combine(ch_tomte_drop_as_out_research_tomte)
-    ch_drop_as_per_sample = ch_meta_nisse.combine(ch_tomte_drop_ae_out_research_tomte)
+    ch_drop_ae_per_sample = join_on_sample(ch_meta_nisse, ch_tomte_drop_ae_out_research_tomte)
+    ch_drop_as_per_sample = join_on_sample(ch_meta_nisse, ch_tomte_drop_as_out_research_tomte)
 
     PREPROCESS(ch_drop_ae_per_sample, ch_drop_as_per_sample, ch_tomte_vcf_tbi_tomte, params.hgnc_map, params.stat_col, params.stat_cutoff)
 
@@ -210,7 +209,7 @@ workflow NISSE {
     SNV_SCORE(SNV_ANNOTATE.out.vcf, ch_ped_nisse, params.score_config, params.score_threshold)
     ch_versions = ch_versions.mix(SNV_SCORE.out.versions)
 
-    ch_drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
+    ch_drop_results = join_on_sample(PREPROCESS.out.fraser, PREPROCESS.out.outrider)
 
     // Regular join did not work due to differing meta objects
     ch_2 = join_on_sample(ch_drop_results, SNV_SCORE.out.vcf_tbi)
