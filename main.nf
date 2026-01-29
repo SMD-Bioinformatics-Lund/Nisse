@@ -41,7 +41,12 @@ include { PIPELINE_INITIALISATION } from './tomte/subworkflows/local/utils_nfcor
 include { CREATE_PED } from './modules/annotate/create_ped.nf'
 include { softwareVersionsToYAML } from './tomte/subworkflows/nf-core/utils_nfcore_pipeline'
 
+
+// Please notice: The meta object fed into Tomte (i.e. Nisses) and the one coming out
+// (i.e. Tomte) are not identical (mutated by Tomte) and can thus not be used for joining.
+// Use this function instead
 def join_on_sample(ch1, ch2) {
+    // Such that downstream processes can assume that item[0] exists
     def normalize_tuple = { item ->
         if (item == null) {
             return [null]
@@ -118,8 +123,6 @@ workflow {
 
     ch_hb_estimates = TOMTE.out.hb_estimates
 
-    // ch_vcf = TOMTE.out.vcf_tbi
-    // ch_ped_tomte = TOMTE.out.ped
     ch_vcf_tbi_tomte = TOMTE.out.vcf_tbi
     ch_drop_ae_out_research_tomte = TOMTE.out.drop_ae_out_research
     ch_drop_as_out_research_tomte = TOMTE.out.drop_as_out_research
@@ -209,11 +212,7 @@ workflow NISSE {
         def cram = String.format(params.tomte_results_paths.cram, params.outdir, sample_id)
         def cram_crai = String.format(params.tomte_results_paths.cram_crai, params.outdir, sample_id)
         def bigwig = String.format(params.tomte_results_paths.bigwig, params.outdir, sample_id)
-        // def peddy_ped = String.format(params.tomte_results_paths.peddy_ped, params.outdir, sample_id)
-        // def peddy_check = String.format(params.tomte_results_paths.peddy_check, params.outdir, sample_id)
-        // def peddy_sex = String.format(params.tomte_results_paths.peddy_sex, params.outdir, sample_id)
         tuple(meta, file(cram), file(cram_crai), file(bigwig))
-        // tuple(meta, file(cram), file(cram_crai), file(bigwig), file(peddy_ped), file(peddy_check), file(peddy_sex))
     }
 
     ch_drop_ae_per_sample = ch_meta_nisse
