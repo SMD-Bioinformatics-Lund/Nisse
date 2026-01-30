@@ -105,7 +105,8 @@ def main(
         "default_gene_panels": "[]",
         "gene_panels": "[]",
         "human_genome_build": "'38'",
-        "rna_human_genome_build": "'38'"
+        "rna_human_genome_build": "'38'",
+        "rank_score_threshold": "-1"
     }
 
     for (key, value) in yaml_dict.items():
