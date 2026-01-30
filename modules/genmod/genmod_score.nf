@@ -10,7 +10,7 @@ process GENMOD_SCORE {
 
     output:
         tuple val(meta), path("*_score.vcf"), emit: vcf
-        tuple val(meta), path("*_versions.yml"), emit: versions
+        path("*_versions.yml"), emit: versions
 
     script:
     """

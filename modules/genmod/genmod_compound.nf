@@ -9,7 +9,7 @@ process GENMOD_COMPOUND {
 
     output:
         tuple val(meta), path("*_compound.vcf"), emit: vcf
-        tuple val(meta), path("*_versions.yml"), emit: versions
+        path("*_versions.yml"), emit: versions
 
     script:
     """

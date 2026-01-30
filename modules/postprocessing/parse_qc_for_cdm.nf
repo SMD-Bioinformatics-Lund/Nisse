@@ -9,7 +9,7 @@ process PARSE_QC_FOR_CDM {
 
     output:
     path("${meta.sample}_out.json"), emit: json
-    tuple val(meta), path("versions.yml"), emit: versions
+    path("versions.yml"), emit: versions
 
     script:
     """

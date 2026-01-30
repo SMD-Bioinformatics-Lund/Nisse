@@ -12,7 +12,7 @@ process VCF_ANNO {
 
 	output:
 		tuple val(meta), path("${meta.sample}.clinvar.loqusdb.gene.vcf"), emit: vcf
-		tuple val(meta), path("*versions.yml"), emit: versions
+		path("*versions.yml"), emit: versions
 
 	script:
 		"""

@@ -10,7 +10,7 @@ process INDEL_VEP {
 
 	output:
 		tuple val(meta), path("${meta.sample}.only_indels.vep.filtered.vcf"), emit: vcf
-		tuple val(meta), path("*versions.yml"), emit: versions
+		path("*versions.yml"), emit: versions
 
 	script:
 		"""

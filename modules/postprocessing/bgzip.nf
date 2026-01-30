@@ -10,7 +10,7 @@ process BGZIP {
     output:
     tuple val(meta), path("${bed_or_vcf}.gz"), emit: vcf, optional: true
     tuple val(meta), path("${bed_or_vcf}.gz"), emit: bed, optional: true
-    tuple val(meta), path("*_versions.yml"), emit: versions
+    path("*_versions.yml"), emit: versions
 
     script:
     """

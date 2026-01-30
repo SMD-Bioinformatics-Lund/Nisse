@@ -1,3 +1,10 @@
+# v1.2.0 - Synced with Tomte 4.2.0
+* Remove the option to start from previously run Tomte output
+* Remove peddy from output (Peddy is not behaving well will RNA-seq, we would need a different software here)
+* More error-safe channel joining function (able to join across Tomte <-> Nisse meta data objects)
+* Fix join errors
+* Fix version output - previously the version outputs from Nisse looked different giving invalid final version yaml
+
 # v1.1.0 - Sync with Tomte v4.1.2
 * Run Tomte pipeline initialization step before Tomte itself.
 * Take a single csv argument --input and use for both Tomte and Nisse.
