@@ -222,7 +222,7 @@ workflow NISSE {
         .combine(ch_tomte_drop_as_out_research_tomte)
         .map { meta, drop_file -> tuple(meta, drop_file) }
 
-    PREPROCESS(ch_drop_ae_per_sample, ch_drop_as_per_sample, ch_tomte_vcf_tbi_tomte, params.hgnc_map, params.stat_col, params.stat_cutoff)
+    PREPROCESS(ch_drop_as_per_sample, ch_drop_ae_per_sample, ch_tomte_vcf_tbi_tomte, params.hgnc_map, params.stat_col, params.stat_cutoff)
 
     SNV_ANNOTATE(PREPROCESS.out.vcf, params.vep)
     ch_versions = ch_versions.mix(SNV_ANNOTATE.out.versions)
