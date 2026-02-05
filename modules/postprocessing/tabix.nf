@@ -10,7 +10,7 @@ process TABIX {
     output:
     tuple val(meta), path("${bed_or_vcf_gz}"), path("${bed_or_vcf_gz}.tbi"), emit: vcf_tbi, optional: true
     tuple val(meta), path("${bed_or_vcf_gz}"), path("${bed_or_vcf_gz}.tbi"), emit: bed_tbi, optional: true
-    tuple val(meta), path("*_versions.yml"), emit: versions
+    path("*_versions.yml"), emit: versions
 
     script:
     """

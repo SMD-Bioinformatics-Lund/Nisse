@@ -9,7 +9,7 @@ process CALCULATE_INDEL_CADD {
 
 	output:
 		tuple val(meta), file("${meta.sample}.indel_cadd.gz"), emit: vcf
-		tuple val(meta), file("*versions.yml"), emit: versions
+		path("*versions.yml"), emit: versions
 
 	script:
 		"""

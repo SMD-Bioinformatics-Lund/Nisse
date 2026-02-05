@@ -53,9 +53,6 @@ def main(
     vcf: Path,
     fraser: Path,
     outrider: Path,
-    peddy_ped: Path,
-    peddy_check: Path,
-    peddy_sex: Path,
 ):
     not_found: list[Path] = []
     if not bam_path.exists():
@@ -76,15 +73,6 @@ def main(
     if not outrider.exists():
         print(f"File in {outrider} not found (outrider)")
         not_found.append(outrider)
-    if not peddy_ped.exists():
-        print(f"File in {peddy_ped} not found")
-        not_found.append(peddy_ped)
-    if not peddy_check.exists():
-        print(f"File in {peddy_check} not found")
-        not_found.append(peddy_check)
-    if not peddy_sex.exists():
-        print(f"File in {peddy_sex} not found")
-        not_found.append(peddy_sex)
 
     if len(not_found) > 0:
         not_found_str = '\n'.join([str(p) for p in not_found])
@@ -110,9 +98,6 @@ def main(
             )
         ],
         'vcf_snv': vcf,
-        'peddy_ped': peddy_ped,
-        'peddy_check': peddy_check,
-        'peddy_sex': peddy_sex,
         'omics_files': [
             f'fraser: {fraser}',
             f'outrider: {outrider}',
@@ -120,7 +105,8 @@ def main(
         "default_gene_panels": "[]",
         "gene_panels": "[]",
         "human_genome_build": "'38'",
-        "rna_human_genome_build": "'38'"
+        "rna_human_genome_build": "'38'",
+        "rank_score_threshold": "-1"
     }
 
     for (key, value) in yaml_dict.items():
@@ -161,9 +147,6 @@ def parse_arguments():
     parser.add_argument("--bam_path", required=True)
     parser.add_argument("--splice_junctions", required=True)
     parser.add_argument("--rna_bigwig", required=True)
-    parser.add_argument("--peddy_ped", required=True)
-    parser.add_argument("--peddy_check", required=True)
-    parser.add_argument("--peddy_sex", required=True)
     args = parser.parse_args()
     return args
 
@@ -181,7 +164,4 @@ if __name__ == "__main__":
         bam_path=Path(args.bam_path),
         splice_junctions=Path(args.splice_junctions),
         rna_bigwig=Path(args.rna_bigwig),
-        peddy_ped=Path(args.peddy_ped),
-        peddy_check=Path(args.peddy_check),
-        peddy_sex=Path(args.peddy_sex),
     )

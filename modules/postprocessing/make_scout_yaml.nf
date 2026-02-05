@@ -14,10 +14,7 @@ process MAKE_SCOUT_YAML {
         path(junctions_tbi),
         path(cram),
         path(cram_crai),
-        path(bigwig),
-        path(peddy_ped),
-        path(peddy_check),
-        path(peddy_sex)
+        path(bigwig)
     val tomte_results_dir
     val nisse_output_dir
     val phenotype
@@ -41,9 +38,6 @@ process MAKE_SCOUT_YAML {
         --bam_path "${tomte_results_dir}/alignment/${cram}" \\
         --splice_junctions "${tomte_results_dir}/ucsc/${junctions}" \\
         --rna_bigwig "${tomte_results_dir}/ucsc/${bigwig}" \\
-        --peddy_ped "${tomte_results_dir}/qc/peddy/${peddy_ped}" \\
-        --peddy_check "${tomte_results_dir}/qc/peddy/${peddy_check}" \\
-        --peddy_sex "${tomte_results_dir}/qc/peddy/${peddy_sex}" \\
          > ${meta.sample}_scout.yaml
     """
 

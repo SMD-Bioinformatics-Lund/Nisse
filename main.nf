@@ -37,19 +37,48 @@ include { TOMTE } from './tomte/workflows/tomte.nf'
 include { IDSNP_CALL } from './modules/defined_calls.nf'
 include { IDSNP_VCF_TO_JSON } from './modules/defined_calls.nf'
 include { PERC_HETEROZYGOTES } from './modules/defined_calls.nf'
-include { versions } from './modules/postprocessing/bgzip_tabix.nf'
 include { PIPELINE_INITIALISATION } from './tomte/subworkflows/local/utils_nfcore_tomte_pipeline/main.nf'
+include { CREATE_PED } from './modules/annotate/create_ped.nf'
+include { softwareVersionsToYAML } from './tomte/subworkflows/nf-core/utils_nfcore_pipeline'
 
+
+// Please notice: The meta object fed into Tomte (i.e. Nisses) and the one coming out
+// (i.e. Tomte) are not identical (mutated by Tomte) and can thus not be used for joining.
+// Use this function instead
 def join_on_sample(ch1, ch2) {
-    def mapped1 = ch1.map { tuple -> [tuple[0].sample, tuple] }
-    def mapped2 = ch2.map { tuple -> [tuple[0].sample, tuple] }
+    // Such that downstream processes can assume that item[0] exists
+    def normalize_tuple = { item ->
+        if (item == null) {
+            return [null]
+        }
+        if (item instanceof List || item instanceof Tuple) {
+            return item
+        }
+        if (item instanceof Map) {
+            return [item]
+        }
+        return [item]
+    }
+
+    def keyed = { item ->
+        def tup = normalize_tuple(item)
+        def meta = tup ? tup[0] : null
+        def sample = meta?.sample
+        if (sample == null) {
+            error("join_on_sample: missing meta.sample in item: ${item}")
+        }
+        return [sample, tup]
+    }
+
+    def mapped1 = ch1.map { item -> keyed(item) }
+    def mapped2 = ch2.map { item -> keyed(item) }
     return mapped1
         .join(mapped2)
         .map { key_values ->
             def _key = key_values[0]
             def ch1_values = key_values[1]
             def ch2_values = key_values[2]
-            [ch1_values[0]] + ch1_values.drop(1) + ch2_values.drop(1)
+            tuple(*[ch1_values[0]] + ch1_values.drop(1) + ch2_values.drop(1))
         }
 }
 
@@ -60,107 +89,52 @@ workflow {
     ch_versions = channel.empty()
     channel.fromPath(params.input)
         .splitCsv(header: true)
-        .set { ch_meta }
+        .set { ch_meta_nisse }
 
     // Either execute Tomte as part of Nisse, or start with its results folder
-    if (params.run_tomte) {
+    PIPELINE_INITIALISATION(
+        params.version,
+        params.validate_params,
+        params.monochrome_logs,
+        args,
+        params.outdir,
+        params.input
+    )
 
-        PIPELINE_INITIALISATION(
-            params.version,
-            params.validate_params,
-            params.monochrome_logs,
-            args,
-            params.outdir,
-            params.input
-        )
+    TOMTE(PIPELINE_INITIALISATION.out.samplesheet)
 
-        TOMTE(PIPELINE_INITIALISATION.out.samplesheet)
+    ch_versions = ch_versions.mix(TOMTE.out.versions)
 
-        ch_versions.mix(TOMTE.out.versions)
-
-        // Tomte adds "id: meta.sample" in one step making the Nisse and Tomte
-        // meta objects different
-        ch_tomte_meta = TOMTE.out.bam_bai.map { it -> it[0] }
-
-        ch_multiqc = ch_tomte_meta
-            .combine(TOMTE.out.multiqc_data)
-            .map { meta, multiqc_folder ->
-                def multiqc_summary = file("${multiqc_folder}/multiqc_general_stats.txt")
-                def star_qc = file("${multiqc_folder}/multiqc_star.txt")
-                def picard_coverage = file("${multiqc_folder}/picard_rna_coverage.txt")
-                tuple(meta, multiqc_summary, star_qc, picard_coverage)
-            }
-
-        ch_junction_bed = ch_meta.map { meta ->
-            def sample_id = meta.sample
-            def junction_bed_gz = String.format(params.tomte_results_paths.junction_bed_gz, params.outdir, sample_id)
-            def junction_bed_gz_tbi = String.format(params.tomte_results_paths.junction_bed_gz_tbi, params.outdir, sample_id)
-            tuple(meta, file(junction_bed_gz), file(junction_bed_gz_tbi))
+    ch_multiqc = TOMTE.out.bam_bai
+        .combine(TOMTE.out.multiqc_data)
+        .map { meta, _bam, _bai, multiqc_folder ->
+            def multiqc_summary = file("${multiqc_folder}/multiqc_general_stats.txt")
+            def star_qc = file("${multiqc_folder}/multiqc_star.txt")
+            def picard_coverage = file("${multiqc_folder}/picard_rna_coverage.txt")
+            tuple(meta, multiqc_summary, star_qc, picard_coverage)
         }
 
-        ch_hb_estimates = TOMTE.out.hb_estimates
-
-        ch_vcf = TOMTE.out.vcf_tbi
-
-        ch_ped = TOMTE.out.ped
-        ch_vcf_tbi = TOMTE.out.vcf_tbi
-        ch_drop_ae_out_research = TOMTE.out.drop_ae_out_research
-        ch_drop_as_out_research = TOMTE.out.drop_as_out_research
-        ch_bam_bai = TOMTE.out.bam_bai
+    ch_junction_bed = ch_meta_nisse.map { meta ->
+        def sample_id = meta.sample
+        def junction_bed_gz = String.format(params.tomte_results_paths.junction_bed_gz, params.outdir, sample_id)
+        def junction_bed_gz_tbi = String.format(params.tomte_results_paths.junction_bed_gz_tbi, params.outdir, sample_id)
+        tuple(meta, file(junction_bed_gz), file(junction_bed_gz_tbi))
     }
-    else {
-        // FIXME: This branch has not been as thoroughly tested
-        // Will likely require some further touches to get it running again, if needed
-        // If not needed - consider removing it
 
-        // Creating a channel for Hb percentage from Tomte results
-        ch_hb_estimates = ch_meta.map { meta ->
-            def sample_id = meta.sample
-            def hb_estimate_json = String.format(params.tomte_results_paths.hb_estimate, params.outdir, sample_id)
-            tuple(meta, file(hb_estimate_json))
-        }
+    ch_hb_estimates = TOMTE.out.hb_estimates
 
-        ch_multiqc = ch_meta.map { meta ->
-            def multiqc_summary = String.format(params.tomte_results_paths.multiqc_summary, params.outdir)
-            def star_qc = String.format(params.tomte_results_paths.star_qc, params.outdir)
-            def picard_coverage = String.format(params.tomte_results_paths.picard_coverage, params.outdir)
-            tuple(meta, file(multiqc_summary), file(star_qc), file(picard_coverage))
-        }
+    ch_vcf_tbi_tomte = TOMTE.out.vcf_tbi
+    ch_drop_ae_out_research_tomte = TOMTE.out.drop_ae_out_research
+    ch_drop_as_out_research_tomte = TOMTE.out.drop_as_out_research
+    ch_bam_bai_tomte = TOMTE.out.bam_bai
 
-        ch_vcf = ch_meta.map { meta ->
-            def sample_id = meta.sample
-            def variant_calls = String.format(params.tomte_results_paths.variant_calls, params.outdir, sample_id)
-            def variant_calls_tbi = "${variant_calls}.tbi"
-            tuple(meta, file(variant_calls), file(variant_calls_tbi))
-        }
-
-        ch_bam_bai = ch_meta.map { meta ->
-            def sample_id = meta.sample
-            def bam = String.format(params.tomte_results_paths.bam, params.outdir, sample_id)
-            def bai = String.format(params.tomte_results_paths.bam, params.outdir, sample_id)
-            tuple(meta, file(bam), file(bai))
-        }
-
-        if (!params.qc_only) {
-            ch_drop_ae_out_research = ch_meta.map { meta ->
-                def case_id = meta.case
-                def outrider_results = String.format(params.tomte_results_paths.outrider_tsv, params.outdir, case_id)
-                tuple(meta, file(outrider_results))
-            }
-
-            ch_drop_as_out_research = ch_meta.map { meta ->
-                def case_id = meta.case
-                def fraser_results = String.format(params.tomte_results_paths.fraser_tsv, params.outdir, case_id)
-                tuple(meta, file(fraser_results))
-            }
-        }
-    }
+    ch_ped_nisse = CREATE_PED(ch_meta_nisse)
 
     NISSE_QC(
         ch_versions,
         ch_multiqc,
         ch_hb_estimates,
-        ch_bam_bai,
+        ch_bam_bai_tomte,
         params.idsnps,
         params.het_calls,
     )
@@ -169,18 +143,18 @@ workflow {
     if (!params.qc_only) {
         NISSE(
             ch_versions,
-            ch_meta,
+            ch_meta_nisse,
             ch_junction_bed,
-            ch_ped,
-            ch_vcf_tbi,
-            ch_drop_ae_out_research,
-            ch_drop_as_out_research,
+            ch_ped_nisse,
+            ch_vcf_tbi_tomte,
+            ch_drop_ae_out_research_tomte,
+            ch_drop_as_out_research_tomte,
         )
+        ch_versions = ch_versions.mix(NISSE.out.versions)
     }
-    ch_versions = ch_versions.mix(NISSE.out.versions)
 
-    // Join the paths, skipping the meta value
-    ch_joined_versions = ch_versions.collect { it -> it[1] }
+    // Format versions the same way as Tomte (YAML strings)
+    ch_joined_versions = softwareVersionsToYAML(ch_versions).collect()
     OUTPUT_VERSIONS(ch_joined_versions)
 
     workflow.onComplete {
@@ -207,8 +181,8 @@ workflow NISSE_QC {
     IDSNP_VCF_TO_JSON(IDSNP_CALL.out.vcf)
 
     ch_qc = ch_multiqc
-    ch_qc = ch_qc.join(ch_hb_estimates)
-    ch_qc = ch_qc.join(PERC_HETEROZYGOTES.out.vcf)
+    ch_qc = join_on_sample(ch_qc, ch_hb_estimates)
+    ch_qc = join_on_sample(ch_qc, PERC_HETEROZYGOTES.out.vcf)
 
     PARSE_QC_FOR_CDM(ch_qc)
 
@@ -224,42 +198,43 @@ workflow NISSE_QC {
 workflow NISSE {
     take:
     ch_versions
-    ch_meta
-    ch_tomte_junction_bed_tbi
-    ch_combined_ped
-    ch_tomte_vcf_tbi
-    ch_tomte_drop_ae_out_research
-    ch_tomte_drop_as_out_research
+    ch_meta_nisse
+    ch_junction_bed_tbi_tomte
+    ch_ped_nisse
+    ch_tomte_vcf_tbi_tomte
+    ch_tomte_drop_ae_out_research_tomte
+    ch_tomte_drop_as_out_research_tomte
 
     main:
     // NOTE: These are not accessed directly - the paths are used in the Scout yaml
-    ch_tomte_raw_results = ch_meta.map { meta ->
+    ch_tomte_raw_results = ch_meta_nisse.map { meta ->
         def sample_id = meta.sample
         def cram = String.format(params.tomte_results_paths.cram, params.outdir, sample_id)
         def cram_crai = String.format(params.tomte_results_paths.cram_crai, params.outdir, sample_id)
         def bigwig = String.format(params.tomte_results_paths.bigwig, params.outdir, sample_id)
-        def peddy_ped = String.format(params.tomte_results_paths.peddy_ped, params.outdir, sample_id)
-        def peddy_check = String.format(params.tomte_results_paths.peddy_check, params.outdir, sample_id)
-        def peddy_sex = String.format(params.tomte_results_paths.peddy_sex, params.outdir, sample_id)
-        tuple(meta, file(cram), file(cram_crai), file(bigwig), file(peddy_ped), file(peddy_check), file(peddy_sex))
+        tuple(meta, file(cram), file(cram_crai), file(bigwig))
     }
 
-    ch_drop_ae_per_sample = ch_meta.combine(ch_tomte_drop_as_out_research)
-    ch_drop_as_per_sample = ch_meta.combine(ch_tomte_drop_ae_out_research)
+    ch_drop_ae_per_sample = ch_meta_nisse
+        .combine(ch_tomte_drop_ae_out_research_tomte)
+        .map { meta, drop_file -> tuple(meta, drop_file) }
+    ch_drop_as_per_sample = ch_meta_nisse
+        .combine(ch_tomte_drop_as_out_research_tomte)
+        .map { meta, drop_file -> tuple(meta, drop_file) }
 
-    PREPROCESS(ch_drop_ae_per_sample, ch_drop_as_per_sample, ch_tomte_vcf_tbi, params.hgnc_map, params.stat_col, params.stat_cutoff)
+    PREPROCESS(ch_drop_as_per_sample, ch_drop_ae_per_sample, ch_tomte_vcf_tbi_tomte, params.hgnc_map, params.stat_col, params.stat_cutoff)
 
     SNV_ANNOTATE(PREPROCESS.out.vcf, params.vep)
     ch_versions = ch_versions.mix(SNV_ANNOTATE.out.versions)
 
-    SNV_SCORE(ch_meta, SNV_ANNOTATE.out.vcf, ch_combined_ped, params.score_config, params.score_threshold)
+    SNV_SCORE(SNV_ANNOTATE.out.vcf, ch_ped_nisse, params.score_config, params.score_threshold)
     ch_versions = ch_versions.mix(SNV_SCORE.out.versions)
 
-    ch_drop_results = PREPROCESS.out.fraser.join(PREPROCESS.out.outrider)
+    ch_drop_results = join_on_sample(PREPROCESS.out.fraser, PREPROCESS.out.outrider)
 
-    // Regular join did for some reason not work here
+    // Regular join did not work due to differing meta objects
     ch_2 = join_on_sample(ch_drop_results, SNV_SCORE.out.vcf_tbi)
-    ch_3 = join_on_sample(ch_2, ch_tomte_junction_bed_tbi)
+    ch_3 = join_on_sample(ch_2, ch_junction_bed_tbi_tomte)
     ch_all_result_files = join_on_sample(ch_3, ch_tomte_raw_results)
 
     MAKE_SCOUT_YAML(ch_all_result_files, params.outdir, params.nisse_outdir, params.phenotype, params.tissue)
@@ -304,7 +279,7 @@ workflow SNV_ANNOTATE {
     CALCULATE_INDEL_CADD(INDEL_VEP.out.vcf)
     BGZIP_INDEL_CADD(CALCULATE_INDEL_CADD.out.vcf)
 
-    ch_cadd_vcf = MARK_SPLICE.out.vcf.join(BGZIP_INDEL_CADD.out.cadd)
+    ch_cadd_vcf = join_on_sample(MARK_SPLICE.out.vcf, BGZIP_INDEL_CADD.out.cadd)
     ADD_CADD_SCORES_TO_VCF(ch_cadd_vcf)
 
     ch_versions = channel.empty()
@@ -323,16 +298,13 @@ workflow SNV_ANNOTATE {
 
 workflow SNV_SCORE {
     take:
-    ch_meta
     ch_annotated_vcf
-    ch_combined_ped
+    ch_ped_nisse
     val_score_config
     val_score_threshold
 
     main:
-    MAKE_CASE_PED(ch_meta, ch_combined_ped)
-
-    ch_annotated_vcf_ped = ch_annotated_vcf.join(MAKE_CASE_PED.out.ped)
+    ch_annotated_vcf_ped = join_on_sample(ch_annotated_vcf, ch_ped_nisse)
 
     GENMOD_MODELS(ch_annotated_vcf_ped)
 
