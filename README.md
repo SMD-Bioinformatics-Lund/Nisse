@@ -54,7 +54,7 @@ Execute while providing the Tomte configs:
 nextflow run main.nf \
     --csv ... \
     --outdir ... \
-    -c ./tomte/nextflow_tomte.config \
+    -c ./tomte/nextflow.config \
     -c ./config-files/nextflow/cmd_tomte.config \
     -c ./config-files/nextflow/cmd_nisse.config
 ```
@@ -86,7 +86,7 @@ timestamp=$(date +"%y%m%d_%H%M")
 outdir="/nisse/results/${timestamp}"
 mkdir -p ${outdir}
 
-tomte_base_config="./tomte/nextflow_tomte.config"
+tomte_base_config="./tomte/nextflow.config"
 tomte_smd_config="./config-files/nextflow/cmd_tomte.config"
 nisse_smd_config="./config-files/nextflow/cmd_nisse.config"
 
