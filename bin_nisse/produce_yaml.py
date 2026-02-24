@@ -2,7 +2,7 @@
 
 import argparse
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 DESCRIPTION = """Generate YAML config used to load sample into Scout"""
 
@@ -39,7 +39,7 @@ class Sample:
         keys = self.__dict__.keys()
         fields = [f"{key}: {self.__dict__[key]}" for key in keys]
         return fields
-        
+
 
 def main(
     sample_id: str,
@@ -53,6 +53,8 @@ def main(
     vcf: Path,
     fraser: Path,
     outrider: Path,
+    path_prefix_from: Optional[str],
+    path_prefix_to: Optional[str],
 ):
     not_found: list[Path] = []
     if not bam_path.exists():
@@ -78,6 +80,13 @@ def main(
         not_found_str = '\n'.join([str(p) for p in not_found])
         raise ValueError(f"All required paths not present. Missing:\n{not_found_str}")
 
+    bam_path_yaml = map_path_prefix(bam_path, path_prefix_from, path_prefix_to)
+    rna_bigwig_yaml = map_path_prefix(rna_bigwig, path_prefix_from, path_prefix_to)
+    splice_junctions_yaml = map_path_prefix(splice_junctions, path_prefix_from, path_prefix_to)
+    vcf_yaml = map_path_prefix(vcf, path_prefix_from, path_prefix_to)
+    fraser_yaml = map_path_prefix(fraser, path_prefix_from, path_prefix_to)
+    outrider_yaml = map_path_prefix(outrider, path_prefix_from, path_prefix_to)
+
     yaml_dict = {
         'owner': 'rnaseq',
         'family': sample_id,
@@ -91,16 +100,16 @@ def main(
                 sex=sex,
                 phenotype=phenotype,
                 tissue_type=tissue,
-                bam_path=bam_path,
-                rna_alignment_path=bam_path,
-                rna_coverage_bigwig=rna_bigwig,
-                splice_junctions_bed=splice_junctions,
+                bam_path=bam_path_yaml,
+                rna_alignment_path=bam_path_yaml,
+                rna_coverage_bigwig=rna_bigwig_yaml,
+                splice_junctions_bed=splice_junctions_yaml,
             )
         ],
-        'vcf_snv': vcf,
+        'vcf_snv': vcf_yaml,
         'omics_files': [
-            f'fraser: {fraser}',
-            f'outrider: {outrider}',
+            f'fraser: {fraser_yaml}',
+            f'outrider: {outrider_yaml}',
         ],
         "default_gene_panels": "[]",
         "gene_panels": "[]",
@@ -134,6 +143,19 @@ def main(
             print(f"{key}: {value}")
 
 
+def map_path_prefix(path: Path, prefix_from: Optional[str], prefix_to: Optional[str]) -> Path:
+    """Update the results file path to be based in /access or similar"""
+    path_str = str(path)
+    if not prefix_from or not prefix_to:
+        return Path(path_str)
+
+    from_norm = prefix_from.rstrip("/")
+    to_norm = prefix_to.rstrip("/")
+    if path_str == from_norm or path_str.startswith(f"{from_norm}/"):
+        return Path(f"{to_norm}{path_str[len(from_norm):]}")
+    return Path(path_str)
+
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description=DESCRIPTION)
     parser.add_argument("--sample_id", required=True)
@@ -147,6 +169,8 @@ def parse_arguments():
     parser.add_argument("--bam_path", required=True)
     parser.add_argument("--splice_junctions", required=True)
     parser.add_argument("--rna_bigwig", required=True)
+    parser.add_argument("--path_prefix_from", required=False, default=None)
+    parser.add_argument("--path_prefix_to", required=False, default=None)
     args = parser.parse_args()
     return args
 
@@ -164,4 +188,6 @@ if __name__ == "__main__":
         bam_path=Path(args.bam_path),
         splice_junctions=Path(args.splice_junctions),
         rna_bigwig=Path(args.rna_bigwig),
+        path_prefix_from=args.path_prefix_from,
+        path_prefix_to=args.path_prefix_to,
     )
