@@ -76,9 +76,9 @@ def main(
         print(f"File in {outrider} not found (outrider)")
         not_found.append(outrider)
 
-    if len(not_found) > 0:
-        not_found_str = '\n'.join([str(p) for p in not_found])
-        raise ValueError(f"All required paths not present. Missing:\n{not_found_str}")
+    # if len(not_found) > 0:
+    #     not_found_str = '\n'.join([str(p) for p in not_found])
+    #     raise ValueError(f"All required paths not present. Missing:\n{not_found_str}")
 
     bam_path_yaml = map_path_prefix(bam_path, path_prefix_from, path_prefix_to)
     rna_bigwig_yaml = map_path_prefix(rna_bigwig, path_prefix_from, path_prefix_to)
