@@ -1,3 +1,8 @@
+# v1.3.0 - Synced with Tomte 4.2.0
+* Limit such that only required outputs are produced
+* Control the base path of the yaml output, with `/access` defined in the config
+* Bug fixes in version outputs. The final file should be written with prefix, and missed Nisse version files are included.
+
 # v1.2.0 - Synced with Tomte 4.2.0
 * Remove the option to start from previously run Tomte output
 * Remove peddy from output (Peddy is not behaving well will RNA-seq, we would need a different software here)
