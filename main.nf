@@ -90,6 +90,17 @@ workflow {
     channel.fromPath(params.input)
         .splitCsv(header: true)
         .set { ch_meta_nisse }
+    ch_case_id = ch_meta_nisse
+        .map { meta -> meta.case?.toString()?.trim() }
+        .unique()
+        .collect()
+        .map { case_ids ->
+            def non_empty_case_ids = case_ids.findAll { case_id -> case_id }
+            if (non_empty_case_ids.size() != 1) {
+                error("Expected exactly one non-empty case id in samplesheet, got: ${case_ids}")
+            }
+            non_empty_case_ids[0]
+        }
 
     // Either execute Tomte as part of Nisse, or start with its results folder
     PIPELINE_INITIALISATION(
@@ -155,7 +166,7 @@ workflow {
 
     // Format versions the same way as Tomte (YAML strings)
     ch_joined_versions = softwareVersionsToYAML(ch_versions).collect()
-    OUTPUT_VERSIONS(ch_joined_versions)
+    OUTPUT_VERSIONS(ch_joined_versions, ch_case_id)
 
     workflow.onComplete {
         log.info("Completed without errors")
@@ -229,6 +240,8 @@ workflow NISSE {
 
     SNV_SCORE(SNV_ANNOTATE.out.vcf, ch_ped_nisse, params.score_config, params.score_threshold)
     ch_versions = ch_versions.mix(SNV_SCORE.out.versions)
+    ch_versions = ch_versions.mix(SNV_SCORE.out.vcf_completion_versions)
+    ch_versions = ch_versions.mix(SNV_SCORE.out.bgzip_tabix_versions)
 
     ch_drop_results = join_on_sample(PREPROCESS.out.fraser, PREPROCESS.out.outrider)
 
@@ -237,7 +250,15 @@ workflow NISSE {
     ch_3 = join_on_sample(ch_2, ch_junction_bed_tbi_tomte)
     ch_all_result_files = join_on_sample(ch_3, ch_tomte_raw_results)
 
-    MAKE_SCOUT_YAML(ch_all_result_files, params.outdir, params.nisse_outdir, params.phenotype, params.tissue)
+    MAKE_SCOUT_YAML(
+        ch_all_result_files,
+        params.outdir,
+        params.nisse_outdir,
+        params.phenotype,
+        params.tissue,
+        params.yaml_path_prefix_from,
+        params.yaml_path_prefix_to
+    )
 
     emit:
     versions = ch_versions
@@ -326,6 +347,8 @@ workflow SNV_SCORE {
     emit:
     vcf_tbi = BGZIP_TABIX_VCF.out.vcf_tbi
     versions = ch_versions
+    vcf_completion_versions = VCF_COMPLETION.out.versions
+    bgzip_tabix_versions = BGZIP_TABIX_VCF.out.versions
 }
 
 def startupMessage(showParams) {

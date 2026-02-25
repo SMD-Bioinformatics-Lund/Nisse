@@ -19,6 +19,8 @@ process MAKE_SCOUT_YAML {
     val nisse_output_dir
     val phenotype
     val tissue
+    val yaml_path_prefix_from
+    val yaml_path_prefix_to
 
     output:
     tuple val(meta), path("${meta.sample}_scout.yaml"), emit: yaml
@@ -38,6 +40,8 @@ process MAKE_SCOUT_YAML {
         --bam_path "${tomte_results_dir}/alignment/${cram}" \\
         --splice_junctions "${tomte_results_dir}/ucsc/${junctions}" \\
         --rna_bigwig "${tomte_results_dir}/ucsc/${bigwig}" \\
+        --path_prefix_from "${yaml_path_prefix_from}" \\
+        --path_prefix_to "${yaml_path_prefix_to}" \\
          > ${meta.sample}_scout.yaml
     """
 

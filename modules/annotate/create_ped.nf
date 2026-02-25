@@ -23,7 +23,6 @@ process CREATE_PED {
         type_fa = "fa"
         type_ma = "ma"
         """
-        touch "${meta.sample}_base.ped"
         touch "${meta.sample}_ma.ped"
         touch "${meta.sample}_fa.ped"
 
